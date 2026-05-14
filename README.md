@@ -3,8 +3,8 @@ Autonomous Robot challenge
 
 # Autonomous RC Car Design Review Document
 
-**Document version:** v1.0  
-**Prepared on:** 2026-05-13  
+**Document version:** v1.0
+**Prepared on:** 2026-05-13
 **Primary design intent:** Build a safe, testable, competition-ready autonomous 1/10-scale RC car platform that can start with simple line/wall-following behavior and grow into LiDAR/vision-based path following, obstacle avoidance, and higher-speed autonomous racing algorithms.
 
 ---
@@ -40,8 +40,8 @@ The car is split into three physical layers:
 | Layer | Purpose |
 |---|---|
 | **Lower chassis** | RC drivetrain, steering servo, suspension, motor, battery compartment, wheels, base RC receiver. |
-| **Upper autonomy deck** | Jetson compute board, power regulation, VESC/motor controller, Wi-Fi/telemetry, wiring harness. |
-| **Sensor layer** | Front LiDAR or distance sensors, forward camera/depth camera, optional line sensor array, optional IMU. |
+| **Upper control deck** | Main compute (optional for high-level autonomy), auxiliary MCU, power regulation, motor driver, servo driver, wiring harness. |
+| **Sensor layer** | Front LiDAR (RPLIDAR C1), IMU (BNO085), optional camera/line sensor for future expansion. |
 
 This structure mirrors the F1TENTH build approach, where the car is organized into lower chassis, autonomy elements, and upper chassis/electronics deck. The official F1TENTH build documentation uses a Traxxas Slash 4x4-style chassis and NVIDIA Jetson compute platform as the base reference design. [W1]
 
@@ -53,50 +53,53 @@ This structure mirrors the F1TENTH build approach, where the car is organized in
                            FRONT / DRIVING DIRECTION
         ┌──────────────────────────────────────────────────────┐
         │                                                      │
-        │   [2D LiDAR / Front Distance Sensor Bar]              │
-        │          ┌───────────────┐                           │
-        │          │   LiDAR       │                           │
-        │          └───────────────┘                           │
-        │                                                      │
-        │       [Camera Mast / Depth Camera]                   │
-        │              ┌───────┐                               │
-        │              │Camera │                               │
-        │              └───────┘                               │
+        │           ┌─────────────────────────┐                │
+        │           │  RPLIDAR C1 (12 m)      │                │
+        │           │  UART TTL / USB         │                │
+        │           └────────────┬────────────┘                │
+        │                        │                             │
+        │           ┌────────────┴────────────┐                │
+        │           │ Steering Servo Linkage  │                │
+        │           │ (MG996R PWM)            │                │
+        │           └─────────────────────────┘                │
         │                                                      │
         │   ┌──────────────────────────────────────────────┐   │
-        │   │              Upper Electronics Deck           │   │
+        │   │          Upper Control Deck                   │   │
         │   │                                              │   │
-        │   │  ┌──────────┐   ┌──────────┐   ┌──────────┐ │   │
-        │   │  │ Jetson   │   │ Power    │   │ Wi-Fi /  │ │   │
-        │   │  │ Compute  │   │ Board    │   │ Telemetry│ │   │
-        │   │  └──────────┘   └──────────┘   └──────────┘ │   │
+        │   │  ┌──────────┐ ┌──────────┐ ┌──────────────┐ │   │
+        │   │  │ Aux MCU  │ │ BNO085   │ │ Power Dist / │ │   │
+        │   │  │ (TBD)    │ │ IMU 9DOF │ │ RC Rx        │ │   │
+        │   │  └──────────┘ └──────────┘ └──────────────┘ │   │
         │   │                                              │   │
-        │   │  ┌──────────┐   ┌──────────┐                 │   │
-        │   │  │ VESC /   │   │ RC Rx /  │                 │   │
-        │   │  │ Motor Ctl│   │ Override │                 │   │
-        │   │  └──────────┘   └──────────┘                 │   │
+        │   │  ┌──────────────────┐  ┌────────────────┐   │   │
+        │   │  │ Cytron MDD10A    │  │ CANUDUINO      │   │   │
+        │   │  │ Dual Motor Drv   │  │ 16-Ch Servo    │   │   │
+        │   │  │ (PWM control)    │  │ Driver (I2C)   │   │   │
+        │   │  └──────────────────┘  └────────────────┘   │   │
         │   └──────────────────────────────────────────────┘   │
         │                                                      │
-        │   [Battery low in chassis tray for lower CG]          │
+        │  [Battery tray low in chassis for center of gravity] │
         │                                                      │
         └──────────────────────────────────────────────────────┘
+        ◆ Motor 1                                    ◆ Motor 2
+        (JGB37-520 left)                    (JGB37-520 right)
                            REAR / MOTOR SIDE
 ```
 
 ### Side View Layout
 
 ```text
-                  Camera mast: ~80–150 mm above top deck
-                           ┌───────┐
-                           │Camera │
-                           └───┬───┘
-                               │
-        ┌───────┐       ┌──────┴────────────────────────┐
-        │LiDAR  │       │ Upper electronics deck          │
-        └───────┘       │ Jetson + VESC + power board     │
+                    Optional camera mast for future expansion
+                         ┌─────────────┐
+                         │Optional Cam │
+                         └──────┬──────┘
+           │
+    ┌───────┐       ┌──────┴────────────────────────┐
+    │LiDAR  │       │ Upper control deck            │
+    └───────┘       │ MCU + MDD10A + servo driver   │
         ────────────────┴─────────────────────────────────
         ┌────────────────────────────────────────────────┐
-        │ Lower RC chassis: battery, motor, servo, ESC    │
+    │ Lower RC chassis: battery, motors, steering, Rx │
         └────────────────────────────────────────────────┘
              O                                           O
           Front wheel                                 Rear wheel
@@ -108,9 +111,10 @@ The first CAD package should focus only on add-on parts:
 
 | CAD Part | Purpose |
 |---|---|
-| Upper electronics deck | Mount Jetson, VESC, power board, cable tie points, and standoffs. |
-| LiDAR front bracket | Keep LiDAR level and forward-facing, with clear 270° scan field if using Hokuyo/RPLiDAR. |
-| Camera mast | Adjustable height and tilt for lane/track visibility. |
+| Upper control deck | Mount MCU/main compute, MDD10A, servo driver, power board, cable tie points, and standoffs. |
+| LiDAR front bracket | Keep LiDAR level and forward-facing, with clear scan field for RPLIDAR C1 (or future compatible 2D LiDAR). |
+| IMU bracket | Rigid mount for BNO085 near centerline, with known axis orientation. |
+| Camera mast (optional) | Adjustable height and tilt for lane/track visibility in future upgrades. |
 | Battery retainer | Prevent LiPo movement under acceleration/braking. |
 | Kill-switch bracket | Externally reachable emergency stop or power cutoff. |
 | Cable routing clips | Keep wires away from driveshafts, wheels, and steering linkages. |
@@ -140,43 +144,31 @@ These dimensions are based on current Slash 4x4 VXL HD retailer specifications. 
 | **LiDAR-first style build** | ~568 mm L × 296 mm W × 250–330 mm H | ~3.4–4.2 kg |
 | **LiDAR + depth camera + extra sensors** | ~568 mm L × 296 mm W × 280–350 mm H | ~3.7–4.6 kg |
 
-Weight should be measured after assembly. The design target should keep the **battery low**, mount the **Jetson near the centerline**, and avoid placing heavy sensors high or far forward unless required for visibility.
+Weight should be measured after assembly. The design target should keep the **battery low**, mount **control electronics near the centerline**, and avoid placing heavy sensors high or far forward unless required for visibility.
 
 ## 1.4 Parts List With Estimated Costs
 
-The table below gives a **recommended competition-capable build** and lower-cost alternatives. Prices are rough US estimates and should be rechecked at purchase time.
+The table below reflects the **current prototype parts actually selected by the team**.
 
-### Recommended Build: F1TENTH-Inspired LiDAR + Camera Platform
+### Current Prototype Build (Confirmed Components)
 
-| Subsystem | Recommended Part | Purpose | Estimated Cost |
+| Subsystem | Selected Part | Purpose | Estimated Cost |
 |---|---|---|---:|
-| Chassis | Traxxas Slash 4x4 VXL HD or similar 1/10 4WD short-course truck | Base vehicle, drivetrain, steering, suspension | $430–$500 |
-| Compute | NVIDIA Jetson Orin Nano Super Developer Kit | Onboard autonomy computer for ROS2, perception, logging, and ML inference | ~$249 |
-| Motor controller | VESC 6-class controller | Closed-loop motor control, motor telemetry, odometry support | $180–$260 |
-| Primary LiDAR | Hokuyo UST-10LX | Reliable 2D LiDAR for mapping, localization, wall following, obstacle detection | $1,200–$1,500 |
-| Low-cost LiDAR alternative | RPLIDAR A2M12 or similar | Lower-cost 2D scanning LiDAR; acceptable for slower testing | $220–$350 |
-| Camera | USB camera, CSI camera, or Intel RealSense D435i | Vision lane/line detection, dataset collection, optional RGB-D sensing | $40–$334 |
-| IMU | RealSense D435i IMU or standalone IMU module | Yaw/acceleration support; helps state estimation | $20–$334 depending on camera choice |
-| Battery | 3S LiPo, 11.1 V, 5000–6000 mAh, 25C+ | Main vehicle power | $80–$120 each |
-| Charger | LiPo balance charger | Safe battery charging | $60–$150 |
-| Power regulation | F1TENTH-style power board or DC-DC buck modules | Stable power for Jetson/sensors | $50–$180 |
-| E-stop / kill switch | Mechanical switch, relay, or remote kill module | Required safety cutoff | $30–$120 |
-| Line sensor array | Pololu QTR-style reflectance array or similar | Needed only if competition uses line-following | $10–$40 |
-| Distance sensors | ToF sensors or ultrasonic modules | Redundant near-field obstacle/safety sensing | $20–$80 |
-| Upper deck + brackets | Laser-cut acrylic/carbon/FR4 or 3D printed mounts | Physical mounting of compute/sensors | $80–$250 |
-| Wiring/fasteners | XT60/Traxxas adapters, standoffs, cable glands, zip ties | Electrical/mechanical integration | $50–$150 |
-| Spare parts | Suspension arms, wheels/tires, spur/pinion gears, servo saver | Competition reliability | $150–$300 |
+| Primary LiDAR | RPLIDAR C1 (12 m) | Front scanning for wall following, gap finding, obstacle detection | $70.00 |
+| IMU | 7semi BNO085 (9-DOF) | Yaw/acceleration support for control and state estimation | $25.40 |
+| Traction motor (x2) | DC Motor JGB37-520 | Main traction actuation | $9.86 each (2x) |
+| Motor driver | Cytron MDD10A Dual Channel 10A | PWM-based dual channel traction motor control | TBD |
+| Steering servo | AZDelivery MG996R Digital Servo | Steering actuation (PWM) | $10.47 |
+| Servo controller | CANUDUINO 16-Channel 12-bit | Multi-servo PWM generation over I2C | $14.84 |
+| Auxiliary controller | Dedicated MCU (model TBD) | PID loops, encoder readout, IMU readout, watchdog, PWM supervision | TBD |
 
-### Estimated Build Cost
+### Estimated Core Electronics Cost (Current Selection)
 
-| Build Type | Estimated Total |
+| Cost Summary | Estimated Total |
 |---|---:|
-| **Low-cost line/camera/ToF build** | ~$1,100–$1,800 |
-| **Build using RPLIDAR** | ~$1,500–$2,300 |
-| **LiDAR build using Hokuyo UST-10LX** | ~$2,700–$4,000 |
-| **Research-grade build with Hokuyo + RealSense + spares** | ~$3,200–$4,700 |
+| Known subtotal (without MDD10A and MCU) | **$140.43** |
 
-The F1TENTH teaching paper reported an approximate platform cost of about $2,400 for the course hardware generation, but current part availability and sensor choices can change the cost significantly. [P2]
+Future upgrades (high-performance compute, additional vision stack, or premium LiDAR) can be evaluated after baseline reliability is demonstrated.
 
 ## 1.5 Build and Testing Timeline Before Competition Day
 
@@ -188,7 +180,7 @@ The timeline below assumes roughly **12 weeks**. If the team has less time, pres
 |---|---|
 | Lock competition rules | Track type, allowed sensors, allowed compute, max size/weight, required safety systems. |
 | Finalize architecture | Decide line/camera-first vs LiDAR-first vs hybrid. |
-| Order parts | Chassis, Jetson, VESC, sensors, batteries, charger, mechanical hardware. |
+| Order parts | Chassis, MCU/main compute, MDD10A, sensors, batteries, charger, mechanical hardware. |
 | Set up repository | Git repo, issue tracker, design folder, BOM spreadsheet, experiment logs. |
 
 **Gate:** Parts ordered; competition constraints documented.
@@ -198,7 +190,7 @@ The timeline below assumes roughly **12 weeks**. If the team has less time, pres
 | Goal | Deliverables |
 |---|---|
 | Assemble base RC chassis | Manual RC driving works reliably. |
-| Mount upper deck | Jetson/VESC/power board physically secured. |
+| Mount upper deck | MCU/main compute, MDD10A, servo driver, power board physically secured. |
 | Power distribution | Safe power to compute and sensors; voltage checks completed. |
 | Battery safety | Charging, storage, and inspection process documented. |
 
@@ -208,9 +200,9 @@ The timeline below assumes roughly **12 weeks**. If the team has less time, pres
 
 | Goal | Deliverables |
 |---|---|
-| Jetson setup | OS, ROS2/ROS, dependencies, SSH/Wi-Fi, logging folders. |
-| VESC integration | Motor calibration, RPM control, steering calibration, odometry topic. |
-| Sensor integration | LiDAR/camera/line sensor data visible and logged. |
+| Controller setup | Firmware setup for MCU and optional high-level compute integration. |
+| Motor integration | MDD10A PWM tuning, motor calibration, steering calibration, encoder readout validation. |
+| Sensor integration | LiDAR/IMU/(optional camera or line sensor) data visible and logged. |
 | Manual override | RC or gamepad override tested. |
 
 **Gate:** Robot can be manually driven while logging sensor and control data.
@@ -231,7 +223,7 @@ The timeline below assumes roughly **12 weeks**. If the team has less time, pres
 |---|---|
 | Emergency stop | Physical and remote stop tested. |
 | Watchdog | Lost heartbeat or stale sensor data stops throttle. |
-| Speed cap | Software and VESC-level speed limits. |
+| Speed cap | Software and controller-level speed limits. |
 | Obstacle stop | Minimum distance threshold triggers braking/neutral throttle. |
 | Logging | Every run logs timestamp, mode, sensor status, steering, throttle, battery. |
 
@@ -274,27 +266,55 @@ The timeline below assumes roughly **12 weeks**. If the team has less time, pres
 
 # 2. Component Selection
 
+## 2.0 Selected Components for Current Prototype (Team-Confirmed)
+
+The following components are the specific parts selected for the current prototype build and should be treated as the baseline integration targets.
+
+| Subsystem | Selected Model | Qty | Interface / Control | Unit Cost (USD) | Subtotal (USD) |
+|---|---|---:|---|---:|---:|
+| LiDAR | RPLIDAR C1 (12 m) | 1 | UART TTL / USB | 70.00 | 70.00 |
+| IMU (9-DOF) | 7semi BNO085 | 1 | I2C / SPI / UART | 25.40 | 25.40 |
+| Traction motor | DC Motor JGB37-520 | 2 | DC motor (driven via PWM motor driver) | 9.86 | 19.72 |
+| Traction motor driver | Cytron MDD10A Dual Channel 10A DC Motor Driver | 1 | PWM control input | TBD | TBD |
+| Steering servo | AZDelivery MG996R Digital Servo Motor | 1 | PWM | 10.47 | 10.47 |
+| Servo controller | CANUDUINO 16-Channel 12-bit Servo Driver | 1 | I2C | 14.84 | 14.84 |
+
+**Known subtotal (excluding MDD10A): 140.43 USD**
+
+### Auxiliary Microcontroller Scope
+
+An auxiliary microcontroller will be used to execute low-latency control and safety loops:
+
+- PID control loops for traction motors.
+- Encoder acquisition and speed estimation.
+- IMU acquisition and filtering.
+- PWM output generation for motor/servo actuation.
+- Watchdog supervision and fail-safe response.
+
+**Open item:** finalize the specific MCU model and document its required peripherals (timers/PWM channels, encoder interfaces, I2C/SPI/UART availability, and watchdog features).
+
 ## 2.1 Motors
 
 ### Recommended Motor/Drivetrain Choice
 
 | Item | Selection |
 |---|---|
-| Motor type | Brushless DC motor |
-| Example | Traxxas Velineon 3500 kV sensorless brushless motor or equivalent |
-| Drive layout | 4WD short-course truck drivetrain |
+| Motor type | Brushed DC geared motor |
+| Example | JGB37-520 |
+| Quantity | 2 |
+| Drive layout | Differential traction drive with two DC traction motors |
 | Steering type | Ackermann steering with standard RC steering servo |
-| Controller | VESC 6-class controller preferred for autonomous control |
+| Controller | Cytron MDD10A dual-channel 10A motor driver (PWM input) |
 
 ### Justification
 
-A brushless motor is preferred because it offers higher efficiency, stronger acceleration, and better repeatability than a brushed motor. The F1TENTH teaching platform specifically replaces stock/non-ideal RC electronics with an open-source controller that can support closed-loop motor RPM control and steering servo actuation, and it uses brushless power to improve state estimation and performance. [P2]
+A geared DC motor pair was selected for this prototype due to lower cost, simpler integration, and easier availability. Closed-loop behavior is provided by the auxiliary MCU + encoder feedback + PWM command to MDD10A.
 
-The stock RC ESC can drive the car manually, but for autonomous control the VESC-style controller is preferred because it supports:
+For autonomous control, the selected architecture supports:
 
 - motor RPM control,
-- telemetry,
-- odometry estimation,
+- encoder telemetry,
+- speed estimation,
 - repeatable throttle behavior,
 - programmable safety limits.
 
@@ -306,9 +326,9 @@ The motor is capable of speeds far above what the autonomous software should ini
 |---|---:|
 | Bench test / wheels lifted | 0.0–0.2 m/s equivalent |
 | First autonomous tests | 0.3–0.7 m/s |
-| Stable baseline testing | 1.0–2.0 m/s |
-| Competition tuning | 2.0–5.0 m/s only after safety gates pass |
-| Advanced F1TENTH racing research | >5.0 m/s only with mature localization, safety, and track environment |
+| Stable baseline testing | 0.8–1.8 m/s |
+| Competition tuning | 1.5–3.0 m/s only after safety gates pass |
+| Advanced upgrade path | Higher speeds only after drivetrain, sensing, and safety redesign |
 
 ## 2.2 Battery
 
@@ -321,7 +341,7 @@ The motor is capable of speeds far above what the autonomous software should ini
 | Capacity | 5000–6000 mAh |
 | Discharge rating | 25C or higher |
 | Quantity | Minimum 3 packs for testing/competition |
-| Connector | Match chassis/VESC connector, or use a properly rated adapter |
+| Connector | Match main power bus, MDD10A, and regulator connectors; use properly rated adapters |
 | Charger | Balance charger with storage-charge mode |
 
 ### Runtime Estimate
@@ -349,18 +369,18 @@ LiPo is the practical choice for 1/10-scale RC platforms because it provides hig
 
 ## 2.3 Sensors
 
-The sensor set should be chosen based on the competition track. A modular sensor design is recommended so the same car can support both beginner-friendly line following and F1TENTH-style LiDAR autonomy.
+The sensor set is anchored to the current selected hardware and keeps optional room for later expansion.
 
 ### Recommended Sensor Stack
 
 | Sensor | Required? | Purpose | Recommendation |
 |---|---|---|---|
-| **2D LiDAR** | Strongly recommended for walled track | Wall following, obstacle detection, SLAM, localization, Follow-the-Gap | Hokuyo UST-10LX for reliability; RPLIDAR A2 for lower-cost slower testing |
-| **Camera** | Recommended | Lane/line detection, data collection, future vision ML | USB/CSI camera for low cost; RealSense D435i for RGB-D + IMU |
+| **2D LiDAR** | Required (selected) | Wall following, obstacle detection, Follow-the-Gap baseline | RPLIDAR C1 (12 m), UART TTL / USB |
+| **Camera** | Optional (future) | Lane/line detection, data collection, future vision ML | USB/CSI camera as future expansion |
 | **Distance sensors** | Optional safety backup | Near-field stop zones and side clearance | ToF sensors preferred over ultrasonic for short-range repeatability |
-| **Encoders / odometry** | Required | Speed and distance estimation | VESC motor RPM/odometry first; wheel encoders optional |
-| **IMU** | Recommended | Yaw rate, acceleration, motion validation | RealSense D435i IMU or standalone IMU |
-| **Battery telemetry** | Required | Voltage, current, low-battery shutdown | VESC telemetry or power module |
+| **Encoders / odometry** | Required | Speed and distance estimation | Wheel encoder feedback processed by auxiliary MCU |
+| **IMU** | Required (selected) | Yaw rate, acceleration, orientation support | 7semi BNO085, I2C/SPI/UART |
+| **Battery telemetry** | Required | Voltage, current, low-battery shutdown | Power monitor + MCU software checks |
 | **RC receiver / gamepad** | Required | Manual override and testing | RC transmitter or gamepad bridge |
 
 ### Track-Type-Specific Sensor Choice
@@ -370,7 +390,7 @@ The sensor set should be chosen based on the competition track. A modular sensor
 | Black/white line track | Line sensor array + IMU/odometry | PID line-following |
 | Lane-marked camera track | Camera + odometry | Vision lane center PID / behavioral cloning later |
 | Wall-bounded track | 2D LiDAR or side ToF sensors | Wall-following PID / Follow-the-Gap |
-| Known mapped F1TENTH track | 2D LiDAR + VESC odometry + IMU | SLAM/localization + Pure Pursuit |
+| Known mapped track | 2D LiDAR + wheel encoder odometry + IMU | SLAM/localization + Pure Pursuit |
 | Obstacle course | 2D LiDAR + camera/depth + odometry | Follow-the-Gap + AEB + local avoidance |
 
 ### Sensor Mounting Requirements
@@ -409,10 +429,11 @@ The design should first prove that the car can be safely driven and stopped. Onl
 
 ```text
 Sensors
-  ├── Camera / line sensor
-  ├── LiDAR / distance sensors
-  ├── VESC odometry
-  ├── IMU
+  ├── LiDAR (RPLIDAR C1)
+  ├── IMU (BNO085)
+  ├── Encoder odometry
+  ├── Optional camera / line sensor
+  ├── Optional distance sensors
   └── Battery telemetry
 
 Perception / State Estimation
@@ -443,8 +464,9 @@ Safety Supervisor
   └── Low-battery stop
 
 Actuation
-  ├── VESC motor control
-  └── Steering servo
+  ├── MDD10A motor control (PWM)
+  ├── Servo control via 16-ch I2C driver
+  └── Auxiliary MCU watchdog/supervision
 ```
 
 This structure follows the common autonomous racing decomposition into perception, planning, and control. The autonomous racing survey uses this perception-planning-control pipeline to categorize autonomous racing research. [P5]
@@ -597,7 +619,7 @@ Safety systems must cover:
 | Requirement | Design |
 |---|---|
 | External access | A physical switch or removable loop must be reachable without touching wheels/drivetrain. |
-| Function | Cut motor power or force VESC to disabled/neutral state. |
+| Function | Cut motor power or force MCU outputs to neutral/disabled PWM state. |
 | Labeling | Red/yellow or clearly marked “E-STOP / POWER”. |
 | Verification | Test before every autonomous run. |
 
@@ -616,7 +638,7 @@ Safety systems must cover:
 |---|---|
 | No autonomy command for >100–250 ms | Throttle = 0, steering hold or center |
 | Sensor timestamp stale | Slow or stop |
-| VESC communication lost | Stop command and alert |
+| MCU-motor driver communication error | Stop command and alert |
 | CPU overload / process crash | Stop command |
 | Low battery voltage | Reduce speed, then stop |
 | Invalid steering/throttle command | Clamp or reject command |
@@ -645,7 +667,7 @@ A simple automatic emergency braking layer should run independently of the main 
 Speed limit should exist in at least two places:
 
 1. software command limiter,
-2. VESC/controller configuration.
+2. MCU/PWM driver output limits.
 
 ### 4.2.6 LiPo Battery Safety
 
@@ -657,7 +679,7 @@ Design requirements:
 | Storage | Storage charge when not used for more than a day. |
 | Physical retention | Battery must be strapped so it cannot eject. |
 | Polarity | Use keyed connectors and label polarity. |
-| Low-voltage cutoff | Enforce via VESC and software warning. |
+| Low-voltage cutoff | Enforce via power monitor/MCU and software warning. |
 | Inspection | Check puffing, heat, damaged wires before each run. |
 
 ### 4.2.7 Mechanical Safety
@@ -681,7 +703,7 @@ Before every autonomous run:
 [ ] Wheels, suspension, steering linkage checked.
 [ ] Sensor mounts tight.
 [ ] LiDAR/camera/line sensor data visible.
-[ ] VESC telemetry visible.
+[ ] Motor driver, encoder, and IMU telemetry visible.
 [ ] Manual RC override tested.
 [ ] Physical E-stop tested.
 [ ] Software stop command tested.
@@ -727,10 +749,10 @@ robot_outside_track_boundary == true
 | Area | Recommended Decision |
 |---|---|
 | Chassis | Use 1/10-scale 4WD short-course RC platform, preferably Traxxas Slash 4x4-style. |
-| Compute | Use Jetson Orin Nano Super or Jetson Xavier NX-class compute. |
-| Motor control | Use VESC-style controller for repeatable autonomous motor control and odometry. |
+| Compute | Use auxiliary MCU for real-time control; optional high-level compute board can be added later. |
+| Motor control | Use Cytron MDD10A with closed-loop control implemented on auxiliary MCU. |
 | Battery | Use 3S 11.1 V 5000–6000 mAh LiPo; bring at least 3 packs. |
-| Primary sensor | Use 2D LiDAR for F1TENTH/walled/obstacle course; use line sensor if official track is line-following. |
+| Primary sensor | Use RPLIDAR C1 as primary ranging sensor and BNO085 as primary IMU. |
 | First autonomy algorithm | PID line-following for line track or wall-following/Follow-the-Gap for walled track. |
 | First planned controller | Pure Pursuit with conservative speed profile. |
 | Future algorithms | Adaptive Pure Pursuit, MPC, MPCC, DRL after baseline and safety pass. |
@@ -761,10 +783,10 @@ robot_outside_track_boundary == true
 |---|---|
 | W1 | F1TENTH official build documentation and bill of materials pages |
 | W2 | Current retailer specifications for Traxxas Slash 4x4 VXL HD / 68386-4-style chassis |
-| W3 | NVIDIA Jetson Orin Nano Super Developer Kit official pricing |
-| W4 | Hokuyo UST-10LX / Acroname / Hokuyo product specifications and pricing |
-| W5 | RealSense D435i pricing/specification listing |
-| W6 | VESC 6-class controller current pricing reference |
+| W3 | RPLIDAR C1 product specifications and current pricing reference |
+| W4 | 7semi BNO085 9-DOF module specifications and current pricing reference |
+| W5 | Cytron MDD10A specifications and current pricing reference |
+| W6 | AZDelivery MG996R and CANUDUINO 16-Channel 12-bit controller references |
 | W7 | Traxxas 3S 5000 mAh LiPo battery pricing reference |
 
 ---
