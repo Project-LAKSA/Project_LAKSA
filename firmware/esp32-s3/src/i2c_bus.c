@@ -27,4 +27,3 @@ esp_err_t i2c_bus_add_device(i2c_master_bus_handle_t bus_handle,
 
     return i2c_master_bus_add_device(bus_handle, &dev_config, dev_handle);
 }
-
