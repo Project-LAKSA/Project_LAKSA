@@ -26,8 +26,8 @@
  */
 #define PCA9685_MODE1_SLEEP 0x10
 
-/* PCA9685 defaults to a 25 MHz oscillator and uses a 12-bit PWM counter. */
-#define PCA9685_OSC_CLOCK_HZ 25000000UL
+/* The oscillator calibration is configured in esp32_config.h. The prototype
+ * was mechanically calibrated with the Adafruit driver set to 27 MHz. */
 #define PCA9685_PWM_RESOLUTION 4096UL
 #define PCA9685_PWM_MAX_TICK (PCA9685_PWM_RESOLUTION - 1)
 #define PCA9685_REGS_PER_CHANNEL 4
