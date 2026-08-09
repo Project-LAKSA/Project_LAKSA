@@ -8,6 +8,8 @@
 #include "freertos/task.h"
 #include "i2c_bus.h"
 #include "pca9685_i2c.h"
+#include "steering_control.h"
+#include "vesc_uart.h"
 #include "web_dashboard.h"
 
 #define IMU_UPDATE_TASK_INTERVAL_MS 10
@@ -47,6 +49,10 @@ void app_main(void)
 
     pca9685_t pca9685;
     bno08x_adapter_t imu;
+    static steering_control_t steering;
+    static vesc_uart_t vesc;
+    static web_dashboard_t dashboard;
+    static imu_update_task_context_t imu_task_context;
     SemaphoreHandle_t hardware_mutex = xSemaphoreCreateMutex();
 
     ESP_ERROR_CHECK(hardware_mutex == NULL ? ESP_ERR_NO_MEM : ESP_OK);
@@ -54,47 +60,31 @@ void app_main(void)
     ESP_ERROR_CHECK(i2c_bus_init(&i2c_bus_handle));
     ESP_ERROR_CHECK(i2c_bus_add_device(i2c_bus_handle, PCA9685_I2C_ADDR, &pca9685_i2c_handle));
     ESP_ERROR_CHECK(pca9685_init(&pca9685, pca9685_i2c_handle, SERVO_FREQ_HZ));
-
-    for (uint8_t angle = 0; angle <= 180; angle += 10) {
-        ESP_ERROR_CHECK(pca9685_set_servo_angle(&pca9685, 13, angle));
-        ESP_ERROR_CHECK(pca9685_set_servo_angle(&pca9685, 15, angle));
-        vTaskDelay(pdMS_TO_TICKS(50));
-    }
-
-    for (uint8_t angle = 180; angle > 0; angle -= 10) {
-        ESP_ERROR_CHECK(pca9685_set_servo_angle(&pca9685, 13, angle));
-        ESP_ERROR_CHECK(pca9685_set_servo_angle(&pca9685, 15, angle));
-        vTaskDelay(pdMS_TO_TICKS(50));
-    }
-    ESP_ERROR_CHECK(pca9685_set_servo_angle(&pca9685, 13, 0));
-    ESP_ERROR_CHECK(pca9685_set_servo_angle(&pca9685, 15, 0));
+    ESP_ERROR_CHECK(steering_control_init(&steering, &pca9685, hardware_mutex));
+    ESP_ERROR_CHECK(vesc_uart_init(&vesc));
 
     esp_err_t imu_err = bno08x_adapter_init(&imu);
-
-    if (imu_err == ESP_OK) {
-        static web_dashboard_t dashboard;
-        static imu_update_task_context_t imu_task_context;
-
-        dashboard = (web_dashboard_t){
-            .pca9685 = &pca9685,
-            .imu = &imu,
-            .hardware_mutex = hardware_mutex,
-            .servo13_angle = 0,
-            .servo15_angle = 0,
-        };
-
-        esp_err_t dashboard_err = web_dashboard_start(&dashboard);
-        if (dashboard_err != ESP_OK) {
-            printf("Dashboard start failed: %s\n", esp_err_to_name(dashboard_err));
-        }
-
+    if (imu_err != ESP_OK) {
+        printf("BNO08x init failed: %s; dashboard will continue without IMU data\n",
+               esp_err_to_name(imu_err));
+    } else {
         imu_task_context = (imu_update_task_context_t){
             .imu = &imu,
             .hardware_mutex = hardware_mutex,
         };
         xTaskCreate(imu_update_task, "imu_update", 4096, &imu_task_context, 5, NULL);
-    } else {
-        printf("BNO08x init failed: %s\n", esp_err_to_name(imu_err));
+    }
+
+    dashboard = (web_dashboard_t){
+        .steering = &steering,
+        .vesc = &vesc,
+        .imu = imu_err == ESP_OK ? &imu : NULL,
+        .hardware_mutex = hardware_mutex,
+    };
+
+    esp_err_t dashboard_err = web_dashboard_start(&dashboard);
+    if (dashboard_err != ESP_OK) {
+        printf("Dashboard start failed: %s\n", esp_err_to_name(dashboard_err));
     }
 
     while (true) {
