@@ -15,3 +15,12 @@ idf_component_get_property(arduino_component espressif__arduino-esp32 COMPONENT_
 target_compile_options(${arduino_component} PRIVATE
     -Wno-error=missing-field-initializers
 )
+
+# The firmware uses Arduino only for HardwareSerial/VescUart. Arduino's USB
+# core embeds a second TinyUSB stack which conflicts with esp_tinyusb, the
+# owner of the native USB peripheral used by the micro-ROS CDC transport.
+get_target_property(arduino_sources ${arduino_component} SOURCES)
+list(FILTER arduino_sources EXCLUDE REGEX
+    "/(esp32-hal-tinyusb\\.c|USB\\.cpp|USBCDC\\.cpp|USBMSC\\.cpp|FirmwareMSC\\.cpp|firmware_msc_fat\\.c)$"
+)
+set_property(TARGET ${arduino_component} PROPERTY SOURCES ${arduino_sources})

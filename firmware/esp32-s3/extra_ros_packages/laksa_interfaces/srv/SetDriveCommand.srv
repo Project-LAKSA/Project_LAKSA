@@ -1,0 +1,4 @@
+laksa_interfaces/DriveCommand command
+---
+bool accepted
+uint8 error_code

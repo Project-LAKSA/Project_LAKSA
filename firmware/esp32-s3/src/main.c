@@ -7,10 +7,13 @@
 #include "freertos/semphr.h"
 #include "freertos/task.h"
 #include "i2c_bus.h"
+#include "micro_ros_bridge.h"
 #include "pca9685_i2c.h"
 #include "steering_control.h"
 #include "vesc_uart.h"
+#if CONFIG_LAKSA_WEB_DASHBOARD
 #include "web_dashboard.h"
+#endif
 
 #define IMU_UPDATE_TASK_INTERVAL_MS 10
 
@@ -51,8 +54,11 @@ void app_main(void)
     bno08x_adapter_t imu;
     static steering_control_t steering;
     static vesc_uart_t vesc;
+#if CONFIG_LAKSA_WEB_DASHBOARD
     static web_dashboard_t dashboard;
+#endif
     static imu_update_task_context_t imu_task_context;
+    micro_ros_bridge_config_t ros_config;
     SemaphoreHandle_t hardware_mutex = xSemaphoreCreateMutex();
 
     ESP_ERROR_CHECK(hardware_mutex == NULL ? ESP_ERR_NO_MEM : ESP_OK);
@@ -75,17 +81,32 @@ void app_main(void)
         xTaskCreate(imu_update_task, "imu_update", 4096, &imu_task_context, 5, NULL);
     }
 
-    dashboard = (web_dashboard_t){
+#if CONFIG_LAKSA_WEB_DASHBOARD
+    dashboard = (web_dashboard_t) {
         .steering = &steering,
         .vesc = &vesc,
         .imu = imu_err == ESP_OK ? &imu : NULL,
         .hardware_mutex = hardware_mutex,
     };
+#endif
 
+    ros_config = (micro_ros_bridge_config_t){
+        .steering = &steering,
+        .vesc = &vesc,
+        .imu = imu_err == ESP_OK ? &imu : NULL,
+        .hardware_mutex = hardware_mutex,
+    };
+    esp_err_t ros_err = micro_ros_bridge_start(&ros_config);
+    if (ros_err != ESP_OK) {
+        printf("micro-ROS start failed: %s\n", esp_err_to_name(ros_err));
+    }
+
+#if CONFIG_LAKSA_WEB_DASHBOARD
     esp_err_t dashboard_err = web_dashboard_start(&dashboard);
     if (dashboard_err != ESP_OK) {
         printf("Dashboard start failed: %s\n", esp_err_to_name(dashboard_err));
     }
+#endif
 
     while (true) {
         vTaskDelay(pdMS_TO_TICKS(1000));

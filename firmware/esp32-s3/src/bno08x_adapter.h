@@ -31,9 +31,13 @@ typedef struct {
 typedef struct {
     void *driver;
     bool has_acceleration;
+    bool has_angular_velocity;
+    bool has_magnetic_field;
     bool has_rotation_vector;
     bool has_game_rotation_vector;
     bno08x_adapter_vec3_t acceleration;
+    bno08x_adapter_vec3_t angular_velocity;
+    bno08x_adapter_vec3_t magnetic_field_ut;
     bno08x_adapter_quat_t rotation_vector;
     bno08x_adapter_quat_t game_rotation_vector;
 } bno08x_adapter_t;
@@ -41,6 +45,10 @@ typedef struct {
 esp_err_t bno08x_adapter_init(bno08x_adapter_t *imu);
 esp_err_t bno08x_adapter_update(bno08x_adapter_t *imu);
 esp_err_t bno08x_adapter_get_acceleration(bno08x_adapter_t *imu, bno08x_adapter_vec3_t *acceleration);
+esp_err_t bno08x_adapter_get_angular_velocity(bno08x_adapter_t *imu,
+                                              bno08x_adapter_vec3_t *angular_velocity);
+esp_err_t bno08x_adapter_get_magnetic_field(bno08x_adapter_t *imu,
+                                            bno08x_adapter_vec3_t *magnetic_field_ut);
 esp_err_t bno08x_adapter_get_rotation_vector(bno08x_adapter_t *imu, bno08x_adapter_quat_t *quaternion);
 esp_err_t bno08x_adapter_get_game_rotation_vector(bno08x_adapter_t *imu, bno08x_adapter_quat_t *quaternion);
 

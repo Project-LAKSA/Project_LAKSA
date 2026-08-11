@@ -1,0 +1,6 @@
+# CP210x adapter built into the LAKSA LiDAR cable.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", ATTRS{serial}=="619c672b30b581469256951e7727b7d4", SYMLINK+="laksa_lidar", SYMLINK+="lidar", GROUP="dialout", MODE="0660"
+
+# Native TinyUSB CDC interface used exclusively by the micro-ROS transport.
+# The product and serial strings are configured in esp32-s3/sdkconfig.defaults.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="303a", ATTRS{idProduct}=="4001", ATTRS{serial}=="LAKSA-ESP32S3-001", SYMLINK+="laksa_microros", GROUP="dialout", MODE="0660"

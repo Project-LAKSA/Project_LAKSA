@@ -1,0 +1,54 @@
+menu "LAKSA vehicle configuration"
+
+config LAKSA_WEB_DASHBOARD
+    bool "Enable Wi-Fi web dashboard"
+    default y
+    help
+        Builds and starts the legacy Wi-Fi/HTTP dashboard. Disable this for a
+        micro-ROS-only deployment to omit the Wi-Fi, TCP/IP and HTTP server
+        dependencies from the application.
+
+config LAKSA_ROS_DOMAIN_ID
+    int "ROS domain ID"
+    range 0 232
+    default 0
+
+config LAKSA_MOTOR_POLE_PAIRS
+    int "Motor pole pairs"
+    range 1 100
+    default 7
+    help
+        Number of magnetic pole pairs. A 14-pole motor has 7 pole pairs.
+
+config LAKSA_GEAR_REDUCTION_X1000
+    int "Motor-to-wheel reduction ratio x1000"
+    range 1 100000
+    default 1000
+    help
+        Motor mechanical revolutions per wheel revolution, multiplied by 1000.
+
+config LAKSA_WHEEL_DIAMETER_MM
+    int "Driven wheel diameter (mm)"
+    range 1 2000
+    default 100
+
+config LAKSA_WHEELBASE_MM
+    int "Vehicle wheelbase (mm)"
+    range 1 5000
+    default 250
+    help
+        Used to convert geometry_msgs/Twist yaw rate into Ackermann steering angle.
+
+config LAKSA_MAX_STEERING_ANGLE_MRAD
+    int "Road-wheel steering limit (mrad)"
+    range 1 1570
+    default 523
+    help
+        Physical road-wheel angle represented by each safe servo endpoint.
+
+config LAKSA_DRIVE_FORWARD_SIGN
+    int "VESC eRPM sign for forward motion"
+    range -1 1
+    default 1
+
+endmenu

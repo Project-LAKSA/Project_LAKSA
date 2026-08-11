@@ -1,0 +1,26 @@
+joy_node:
+  ros__parameters:
+    device_id: 0
+    deadzone: 0.10
+    autorepeat_rate: 20.0
+    sticky_buttons: false
+
+joy_teleop:
+  ros__parameters:
+    drive:
+      type: topic
+      interface_type: laksa_interfaces/msg/DriveCommand
+      topic_name: /laksa/command
+      # Xbox SDL mapping: hold right bumper to enable motion.
+      deadman_buttons: [10]
+      axis_mappings:
+        # Left stick vertical: vehicle longitudinal speed in m/s.
+        speed_mps:
+          axis: 1
+          scale: 0.20
+          offset: 0.0
+        # Right stick horizontal: front-wheel steering angle in radians.
+        steering_angle_rad:
+          axis: 2
+          scale: -0.35
+          offset: 0.0

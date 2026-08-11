@@ -54,6 +54,8 @@ extern "C" esp_err_t bno08x_adapter_init(bno08x_adapter_t *imu)
 
     bool enabled = true;
     enabled = driver->rpt.accelerometer.enable(BNO08X_REPORT_INTERVAL_US) && enabled;
+    enabled = driver->rpt.cal_gyro.enable(BNO08X_REPORT_INTERVAL_US) && enabled;
+    enabled = driver->rpt.cal_magnetometer.enable(BNO08X_REPORT_INTERVAL_US) && enabled;
     enabled = driver->rpt.rv.enable(BNO08X_REPORT_INTERVAL_US) && enabled;
     enabled = driver->rpt.rv_game.enable(BNO08X_REPORT_INTERVAL_US) && enabled;
 
@@ -87,6 +89,26 @@ extern "C" esp_err_t bno08x_adapter_update(bno08x_adapter_t *imu)
         imu->has_acceleration = true;
     }
 
+    if (driver->rpt.cal_gyro.has_new_data()) {
+        bno08x_gyro_t gyro = driver->rpt.cal_gyro.get();
+        imu->angular_velocity = {
+            .x = gyro.x,
+            .y = gyro.y,
+            .z = gyro.z,
+        };
+        imu->has_angular_velocity = true;
+    }
+
+    if (driver->rpt.cal_magnetometer.has_new_data()) {
+        bno08x_magf_t magnetic_field = driver->rpt.cal_magnetometer.get();
+        imu->magnetic_field_ut = {
+            .x = magnetic_field.x,
+            .y = magnetic_field.y,
+            .z = magnetic_field.z,
+        };
+        imu->has_magnetic_field = true;
+    }
+
     if (driver->rpt.rv.has_new_data()) {
         imu->rotation_vector = bno08x_adapter_from_quat(driver->rpt.rv.get_quat());
         imu->has_rotation_vector = true;
@@ -110,6 +132,34 @@ extern "C" esp_err_t bno08x_adapter_get_acceleration(bno08x_adapter_t *imu, bno0
     }
 
     *acceleration = imu->acceleration;
+    return ESP_OK;
+}
+
+extern "C" esp_err_t bno08x_adapter_get_angular_velocity(
+    bno08x_adapter_t *imu, bno08x_adapter_vec3_t *angular_velocity)
+{
+    if (imu == nullptr || angular_velocity == nullptr) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (!imu->has_angular_velocity) {
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    *angular_velocity = imu->angular_velocity;
+    return ESP_OK;
+}
+
+extern "C" esp_err_t bno08x_adapter_get_magnetic_field(
+    bno08x_adapter_t *imu, bno08x_adapter_vec3_t *magnetic_field_ut)
+{
+    if (imu == nullptr || magnetic_field_ut == nullptr) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    if (!imu->has_magnetic_field) {
+        return ESP_ERR_NOT_FOUND;
+    }
+
+    *magnetic_field_ut = imu->magnetic_field_ut;
     return ESP_OK;
 }
 

@@ -1,0 +1,11 @@
+builtin_interfaces/Time stamp
+bool imu_available
+geometry_msgs/Quaternion orientation
+float32 orientation_accuracy_rad
+geometry_msgs/Vector3 angular_velocity_rad_s
+geometry_msgs/Vector3 linear_acceleration_m_s2
+geometry_msgs/Vector3 magnetic_field_t
+laksa_interfaces/VescState vesc
+float32 steering_target_rad
+float32 steering_current_rad
+bool steering_endpoint_relief_active
