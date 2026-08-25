@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="1000" viewBox="0 0 1400 1000">
+  <title>LAKSA ZED 2i mount datum drawing</title>
+  <desc>Mechanical handoff drawing showing the vehicle side and front datums, ZED optical target, LiDAR keep-out slab, bumper plane, camera mounting-hole pattern, and fabrication notes.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#222"/>
+    </marker>
+    <style>
+      .border{fill:none;stroke:#222;stroke-width:2}
+      .thin{fill:none;stroke:#333;stroke-width:1.3}
+      .dash{fill:none;stroke:#666;stroke-width:1.3;stroke-dasharray:7 5}
+      .datum{fill:none;stroke:#005bbb;stroke-width:2}
+      .dim{fill:none;stroke:#222;stroke-width:1.2;marker-start:url(#arrow);marker-end:url(#arrow)}
+      .camera{fill:#8ec5ff;fill-opacity:.65;stroke:#005bbb;stroke-width:2}
+      .lidar{fill:#b9b9b9;stroke:#333;stroke-width:2}
+      .keepout{fill:#ef5350;fill-opacity:.20;stroke:#c62828;stroke-width:1.2;stroke-dasharray:6 4}
+      .mount{fill:#7cbf72;fill-opacity:.55;stroke:#237a20;stroke-width:2}
+      .txt{font:16px Arial,sans-serif;fill:#111}
+      .small{font:13px Arial,sans-serif;fill:#222}
+      .title{font:bold 25px Arial,sans-serif;fill:#111}
+      .head{font:bold 19px Arial,sans-serif;fill:#111}
+      .note{font:14px Arial,sans-serif;fill:#333}
+    </style>
+  </defs>
+
+  <rect x="20" y="20" width="1360" height="960" class="border"/>
+  <text x="50" y="58" class="title">LAKSA ZED 2i 3D-Printed Tilting Mount — Datum Drawing Rev A</text>
+  <text x="50" y="85" class="note">All dimensions in mm · Vehicle origin: rear-axle midpoint on ground · +X forward · +Y left · +Z up</text>
+
+  <rect x="45" y="110" width="825" height="470" class="border"/>
+  <text x="65" y="142" class="head">SIDE VIEW — REQUIRED ASSEMBLED POSE</text>
+  <line x1="100" y1="520" x2="825" y2="520" class="thin"/>
+  <text x="105" y="548" class="small">Ground Z=0</text>
+
+  <!-- Rear axle, front axle, bumper, and body datums -->
+  <line x1="100" y1="175" x2="100" y2="530" class="datum"/>
+  <text x="105" y="195" class="small">Rear axle X=0</text>
+  <line x1="595.3" y1="175" x2="595.3" y2="530" class="dash"/>
+  <text x="530" y="560" class="small">Front axle X=330.2</text>
+  <line x1="709.6" y1="155" x2="709.6" y2="530" class="datum"/>
+  <line x1="717.3" y1="175" x2="717.3" y2="530" class="dash"/>
+  <text x="112" y="470" class="small">Blue solid: rigid bumper X=406.4</text>
+  <text x="112" y="491" class="small">Gray dashed: body nose X≈411.5</text>
+
+  <!-- LiDAR housing and scan keepout -->
+  <rect x="538.3" y="243.8" width="114" height="61.5" class="lidar"/>
+  <line x1="595.3" y1="230" x2="595.3" y2="325" class="dash"/>
+  <text x="510" y="333" class="small">A2 housing; axis X=330.2, Y=+12.7</text>
+  <rect x="480" y="238" width="345" height="21" class="keepout"/>
+  <text x="270" y="250" class="small">NO-GEOMETRY SLAB Z=174–188</text>
+  <line x1="465" y1="246" x2="480" y2="246" class="thin"/>
+
+  <!-- Camera conservative rotated envelope at x=350 z=220 pitch=7 -->
+  <polygon points="627.8,167.5 622.2,212.5 558.1,204.6 563.6,159.6" class="camera"/>
+  <circle cx="625" cy="190" r="5" fill="#005bbb"/>
+  <line x1="625" y1="190" x2="690" y2="198" class="datum"/>
+  <text x="385" y="172" class="small">ZED conservative envelope:</text>
+  <text x="385" y="191" class="small">X≈305–352, Z≈205–240 · pitch 7° down</text>
+
+  <!-- Mount saddle / open base conceptual geometry -->
+  <path d="M554 213 L623 221 L623 232 L551 223 Z" class="mount"/>
+  <path d="M548 234 L645 234 L645 245 L548 245 Z" class="mount"/>
+  <text x="270" y="291" class="small">Open yoke/base above scan plane</text>
+  <line x1="485" y1="286" x2="552" y2="241" class="thin"/>
+
+  <!-- Camera x and z dimensions -->
+  <line x1="100" y1="380" x2="625" y2="380" class="dim"/>
+  <line x1="100" y1="370" x2="100" y2="395" class="thin"/>
+  <line x1="625" y1="370" x2="625" y2="395" class="thin"/>
+  <text x="332" y="372" class="txt">Optical midpoint X = 350 ±3</text>
+
+  <line x1="825" y1="520" x2="825" y2="190" class="dim"/>
+  <line x1="810" y1="520" x2="840" y2="520" class="thin"/>
+  <line x1="810" y1="190" x2="840" y2="190" class="thin"/>
+  <text x="845" y="410" class="txt" transform="rotate(-90 845 410)">Optical midpoint Z = 220 ±3</text>
+
+  <line x1="625" y1="125" x2="709.6" y2="125" class="dim"/>
+  <line x1="625" y1="125" x2="625" y2="180" class="thin"/>
+  <line x1="709.6" y1="125" x2="709.6" y2="155" class="thin"/>
+  <text x="640" y="116" class="small">56.4 setback to rigid bumper</text>
+
+  <!-- Front view -->
+  <rect x="895" y="110" width="455" height="470" class="border"/>
+  <text x="915" y="142" class="head">FRONT VIEW — CENTERING AND WIDTH</text>
+  <line x1="1122.5" y1="165" x2="1122.5" y2="540" class="datum"/>
+  <text x="1130" y="180" class="small">Vehicle Y=0</text>
+  <line x1="884.4" y1="520" x2="1360.6" y2="520" class="thin"/>
+  <text x="915" y="548" class="small">Rear wheel centers: Y=±158.75</text>
+
+  <rect x="991.1" y="167.5" width="262.8" height="45.4" class="camera"/>
+  <circle cx="1032.5" cy="190" r="8" class="datum"/>
+  <circle cx="1212.5" cy="190" r="8" class="datum"/>
+  <text x="1010" y="160" class="small">ZED width 175.25 · lens baseline 120 · Y=±87.63</text>
+
+  <circle cx="1141.6" cy="247.5" r="57" class="lidar"/>
+  <circle cx="1141.6" cy="247.5" r="4" fill="#333"/>
+  <text x="1205" y="292" class="small">LiDAR Y=+12.7, Ø76</text>
+
+  <path d="M977 300 L977 455 L1268 455 L1268 300" class="mount"/>
+  <text x="1010" y="478" class="small">Concept only: side supports routed behind LiDAR sector</text>
+  <line x1="968.8" y1="495" x2="1276.2" y2="495" class="dim"/>
+  <text x="1045" y="515" class="small">Target yoke width ≤205</text>
+
+  <!-- Camera mounting interface -->
+  <rect x="45" y="610" width="600" height="325" class="border"/>
+  <text x="65" y="642" class="head">CAMERA BOTTOM INTERFACE — STEP-DERIVED</text>
+  <rect x="95" y="690" width="500" height="130" rx="8" class="camera"/>
+  <line x1="345" y1="670" x2="345" y2="845" class="datum"/>
+  <text x="350" y="675" class="small">Optical midpoint plane</text>
+  <circle cx="291" cy="755" r="9" fill="#fff" stroke="#005bbb" stroke-width="2"/>
+  <circle cx="345" cy="755" r="14" fill="#fff" stroke="#333" stroke-width="2"/>
+  <circle cx="399" cy="755" r="9" fill="#fff" stroke="#005bbb" stroke-width="2"/>
+  <text x="272" y="785" class="small">M3</text>
+  <text x="316" y="785" class="small">1/4-20</text>
+  <text x="390" y="785" class="small">M3</text>
+  <line x1="291" y1="850" x2="399" y2="850" class="dim"/>
+  <line x1="291" y1="820" x2="291" y2="860" class="thin"/>
+  <line x1="399" y1="820" x2="399" y2="860" class="thin"/>
+  <text x="292" y="880" class="txt">36.000 center-to-center</text>
+  <text x="70" y="906" class="small">M3 axes: ±18.000 from optical midpoint.</text>
+  <text x="70" y="925" class="small">Depth coordinate: −6.0393 relative to optical midpoint.</text>
+
+  <!-- Release notes -->
+  <rect x="675" y="610" width="675" height="325" class="border"/>
+  <text x="695" y="642" class="head">CAD RELEASE REQUIREMENTS</text>
+  <text x="705" y="680" class="txt">1. Import official ZED2i.step without scaling.</text>
+  <text x="705" y="710" class="txt">2. Normalize STEP optical midpoint M:</text>
+  <text x="730" y="735" class="small">M = (−8.9685065, 6.6889895, 15.6880000) mm</text>
+  <text x="705" y="770" class="txt">3. Pivot axis through M; parallel to vehicle Y.</text>
+  <text x="705" y="800" class="txt">4. 7° positive hard key plus M5 pivot/locking bolts.</text>
+  <text x="705" y="830" class="txt">5. Printed load path: ≥6 mm cheeks, metal sleeves, through-bolts.</text>
+  <text x="705" y="860" class="txt">6. No printed/metal feature in Z=174–188 forward scan slab.</text>
+  <text x="705" y="890" class="txt">7. Final chassis holes wait for measured rigid anchor coordinates.</text>
+  <text x="705" y="920" class="small">Drawing is a requirements sheet, not a production STL. The official STEP model controls camera geometry.</text>
+</svg>
