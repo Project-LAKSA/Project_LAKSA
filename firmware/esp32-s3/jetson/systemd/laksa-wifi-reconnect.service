@@ -1,0 +1,15 @@
+[Unit]
+Description=Keep the LAKSA phone-hotspot connection active
+After=NetworkManager.service
+Wants=NetworkManager.service
+
+[Service]
+Type=simple
+Environment=LAKSA_WIFI_CONNECTION=LAKSA-phone-hotspot
+Environment=LAKSA_WIFI_RETRY_SECONDS=5
+ExecStart=/usr/local/lib/laksa/laksa-wifi-reconnect
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

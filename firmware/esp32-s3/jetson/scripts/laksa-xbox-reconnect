@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+set -u
+
+readonly controller_mac="${1:?Xbox controller MAC address is required}"
+readonly retry_seconds="${LAKSA_XBOX_RETRY_SECONDS:-5}"
+
+last_state=""
+
+while true; do
+    if bluetoothctl info "${controller_mac}" 2>/dev/null | grep -q "Connected: yes"; then
+        if [[ "${last_state}" != "connected" ]]; then
+            echo "Xbox controller ${controller_mac} connected"
+            last_state="connected"
+        fi
+    else
+        if [[ "${last_state}" != "disconnected" ]]; then
+            echo "Xbox controller ${controller_mac} disconnected; waiting for it to become available"
+            last_state="disconnected"
+        fi
+        timeout 15s bluetoothctl connect "${controller_mac}" >/dev/null 2>&1 || true
+    fi
+
+    sleep "${retry_seconds}"
+done

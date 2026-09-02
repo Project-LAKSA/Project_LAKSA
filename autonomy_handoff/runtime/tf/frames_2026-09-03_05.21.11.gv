@@ -1,0 +1,15 @@
+digraph G {
+"laksa_base_footprint" -> "zed_camera_link"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"laksa_odom" -> "laksa_base_footprint"[label=" Broadcaster: default_authority\nAverage rate: 10.216\nBuffer length: 4.992\nMost recent transform: 1788384071.491957\nOldest transform: 1788384066.499756\n"];
+"laksa_base_footprint" -> "laksa_lidar"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"zed_camera_link" -> "zed_camera_center"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"zed_camera_center" -> "zed_left_camera_frame"[label=" Broadcaster: default_authority\nAverage rate: 14.4\nBuffer length: 5.0\nMost recent transform: 1788384071.339158\nOldest transform: 1788384066.339046\n"];
+"zed_left_camera_frame" -> "zed_left_camera_frame_optical"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"zed_camera_center" -> "zed_right_camera_frame"[label=" Broadcaster: default_authority\nAverage rate: 14.4\nBuffer length: 5.0\nMost recent transform: 1788384071.339158\nOldest transform: 1788384066.339046\n"];
+"zed_right_camera_frame" -> "zed_right_camera_frame_optical"[label=" Broadcaster: default_authority\nAverage rate: 10000.0\nBuffer length: 0.0\nMost recent transform: 0.0\nOldest transform: 0.0\n"];
+"map" -> "laksa_odom"[label=" Broadcaster: default_authority\nAverage rate: 20.216\nBuffer length: 4.65\nMost recent transform: 1788384071.614007\nOldest transform: 1788384066.964116\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1788384071.5452952"[ shape=plaintext ] ;
+}->"map";
+}

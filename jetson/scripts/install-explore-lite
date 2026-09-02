@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly source_dir="${HOME}/laksa_ws/src/m-explore-ros2"
+readonly upstream_url="https://github.com/robo-friends/m-explore-ros2.git"
+readonly upstream_commit="326cf8a0b487c34246bb8f3326afbcd69576dc60"
+readonly patch_file="${HOME}/src/Project_LAKSA/jetson/patches/m-explore-ros2-laksa.patch"
+readonly completion_patch_file="${HOME}/src/Project_LAKSA/jetson/patches/m-explore-ros2-completion-stability.patch"
+
+if [[ ! -d "${source_dir}/.git" ]]; then
+    git clone "${upstream_url}" "${source_dir}"
+fi
+
+git -C "${source_dir}" fetch --depth 1 origin "${upstream_commit}"
+if [[ "$(git -C "${source_dir}" rev-parse HEAD)" != "${upstream_commit}" ]]; then
+    if ! git -C "${source_dir}" diff --quiet || \
+       ! git -C "${source_dir}" diff --cached --quiet; then
+        echo "Refusing to switch commits with local m-explore-ros2 changes" >&2
+        exit 1
+    fi
+    git -C "${source_dir}" checkout --detach "${upstream_commit}"
+fi
+if ! git -C "${source_dir}" apply --reverse --check "${patch_file}" 2>/dev/null; then
+    if ! git -C "${source_dir}" diff --quiet || \
+       ! git -C "${source_dir}" diff --cached --quiet; then
+        echo "Refusing to mix the LAKSA patch with unrelated local changes" >&2
+        exit 1
+    fi
+    git -C "${source_dir}" apply "${patch_file}"
+fi
+if ! git -C "${source_dir}" apply --reverse --check "${completion_patch_file}" 2>/dev/null; then
+    git -C "${source_dir}" apply "${completion_patch_file}"
+fi
+
+set +u
+source /opt/ros/humble/setup.bash
+set -u
+cd "${HOME}/laksa_ws"
+colcon build --symlink-install --packages-up-to explore_lite

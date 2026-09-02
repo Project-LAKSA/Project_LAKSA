@@ -1,0 +1,62 @@
+Type: laksa_interfaces/msg/VehicleState
+
+Publisher count: 1
+
+Node name: laksa_esp32
+Node namespace: /
+Topic type: laksa_interfaces/msg/VehicleState
+Endpoint type: PUBLISHER
+GID: 01.0f.a3.a2.0f.00.9a.35.00.00.4d.00.00.00.04.03.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: BEST_EFFORT
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Subscription count: 3
+
+Node name: drive_supervisor
+Node namespace: /
+Topic type: laksa_interfaces/msg/VehicleState
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a3.a2.d4.62.55.e1.00.00.00.00.00.00.22.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: BEST_EFFORT
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: state_measurements
+Node namespace: /
+Topic type: laksa_interfaces/msg/VehicleState
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a3.a2.e1.4c.d1.ff.00.00.00.00.00.00.14.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: BEST_EFFORT
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+
+Node name: laksa_dashboard
+Node namespace: /
+Topic type: laksa_interfaces/msg/VehicleState
+Endpoint type: SUBSCRIPTION
+GID: 01.0f.a3.a2.e1.62.32.e7.00.00.00.00.00.00.11.04.00.00.00.00.00.00.00.00
+QoS profile:
+  Reliability: BEST_EFFORT
+  History (Depth): UNKNOWN
+  Durability: VOLATILE
+  Lifespan: Infinite
+  Deadline: Infinite
+  Liveliness: AUTOMATIC
+  Liveliness lease duration: Infinite
+

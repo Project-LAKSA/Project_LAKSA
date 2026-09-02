@@ -1,0 +1,60 @@
+#!/usr/bin/env python3
+
+"""Validate a LAKSA ZED mount calibration before enabling 3-D mapping."""
+
+import argparse
+import math
+from pathlib import Path
+import sys
+
+import yaml
+
+
+EXPECTED_PARENT = "laksa_base_footprint"
+EXPECTED_CHILD = "zed_camera_link"
+VALUE_KEYS = ("x_m", "y_m", "z_m", "roll_rad", "pitch_rad", "yaw_rad")
+
+
+def validate(path: Path) -> dict:
+    try:
+        mount = yaml.safe_load(path.read_text(encoding="utf-8"))["camera_mount"]
+    except (OSError, KeyError, TypeError, yaml.YAMLError) as error:
+        raise ValueError(f"cannot read camera_mount from {path}: {error}") from error
+    if mount.get("configured") is not True:
+        raise ValueError("camera_mount.configured is not true")
+    if mount.get("parent_frame") != EXPECTED_PARENT:
+        raise ValueError(f"parent_frame must be {EXPECTED_PARENT}")
+    if mount.get("child_frame") != EXPECTED_CHILD:
+        raise ValueError(f"child_frame must be {EXPECTED_CHILD}")
+    values = {}
+    for key in VALUE_KEYS:
+        try:
+            values[key] = float(mount[key])
+        except (KeyError, TypeError, ValueError) as error:
+            raise ValueError(f"{key} must be a number") from error
+        if not math.isfinite(values[key]):
+            raise ValueError(f"{key} must be finite")
+    if max(abs(values[key]) for key in ("x_m", "y_m", "z_m")) > 2.0:
+        raise ValueError("camera translation exceeds the 2 m sanity bound")
+    if max(abs(values[key]) for key in ("roll_rad", "pitch_rad", "yaw_rad")) > math.tau:
+        raise ValueError("camera rotations must be expressed in radians")
+    return values
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("mount_file", type=Path)
+    arguments = parser.parse_args()
+    try:
+        values = validate(arguments.mount_file)
+    except ValueError as error:
+        print(f"ZED mount calibration is not ready: {error}", file=sys.stderr)
+        return 2
+    formatted = ", ".join(f"{key}={value:.6f}" for key, value in values.items())
+    print(f"ZED mount calibration is valid: {formatted}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+

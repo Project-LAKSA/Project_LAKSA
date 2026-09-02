@@ -1,0 +1,22 @@
+/behavior_server:
+  ros__parameters:
+    /bond_disable_heartbeat_timeout: true
+    backup:
+      acceleration_limit: 0.5
+      deceleration_limit: -0.5
+      minimum_speed: 0.217
+      plugin: nav2_behaviors/BackUp
+    behavior_plugins:
+    - backup
+    - wait
+    costmap_topic: local_costmap/costmap_raw
+    cycle_frequency: 10.0
+    footprint_topic: local_costmap/published_footprint
+    global_frame: laksa_odom
+    robot_base_frame: laksa_base_footprint
+    simulate_ahead_time: 2.0
+    transform_tolerance: 0.2
+    use_sim_time: false
+    wait:
+      plugin: nav2_behaviors/Wait
+

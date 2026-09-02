@@ -1,0 +1,4 @@
+# Copy to /etc/laksa/mapping.conf only after validating zed_mount.yaml.
+# The default remains 2d when this file is absent.
+LAKSA_MAPPING_MODE=3d
+

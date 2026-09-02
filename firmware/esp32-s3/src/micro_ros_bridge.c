@@ -11,8 +11,8 @@
 #include "esp32_config.h"
 #include "freertos/task.h"
 #include "sdkconfig.h"
+#include "status_led.h"
 
-#include <geometry_msgs/msg/twist.h>
 #include <laksa_interfaces/msg/drive_command.h>
 #include <laksa_interfaces/msg/vehicle_state.h>
 #include <laksa_interfaces/msg/vesc_state.h>
@@ -25,6 +25,7 @@
 #include <rosidl_runtime_c/string_functions.h>
 #include <sensor_msgs/msg/imu.h>
 #include <sensor_msgs/msg/magnetic_field.h>
+#include <std_msgs/msg/bool.h>
 
 #define MICRO_ROS_TASK_STACK_SIZE 20000
 #define MICRO_ROS_TASK_PRIORITY 5
@@ -57,7 +58,7 @@ typedef struct {
     rcl_publisher_t vesc_publisher;
     rcl_publisher_t state_publisher;
     rcl_subscription_t command_subscription;
-    rcl_subscription_t cmd_vel_subscription;
+    rcl_subscription_t brake_subscription;
     rcl_service_t set_command_service;
     rcl_service_t get_state_service;
     sensor_msgs__msg__Imu imu_message;
@@ -65,11 +66,14 @@ typedef struct {
     laksa_interfaces__msg__VescState vesc_message;
     laksa_interfaces__msg__VehicleState state_message;
     laksa_interfaces__msg__DriveCommand command_message;
-    geometry_msgs__msg__Twist cmd_vel_message;
+    std_msgs__msg__Bool brake_message;
     laksa_interfaces__srv__SetDriveCommand_Request set_request;
     laksa_interfaces__srv__SetDriveCommand_Response set_response;
     laksa_interfaces__srv__GetVehicleState_Request get_request;
     laksa_interfaces__srv__GetVehicleState_Response get_response;
+    TickType_t last_drive_command_tick;
+    bool brake_requested;
+    bool steering_failsafe_active;
     bool entities_created;
 } micro_ros_bridge_t;
 
@@ -107,11 +111,20 @@ static bool speed_to_erpm(float speed_mps, int32_t *erpm)
     float value = speed_mps * 60.0f * gear_reduction() *
                   (float)CONFIG_LAKSA_MOTOR_POLE_PAIRS /
                   circumference_m * (float)CONFIG_LAKSA_DRIVE_FORWARD_SIGN;
-    if (!isfinite(value) || fabsf(value) > (float)VESC_MAX_ABS_RPM) {
+    /* Validate the rounded command so a float32 ROS round trip at exactly the
+     * configured limit is not rejected by a sub-eRPM conversion error. */
+    if (!isfinite(value) ||
+        fabsf(value) > (float)VESC_MAX_ABS_RPM + 0.5f) {
         return false;
     }
 
-    *erpm = (int32_t)lroundf(value);
+    int32_t rounded_erpm = (int32_t)lroundf(value);
+    if (rounded_erpm < -VESC_MAX_ABS_RPM ||
+        rounded_erpm > VESC_MAX_ABS_RPM) {
+        return false;
+    }
+
+    *erpm = rounded_erpm;
     return true;
 }
 
@@ -134,10 +147,12 @@ static bool steering_rad_to_servo(float steering_rad, uint8_t *servo_angle_deg)
     float servo_angle;
     if (steering_rad >= 0.0f) {
         servo_angle = (float)STEERING_CENTER_DEG -
-                      normalized * (float)(STEERING_CENTER_DEG - STEERING_LEFT_SAFE_DEG);
+                      normalized *
+                          (float)(STEERING_CENTER_DEG - STEERING_LEFT_COMMAND_LIMIT_DEG);
     } else {
         servo_angle = (float)STEERING_CENTER_DEG +
-                      normalized * (float)(STEERING_RIGHT_SAFE_DEG - STEERING_CENTER_DEG);
+                      normalized *
+                          (float)(STEERING_RIGHT_COMMAND_LIMIT_DEG - STEERING_CENTER_DEG);
     }
     *servo_angle_deg = (uint8_t)lroundf(servo_angle);
     return true;
@@ -147,32 +162,41 @@ static float servo_to_steering_rad(uint8_t servo_angle_deg)
 {
     if (servo_angle_deg <= STEERING_CENTER_DEG) {
         return ((float)(STEERING_CENTER_DEG - servo_angle_deg) /
-                (float)(STEERING_CENTER_DEG - STEERING_LEFT_SAFE_DEG)) *
+                (float)(STEERING_CENTER_DEG - STEERING_LEFT_COMMAND_LIMIT_DEG)) *
                max_steering_angle_rad();
     }
     return -((float)(servo_angle_deg - STEERING_CENTER_DEG) /
-             (float)(STEERING_RIGHT_SAFE_DEG - STEERING_CENTER_DEG)) *
+             (float)(STEERING_RIGHT_COMMAND_LIMIT_DEG - STEERING_CENTER_DEG)) *
            max_steering_angle_rad();
 }
 
-static uint8_t apply_drive_command(float speed_mps, float steering_angle_rad)
+static uint8_t apply_drive_command(float speed_mps, float steering_angle_rad, bool brake)
 {
     int32_t erpm;
     uint8_t servo_angle;
     if (!speed_to_erpm(speed_mps, &erpm)) {
         return 1;
     }
-    if (!steering_rad_to_servo(steering_angle_rad, &servo_angle)) {
+    if (!steering_rad_to_servo(brake ? 0.0f : steering_angle_rad, &servo_angle)) {
         return 2;
     }
-    if (vesc_uart_set_target_rpm(bridge.hardware.vesc, erpm) != ESP_OK) {
+    if (vesc_uart_set_drive(bridge.hardware.vesc, erpm, brake) != ESP_OK) {
         return 3;
     }
     if (steering_control_set_target(bridge.hardware.steering, servo_angle) != ESP_OK) {
-        (void)vesc_uart_set_target_rpm(bridge.hardware.vesc, 0);
+        (void)vesc_uart_set_drive(bridge.hardware.vesc, 0, true);
         return 4;
     }
+    bridge.last_drive_command_tick = xTaskGetTickCount();
+    bridge.steering_failsafe_active = brake;
     return 0;
+}
+
+static void apply_actuator_failsafe(void)
+{
+    (void)vesc_uart_set_drive(bridge.hardware.vesc, 0, true);
+    (void)steering_control_center(bridge.hardware.steering);
+    bridge.steering_failsafe_active = true;
 }
 
 static builtin_interfaces__msg__Time ros_time_now(void)
@@ -224,7 +248,10 @@ static void fill_vesc_state(laksa_interfaces__msg__VescState *message,
     message->stamp = stamp;
     message->command_fresh = snapshot->command_fresh;
     message->direction_change_pending = snapshot->direction_change_pending;
+    message->brake_active = snapshot->brake_active;
     message->telemetry_fresh = snapshot->telemetry_fresh;
+    message->telemetry_sequence = snapshot->telemetry_sequence;
+    message->telemetry_age_ms = snapshot->telemetry_age_ms;
     message->requested_erpm = snapshot->requested_rpm;
     message->active_erpm = snapshot->active_rpm;
     message->measured_erpm = snapshot->measured_rpm;
@@ -326,24 +353,20 @@ static void command_callback(const void *message)
 {
     const laksa_interfaces__msg__DriveCommand *command =
         (const laksa_interfaces__msg__DriveCommand *)message;
-    uint8_t error = apply_drive_command(command->speed_mps, command->steering_angle_rad);
+    uint8_t error = apply_drive_command(command->speed_mps,
+                                        command->steering_angle_rad,
+                                        bridge.brake_requested || command->brake);
     if (error != 0) {
         ESP_LOGW(TAG, "Rejected drive command (error %u)", (unsigned)error);
     }
 }
 
-static void cmd_vel_callback(const void *message)
+static void brake_callback(const void *message)
 {
-    const geometry_msgs__msg__Twist *command = (const geometry_msgs__msg__Twist *)message;
-    float speed = (float)command->linear.x;
-    float steering = 0.0f;
-    if (fabsf(speed) > 0.01f) {
-        steering = atanf(((float)CONFIG_LAKSA_WHEELBASE_MM / 1000.0f) *
-                         (float)command->angular.z / speed);
-    }
-    uint8_t error = apply_drive_command(speed, steering);
-    if (error != 0) {
-        ESP_LOGW(TAG, "Rejected cmd_vel (error %u)", (unsigned)error);
+    const std_msgs__msg__Bool *brake = (const std_msgs__msg__Bool *)message;
+    bridge.brake_requested = brake->data;
+    if (brake->data) {
+        apply_actuator_failsafe();
     }
 }
 
@@ -354,7 +377,9 @@ static void set_command_callback(const void *request, void *response)
     laksa_interfaces__srv__SetDriveCommand_Response *set_response =
         (laksa_interfaces__srv__SetDriveCommand_Response *)response;
     set_response->error_code = apply_drive_command(set_request->command.speed_mps,
-                                                   set_request->command.steering_angle_rad);
+                                                   set_request->command.steering_angle_rad,
+                                                   bridge.brake_requested ||
+                                                       set_request->command.brake);
     set_response->accepted = set_response->error_code == 0;
 }
 
@@ -403,11 +428,11 @@ static bool create_entities(void)
     }
 
     bridge.command_subscription = rcl_get_zero_initialized_subscription();
-    bridge.cmd_vel_subscription = rcl_get_zero_initialized_subscription();
+    bridge.brake_subscription = rcl_get_zero_initialized_subscription();
     if (rclc_subscription_init_default(&bridge.command_subscription, &bridge.node,
             ROSIDL_GET_MSG_TYPE_SUPPORT(laksa_interfaces, msg, DriveCommand), "/laksa/command") != RCL_RET_OK ||
-        rclc_subscription_init_default(&bridge.cmd_vel_subscription, &bridge.node,
-            ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist), "/cmd_vel") != RCL_RET_OK) {
+        rclc_subscription_init_default(&bridge.brake_subscription, &bridge.node,
+            ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool), "/laksa/brake") != RCL_RET_OK) {
         return false;
     }
 
@@ -427,7 +452,7 @@ static bool create_entities(void)
         !laksa_interfaces__msg__VescState__init(&bridge.vesc_message) ||
         !laksa_interfaces__msg__VehicleState__init(&bridge.state_message) ||
         !laksa_interfaces__msg__DriveCommand__init(&bridge.command_message) ||
-        !geometry_msgs__msg__Twist__init(&bridge.cmd_vel_message) ||
+        !std_msgs__msg__Bool__init(&bridge.brake_message) ||
         !laksa_interfaces__srv__SetDriveCommand_Request__init(&bridge.set_request) ||
         !laksa_interfaces__srv__SetDriveCommand_Response__init(&bridge.set_response) ||
         !laksa_interfaces__srv__GetVehicleState_Request__init(&bridge.get_request) ||
@@ -444,8 +469,8 @@ static bool create_entities(void)
                            MICRO_ROS_EXECUTOR_HANDLES, &bridge.allocator) != RCL_RET_OK ||
         rclc_executor_add_subscription(&bridge.executor, &bridge.command_subscription,
                                        &bridge.command_message, command_callback, ON_NEW_DATA) != RCL_RET_OK ||
-        rclc_executor_add_subscription(&bridge.executor, &bridge.cmd_vel_subscription,
-                                       &bridge.cmd_vel_message, cmd_vel_callback, ON_NEW_DATA) != RCL_RET_OK ||
+        rclc_executor_add_subscription(&bridge.executor, &bridge.brake_subscription,
+                                       &bridge.brake_message, brake_callback, ON_NEW_DATA) != RCL_RET_OK ||
         rclc_executor_add_service(&bridge.executor, &bridge.set_command_service,
                                   &bridge.set_request, &bridge.set_response,
                                   set_command_callback) != RCL_RET_OK ||
@@ -462,8 +487,8 @@ static bool create_entities(void)
 
 static void destroy_entities(void)
 {
-    (void)vesc_uart_set_target_rpm(bridge.hardware.vesc, 0);
-    (void)steering_control_center(bridge.hardware.steering);
+    bridge.brake_requested = true;
+    apply_actuator_failsafe();
     if (!bridge.entities_created) {
         memset(&bridge.support, 0, sizeof(bridge.support));
         return;
@@ -476,7 +501,7 @@ static void destroy_entities(void)
     (void)rclc_executor_fini(&bridge.executor);
     consume_rcl_result(rcl_service_fini(&bridge.get_state_service, &bridge.node));
     consume_rcl_result(rcl_service_fini(&bridge.set_command_service, &bridge.node));
-    consume_rcl_result(rcl_subscription_fini(&bridge.cmd_vel_subscription, &bridge.node));
+    consume_rcl_result(rcl_subscription_fini(&bridge.brake_subscription, &bridge.node));
     consume_rcl_result(rcl_subscription_fini(&bridge.command_subscription, &bridge.node));
     consume_rcl_result(rcl_publisher_fini(&bridge.state_publisher, &bridge.node));
     consume_rcl_result(rcl_publisher_fini(&bridge.vesc_publisher, &bridge.node));
@@ -490,7 +515,7 @@ static void destroy_entities(void)
     laksa_interfaces__msg__VescState__fini(&bridge.vesc_message);
     laksa_interfaces__msg__VehicleState__fini(&bridge.state_message);
     laksa_interfaces__msg__DriveCommand__fini(&bridge.command_message);
-    geometry_msgs__msg__Twist__fini(&bridge.cmd_vel_message);
+    std_msgs__msg__Bool__fini(&bridge.brake_message);
     laksa_interfaces__srv__SetDriveCommand_Request__fini(&bridge.set_request);
     laksa_interfaces__srv__SetDriveCommand_Response__fini(&bridge.set_response);
     laksa_interfaces__srv__GetVehicleState_Request__fini(&bridge.get_request);
@@ -530,6 +555,8 @@ static void micro_ros_task(void *argument)
     TickType_t last_mag = 0;
     TickType_t last_state = 0;
 
+    status_led_set_mode(STATUS_LED_WAITING_FOR_MICRO_ROS);
+
     while (true) {
         TickType_t now = xTaskGetTickCount();
         switch (state) {
@@ -547,6 +574,7 @@ static void micro_ros_task(void *argument)
                 last_imu = now;
                 last_mag = now;
                 last_state = now;
+                status_led_set_mode(STATUS_LED_MICRO_ROS_CONNECTED);
                 state = BRIDGE_AGENT_CONNECTED;
             } else {
                 ESP_LOGE(TAG, "Failed to create ROS 2 entities; retrying");
@@ -564,11 +592,23 @@ static void micro_ros_task(void *argument)
                 }
             }
             (void)rclc_executor_spin_some(&bridge.executor, RCL_MS_TO_NS(5));
+            /* A subscription callback can update last_drive_command_tick while
+             * spin_some() runs. Refresh now afterwards; comparing the stale
+             * pre-spin tick against a newer callback tick would underflow the
+             * unsigned FreeRTOS tick counter and cause a false timeout. */
+            now = xTaskGetTickCount();
+            if (!bridge.steering_failsafe_active &&
+                now - bridge.last_drive_command_tick >
+                    pdMS_TO_TICKS(VESC_COMMAND_TIMEOUT_MS)) {
+                ESP_LOGW(TAG, "Drive command timeout; braking and centering steering");
+                apply_actuator_failsafe();
+            }
             publish_periodic(now, &last_imu, &last_mag, &last_state);
             vTaskDelay(pdMS_TO_TICKS(2));
             break;
         case BRIDGE_AGENT_DISCONNECTED:
             ESP_LOGW(TAG, "Agent disconnected; stopping actuators");
+            status_led_set_mode(STATUS_LED_WAITING_FOR_MICRO_ROS);
             destroy_entities();
             state = BRIDGE_WAITING_FOR_AGENT;
             break;
@@ -584,6 +624,8 @@ esp_err_t micro_ros_bridge_start(const micro_ros_bridge_config_t *config)
 
     memset(&bridge, 0, sizeof(bridge));
     bridge.hardware = *config;
+    bridge.brake_requested = true;
+    bridge.steering_failsafe_active = true;
 
 #if defined(RMW_UXRCE_TRANSPORT_CUSTOM)
     if (rmw_uros_set_custom_transport(true, &cdc_port,

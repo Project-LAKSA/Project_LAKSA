@@ -1,0 +1,11 @@
+cba74e7fed8e262a878186b375b2cb7a75bab20c 2026-08-10 23:19:58 -0500 Added initial micro ROS support to the esp32
+1fafd2fc154b04cf4660b343b8a9aaedcaff0d10 2026-08-08 22:34:58 -0500 Merge pull request #13 from Project-LAKSA/add_brushless_control
+81055eb4de1c05619bee065b8c2ce10743412c8e 2026-08-08 22:25:48 -0500 Added brushless motor support with VESC control
+dd3a793984de3234c0825154bf280d33c5faaed1 2026-05-28 01:07:56 -0500 Adding high level design document
+9e8a46f50e2b63e6f9ec0bb5b6963b88849a9615 2026-05-21 15:56:06 -0500 Added first iteration of the block diagram
+077cb9b48df072db5a7695589eae9d38d60b50d1 2026-05-14 16:13:41 -0500 Update README.md with specific hardware modules
+c41be2071ba433a942bfb4922458327bcb88be96 2026-05-13 22:12:15 -0500 Added first iteration of the high level design document
+da9168ca71ecdceac94b4025187b486d140eca0c 2026-05-28 00:55:15 -0500 Add ESP32-S3 firmware baseline for LAKSA control system
+e914d58b6794329eed03b5033957ffa6598f5888 2026-05-28 00:45:47 -0500 Added ESP32 code baseline
+10a5b72f9faaa5044ca1fdeda979507a4a1c3bd5 2026-05-25 20:50:34 -0500 Added the ESP32-S3 source code baseline
+9d4c591b3039038376201b71923286432da91b11 2026-04-21 17:33:56 -0500 Initial commit

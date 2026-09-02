@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly serial_device="${LAKSA_MICROROS_DEVICE:-/dev/laksa_microros}"
+readonly domain_id="${ROS_DOMAIN_ID:-0}"
+readonly localhost_only="${ROS_LOCALHOST_ONLY:-1}"
+
+while [[ ! -c "${serial_device}" ]]; do
+    echo "Waiting for ${serial_device}"
+    sleep 2
+done
+
+echo "Starting micro-ROS Agent on ${serial_device} in ROS domain ${domain_id}"
+exec /usr/bin/docker run --rm \
+    --name laksa-microros-agent \
+    --privileged \
+    --network host \
+    --env "ROS_DOMAIN_ID=${domain_id}" \
+    --env "ROS_LOCALHOST_ONLY=${localhost_only}" \
+    --volume /dev:/dev \
+    --volume /dev/shm:/dev/shm \
+    microros/micro-ros-agent:humble \
+    serial --dev "${serial_device}" --baudrate 115200 --verbose 4

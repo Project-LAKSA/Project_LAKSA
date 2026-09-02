@@ -1,0 +1,14 @@
+/global_costmap/clearing_endpoints
+/local_costmap/clearing_endpoints
+/rtabmap/cloud_ground
+/rtabmap/cloud_map
+/rtabmap/cloud_obstacles
+/rtabmap/local_grid_empty
+/rtabmap/local_grid_ground
+/rtabmap/local_grid_obstacle
+/rtabmap/octomap_empty_space
+/rtabmap/octomap_global_frontier_space
+/rtabmap/octomap_ground
+/rtabmap/octomap_obstacles
+/rtabmap/octomap_occupied_space
+/zed/zed_node/point_cloud/cloud_registered

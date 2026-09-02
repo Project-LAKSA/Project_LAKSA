@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly ZED_EXPLORER=/usr/local/zed/tools/ZED_Explorer
+readonly CAMERA_DEVICE=/dev/video0
+
+if ! lsusb | grep -Eiq 'stereolabs|2b03:' || [[ ! -r "${CAMERA_DEVICE}" ]]; then
+    echo "No Stereolabs USB camera was detected. Connect the ZED 2i directly to a USB 3.x port." >&2
+    exit 3
+fi
+
+if [[ -z "${DISPLAY:-}" && -S /tmp/.X11-unix/X0 ]]; then
+    export DISPLAY=:0
+    export XAUTHORITY="${XAUTHORITY:-/run/user/$(id -u)/gdm/Xauthority}"
+elif [[ -z "${DISPLAY:-}" && -S /tmp/.X11-unix/X1001 ]]; then
+    export DISPLAY=:1001
+    export XAUTHORITY="${XAUTHORITY:-/run/user/$(id -u)/gdm/Xauthority}"
+fi
+
+if [[ -z "${DISPLAY:-}" ]]; then
+    echo "No graphical display was found. Connect with NoMachine, open a terminal there, and run this command again." >&2
+    exit 4
+fi
+
+echo "Opening the ZED 2i live stereo preview on DISPLAY=${DISPLAY}."
+echo "The left and right images are shown side by side. Close the window to stop it."
+
+if [[ -x "${ZED_EXPLORER}" ]]; then
+    exec "${ZED_EXPLORER}" "$@"
+fi
+
+if ! command -v gst-launch-1.0 >/dev/null 2>&1; then
+    echo "Neither ZED Explorer nor GStreamer is available." >&2
+    exit 5
+fi
+
+echo "ZED SDK is not installed; using the raw USB stereo preview."
+exec gst-launch-1.0 -e \
+    v4l2src device="${CAMERA_DEVICE}" ! \
+    'video/x-raw,format=YUY2,width=2560,height=720,framerate=30/1' ! \
+    xvimagesink sync=false force-aspect-ratio=true "$@"

@@ -1,0 +1,20 @@
+[Unit]
+Description=LAKSA ZED 2i RGB-D and visual-inertial camera
+After=systemd-udev-settle.service time-sync.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+SupplementaryGroups=video
+Environment=ROS_DOMAIN_ID=0
+Environment=ROS_LOCALHOST_ONLY=1
+ExecStart=/usr/local/lib/laksa/laksa-zed-camera
+Restart=always
+RestartSec=5
+KillMode=control-group
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,21 @@
+[Unit]
+Description=LAKSA RPLIDAR A2M12, ZED 2i, and RTAB-Map 3-D mapping
+After=laksa-micro-ros-agent.service laksa-zed-camera.service
+Wants=laksa-micro-ros-agent.service laksa-zed-camera.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+SupplementaryGroups=dialout
+Environment=ROS_DOMAIN_ID=0
+Environment=ROS_LOCALHOST_ONLY=1
+Environment=LAKSA_LIDAR_DEVICE=/dev/laksa_lidar
+ExecStart=/usr/local/lib/laksa/laksa-lidar-mapping
+Restart=always
+RestartSec=3
+KillMode=control-group
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

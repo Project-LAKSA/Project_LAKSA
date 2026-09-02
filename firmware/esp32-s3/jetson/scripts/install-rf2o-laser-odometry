@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+readonly source_dir="${HOME}/laksa_ws/src/rf2o_laser_odometry"
+readonly upstream_url="https://github.com/MAPIRlab/rf2o_laser_odometry.git"
+readonly upstream_commit="b38c68e46387b98845ecbfeb6660292f967a00d3"
+readonly patch_file="${script_dir}/../patches/rf2o-laser-odometry-laksa.patch"
+
+if [[ ! -f "${patch_file}" ]]; then
+    echo "RF2O patch not found: ${patch_file}" >&2
+    exit 1
+fi
+
+mkdir -p "$(dirname -- "${source_dir}")"
+if [[ ! -e "${source_dir}" ]]; then
+    git clone "${upstream_url}" "${source_dir}"
+elif [[ ! -d "${source_dir}/.git" ]]; then
+    echo "Refusing to replace non-git path: ${source_dir}" >&2
+    exit 1
+fi
+
+git -C "${source_dir}" fetch --depth 1 origin "${upstream_commit}"
+if [[ "$(git -C "${source_dir}" rev-parse HEAD)" != "${upstream_commit}" ]]; then
+    if ! git -C "${source_dir}" diff --quiet || \
+       ! git -C "${source_dir}" diff --cached --quiet; then
+        echo "Refusing to switch commits with local RF2O changes" >&2
+        exit 1
+    fi
+    git -C "${source_dir}" checkout --detach "${upstream_commit}"
+fi
+
+if ! git -C "${source_dir}" apply --reverse --check "${patch_file}" 2>/dev/null; then
+    if ! git -C "${source_dir}" diff --quiet || \
+       ! git -C "${source_dir}" diff --cached --quiet; then
+        echo "Refusing to mix the LAKSA RF2O patch with unrelated changes" >&2
+        exit 1
+    fi
+    git -C "${source_dir}" apply --check "${patch_file}"
+    git -C "${source_dir}" apply "${patch_file}"
+fi
+
+set +u
+source /opt/ros/humble/setup.bash
+set -u
+
+rosdep install --from-paths "${source_dir}" --ignore-src --rosdistro humble -r -y
+
+cd "${HOME}/laksa_ws"
+colcon build --symlink-install --packages-select rf2o_laser_odometry

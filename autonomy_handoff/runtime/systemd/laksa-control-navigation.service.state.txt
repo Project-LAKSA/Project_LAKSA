@@ -1,0 +1,5 @@
+ExecStart={ path=/usr/local/lib/laksa/laksa-control-navigation ; argv[]=/usr/local/lib/laksa/laksa-control-navigation ; ignore_errors=no ; start_time=[Wed 2026-09-02 16:24:53 CST] ; stop_time=[n/a] ; pid=1466992 ; code=(null) ; status=0/0 }
+Id=laksa-control-navigation.service
+ActiveState=active
+SubState=running
+FragmentPath=/etc/systemd/system/laksa-control-navigation.service

@@ -1,0 +1,52 @@
+[INFO] [1788384072.469857088] [tf2_echo]: Waiting for transform laksa_odom ->  laksa_base_footprint: Invalid frame ID "laksa_odom" passed to canTransform argument target_frame - frame does not exist
+At time 1788384073.267471948
+- Translation: [0.002, -0.001, 0.000]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]
+- Rotation: in RPY (radian) [0.000, -0.000, 0.000]
+- Rotation: in RPY (degree) [0.000, -0.000, 0.003]
+- Matrix:
+  1.000 -0.000  0.000  0.002
+  0.000  1.000  0.000 -0.001
+  0.000  0.000  1.000  0.000
+  0.000  0.000  0.000  1.000
+At time 1788384074.317396948
+- Translation: [0.002, -0.001, 0.000]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]
+- Rotation: in RPY (radian) [0.000, -0.000, 0.000]
+- Rotation: in RPY (degree) [0.000, -0.000, 0.025]
+- Matrix:
+  1.000 -0.000  0.000  0.002
+  0.000  1.000  0.000 -0.001
+  0.000  0.000  1.000  0.000
+  0.000  0.000  0.000  1.000
+At time 1788384075.246734948
+- Translation: [0.002, -0.001, 0.000]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, -0.000, 1.000]
+- Rotation: in RPY (radian) [0.000, 0.000, -0.001]
+- Rotation: in RPY (degree) [0.000, 0.000, -0.055]
+- Matrix:
+  1.000  0.001  0.000  0.002
+ -0.001  1.000 -0.000 -0.001
+ -0.000  0.000  1.000  0.000
+  0.000  0.000  0.000  1.000
+At time 1788384076.289417948
+- Translation: [0.002, -0.001, 0.000]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, 0.000, 1.000]
+- Rotation: in RPY (radian) [0.000, -0.000, 0.001]
+- Rotation: in RPY (degree) [0.000, -0.000, 0.037]
+- Matrix:
+  1.000 -0.001  0.000  0.002
+  0.001  1.000  0.000 -0.001
+  0.000  0.000  1.000  0.000
+  0.000  0.000  0.000  1.000
+At time 1788384077.330420948
+- Translation: [0.001, -0.001, 0.000]
+- Rotation: in Quaternion (xyzw) [0.000, 0.000, -0.000, 1.000]
+- Rotation: in RPY (radian) [0.000, 0.000, -0.001]
+- Rotation: in RPY (degree) [0.000, 0.000, -0.049]
+- Matrix:
+  1.000  0.001  0.000  0.001
+ -0.001  1.000 -0.000 -0.001
+ -0.000  0.000  1.000  0.000
+  0.000  0.000  0.000  1.000
+[INFO] [1788384078.023228704] [rclcpp]: signal_handler(signum=15)

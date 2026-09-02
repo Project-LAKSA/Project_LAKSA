@@ -1,0 +1,5 @@
+[INFO] [1788384078.458244832] [tf2_echo]: Waiting for transform laksa_base_footprint ->  laser: Invalid frame ID "laksa_base_footprint" passed to canTransform argument target_frame - frame does not exist
+[INFO] [1788384080.364000768] [tf2_echo]: Waiting for transform laksa_base_footprint ->  laser: Invalid frame ID "laksa_base_footprint" passed to canTransform argument target_frame - frame does not exist
+[INFO] [1788384081.364011872] [tf2_echo]: Waiting for transform laksa_base_footprint ->  laser: Invalid frame ID "laser" passed to canTransform argument source_frame - frame does not exist
+[INFO] [1788384083.364009216] [tf2_echo]: Waiting for transform laksa_base_footprint ->  laser: Invalid frame ID "laser" passed to canTransform argument source_frame - frame does not exist
+[INFO] [1788384084.026194720] [rclcpp]: signal_handler(signum=15)

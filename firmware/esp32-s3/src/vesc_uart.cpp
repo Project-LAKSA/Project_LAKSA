@@ -40,6 +40,9 @@ static void store_telemetry(vesc_uart_t *vesc, const VescUart &driver)
     vesc->fault_code = (uint8_t)driver.data.error;
     vesc->last_telemetry_tick = xTaskGetTickCount();
     vesc->has_received_telemetry = true;
+    if (++vesc->telemetry_sequence == 0) {
+        ++vesc->telemetry_sequence;
+    }
     xSemaphoreGive(vesc->lock);
 }
 
@@ -49,18 +52,38 @@ static void vesc_control_task(void *arg)
     VescUart *driver = static_cast<VescUart *>(vesc->driver);
     const TickType_t command_timeout = pdMS_TO_TICKS(VESC_COMMAND_TIMEOUT_MS);
     const TickType_t neutral_time = pdMS_TO_TICKS(VESC_DIRECTION_CHANGE_NEUTRAL_MS);
+    const TickType_t command_keepalive = pdMS_TO_TICKS(VESC_COMMAND_KEEPALIVE_MS);
     const TickType_t telemetry_interval = pdMS_TO_TICKS(VESC_TELEMETRY_INTERVAL_MS);
+    TickType_t last_command_send = 0;
     TickType_t last_telemetry_request = xTaskGetTickCount();
+    int32_t last_sent_rpm = 0;
+    bool last_sent_brake = true;
+    bool has_sent_command = false;
 
     while (true) {
         TickType_t now = xTaskGetTickCount();
         int32_t output_rpm = 0;
 
+        /* Read fault telemetry before deciding the next actuator command. This
+           prevents one stale RPM keepalive from being sent after a newly
+           reported undervoltage or other controller fault. */
+        if (now - last_telemetry_request >= telemetry_interval) {
+            last_telemetry_request = now;
+            if (driver->getVescValues()) {
+                store_telemetry(vesc, *driver);
+            }
+        }
+
         xSemaphoreTake(vesc->lock, portMAX_DELAY);
 
         bool command_fresh = vesc->has_received_command &&
                              (now - vesc->last_command_tick <= command_timeout);
-        int32_t target_rpm = command_fresh ? vesc->requested_rpm : 0;
+        /* A VESC fault is an actuator-level safety condition. Do not rely on
+           the Jetson control loop to notice it before removing torque: brake
+           locally as soon as telemetry reports any nonzero fault. */
+        bool brake_active = !command_fresh || vesc->brake_requested ||
+                            (vesc->has_received_telemetry && vesc->fault_code != 0);
+        int32_t target_rpm = brake_active ? 0 : vesc->requested_rpm;
 
         if (target_rpm == 0) {
             vesc->active_rpm = 0;
@@ -83,13 +106,19 @@ static void vesc_control_task(void *arg)
         output_rpm = vesc->active_rpm;
         xSemaphoreGive(vesc->lock);
 
-        driver->setRPM((float)output_rpm);
-
-        if (now - last_telemetry_request >= telemetry_interval) {
-            last_telemetry_request = now;
-            if (driver->getVescValues()) {
-                store_telemetry(vesc, *driver);
+        bool output_changed = !has_sent_command ||
+                              brake_active != last_sent_brake ||
+                              (!brake_active && output_rpm != last_sent_rpm);
+        if (output_changed || now - last_command_send >= command_keepalive) {
+            if (brake_active) {
+                driver->setBrakeCurrent(VESC_BRAKE_CURRENT_A);
+            } else {
+                driver->setRPM((float)output_rpm);
             }
+            last_sent_brake = brake_active;
+            last_sent_rpm = output_rpm;
+            last_command_send = xTaskGetTickCount();
+            has_sent_command = true;
         }
 
         vTaskDelay(pdMS_TO_TICKS(VESC_SEND_INTERVAL_MS));
@@ -154,7 +183,7 @@ extern "C" esp_err_t vesc_uart_init(vesc_uart_t *vesc)
     return ESP_OK;
 }
 
-extern "C" esp_err_t vesc_uart_set_target_rpm(vesc_uart_t *vesc, int32_t rpm)
+extern "C" esp_err_t vesc_uart_set_drive(vesc_uart_t *vesc, int32_t rpm, bool brake)
 {
     if (vesc == nullptr || vesc->lock == nullptr ||
         rpm < -VESC_MAX_ABS_RPM || rpm > VESC_MAX_ABS_RPM) {
@@ -162,7 +191,8 @@ extern "C" esp_err_t vesc_uart_set_target_rpm(vesc_uart_t *vesc, int32_t rpm)
     }
 
     xSemaphoreTake(vesc->lock, portMAX_DELAY);
-    vesc->requested_rpm = rpm;
+    vesc->requested_rpm = brake ? 0 : rpm;
+    vesc->brake_requested = brake;
     vesc->last_command_tick = xTaskGetTickCount();
     vesc->has_received_command = true;
     if (rpm == 0) {
@@ -171,6 +201,11 @@ extern "C" esp_err_t vesc_uart_set_target_rpm(vesc_uart_t *vesc, int32_t rpm)
     }
     xSemaphoreGive(vesc->lock);
     return ESP_OK;
+}
+
+extern "C" esp_err_t vesc_uart_set_target_rpm(vesc_uart_t *vesc, int32_t rpm)
+{
+    return vesc_uart_set_drive(vesc, rpm, false);
 }
 
 extern "C" esp_err_t vesc_uart_get_snapshot(vesc_uart_t *vesc, vesc_uart_snapshot_t *snapshot)
@@ -186,8 +221,18 @@ extern "C" esp_err_t vesc_uart_get_snapshot(vesc_uart_t *vesc, vesc_uart_snapsho
     snapshot->command_fresh = vesc->has_received_command &&
                               (now - vesc->last_command_tick <= pdMS_TO_TICKS(VESC_COMMAND_TIMEOUT_MS));
     snapshot->direction_change_pending = vesc->direction_change_pending;
+    snapshot->brake_active = !snapshot->command_fresh || vesc->brake_requested ||
+                             (vesc->has_received_telemetry && vesc->fault_code != 0);
     snapshot->telemetry_fresh = vesc->has_received_telemetry &&
                                 (now - vesc->last_telemetry_tick <= pdMS_TO_TICKS(VESC_TELEMETRY_STALE_MS));
+    snapshot->telemetry_sequence = vesc->telemetry_sequence;
+    if (vesc->has_received_telemetry) {
+        uint64_t age_ms = (uint64_t)(now - vesc->last_telemetry_tick) * 1000ULL /
+                          (uint64_t)configTICK_RATE_HZ;
+        snapshot->telemetry_age_ms = age_ms > UINT32_MAX ? UINT32_MAX : (uint32_t)age_ms;
+    } else {
+        snapshot->telemetry_age_ms = UINT32_MAX;
+    }
     snapshot->measured_rpm = vesc->measured_rpm;
     snapshot->motor_current = vesc->motor_current;
     snapshot->input_current = vesc->input_current;

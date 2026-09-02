@@ -1,0 +1,26 @@
+/lidar_cruise:
+  ros__parameters:
+    blocked_before_reverse_sec: 2.0
+    clearance_weight: 3.5
+    continuity_weight: 0.3
+    forward_recovery_sec: 2.5
+    forward_recovery_yaw_rad: 0.75
+    forward_speed_mps: 0.2414
+    horizon_sec: 3.4
+    left_steering_limit_rad: 0.523
+    lidar_x_m: 0.315
+    lidar_yaw_rad: 3.141592653589793
+    minimum_clearance_m: 0.2
+    novelty_weight: 1.5
+    odom_timeout_sec: 0.5
+    recovery_phase_timeout_sec: 5.0
+    reverse_cooldown_sec: 10.0
+    reverse_distance_m: 0.36
+    reverse_duration_sec: 1.8
+    reverse_speed_mps: 0.2173
+    right_steering_limit_rad: 0.288
+    scan_timeout_sec: 0.5
+    steering_weight: 0.2
+    use_sim_time: false
+    wheelbase_m: 0.324
+

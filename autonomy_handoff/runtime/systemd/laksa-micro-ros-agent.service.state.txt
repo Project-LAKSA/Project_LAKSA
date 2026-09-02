@@ -1,0 +1,5 @@
+ExecStart={ path=/usr/local/lib/laksa/laksa-micro-ros-agent ; argv[]=/usr/local/lib/laksa/laksa-micro-ros-agent ; ignore_errors=no ; start_time=[Wed 2026-09-02 16:11:33 CST] ; stop_time=[n/a] ; pid=1427862 ; code=(null) ; status=0/0 }
+Id=laksa-micro-ros-agent.service
+ActiveState=active
+SubState=running
+FragmentPath=/etc/systemd/system/laksa-micro-ros-agent.service

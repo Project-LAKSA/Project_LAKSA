@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly ros_domain_id="${ROS_DOMAIN_ID:-0}"
+
+set +u
+source /opt/ros/humble/setup.bash
+if [[ -f /home/ubuntu/third_party/third_party_ws/install/setup.bash ]]; then
+    source /home/ubuntu/third_party/third_party_ws/install/setup.bash
+fi
+source /home/ubuntu/laksa_ws/install/setup.bash
+set -u
+
+export ROS_DOMAIN_ID="${ros_domain_id}"
+
+echo "Starting LAKSA manual-first control and navigation in ROS domain ${ros_domain_id}"
+exec ros2 launch laksa_bringup laksa_system.launch.py

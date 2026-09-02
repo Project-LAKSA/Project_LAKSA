@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# Keep the pre-provisioned NetworkManager connection available without storing
+# Wi-Fi credentials in the repository. NetworkManager owns the secret and this
+# watchdog only requests reconnection when the Wi-Fi interface is disconnected.
+
+set -u
+
+connection_name="${LAKSA_WIFI_CONNECTION:-LAKSA-phone-hotspot}"
+retry_seconds="${LAKSA_WIFI_RETRY_SECONDS:-5}"
+
+while true; do
+    wifi_device="$(nmcli --terse --fields DEVICE,TYPE device status | awk -F: '$2 == "wifi" {print $1; exit}')"
+    if [[ -z "${wifi_device}" ]]; then
+        echo "No Wi-Fi interface detected; retrying in ${retry_seconds} seconds"
+        sleep "${retry_seconds}"
+        continue
+    fi
+
+    active_connection="$(nmcli --get-values GENERAL.CONNECTION device show "${wifi_device}" 2>/dev/null || true)"
+    if [[ "${active_connection}" == "${connection_name}" ]]; then
+        sleep "${retry_seconds}"
+        continue
+    fi
+
+    if ! nmcli --terse --fields NAME connection show | grep -Fqx "${connection_name}"; then
+        echo "NetworkManager connection '${connection_name}' is not provisioned"
+        sleep "${retry_seconds}"
+        continue
+    fi
+
+    echo "Connecting ${wifi_device} using '${connection_name}'"
+    nmcli radio wifi on
+    if ! nmcli --wait 20 connection up id "${connection_name}" ifname "${wifi_device}"; then
+        echo "Connection attempt failed; retrying in ${retry_seconds} seconds"
+    fi
+    sleep "${retry_seconds}"
+done

@@ -1,0 +1,75 @@
+diff --git a/explore/include/explore/explore.h b/explore/include/explore/explore.h
+--- a/explore/include/explore/explore.h
++++ b/explore/include/explore/explore.h
+@@ -142,6 +142,7 @@ private:
+   double progress_timeout_;
+   bool visualize_;
+   bool return_to_init_;
++  bool start_paused_;
+   std::string robot_base_frame_;
+   bool resuming_ = false;
+   bool goal_active_{false};
+diff --git a/explore/src/explore.cpp b/explore/src/explore.cpp
+--- a/explore/src/explore.cpp
++++ b/explore/src/explore.cpp
+@@ -69,6 +69,7 @@ Explore::Explore()
+   this->declare_parameter<float>("gain_scale", 1.0);
+   this->declare_parameter<float>("min_frontier_size", 0.5);
+   this->declare_parameter<bool>("return_to_init", false);
++  this->declare_parameter<bool>("start_paused", false);
+ 
+   this->get_parameter("planner_frequency", planner_frequency_);
+   this->get_parameter("progress_timeout", timeout);
+@@ -81,6 +82,7 @@ Explore::Explore()
+   this->get_parameter("gain_scale", gain_scale_);
+   this->get_parameter("min_frontier_size", min_frontier_size);
+   this->get_parameter("return_to_init", return_to_init_);
++  this->get_parameter("start_paused", start_paused_);
+   this->get_parameter("robot_base_frame", robot_base_frame_);
+ 
+   progress_timeout_ = timeout;
+@@ -139,11 +141,18 @@ Explore::Explore()
+   exploring_timer_ = this->create_wall_timer(
+       std::chrono::milliseconds((uint16_t)(1000.0 / planner_frequency_)),
+       [this]() { makePlan(); });
+-  // Start exploration right away
+   auto status_msg = explore_lite_msgs::msg::ExploreStatus();
+-  status_msg.status = explore_lite_msgs::msg::ExploreStatus::EXPLORATION_STARTED;
++  if (start_paused_) {
++    exploring_timer_->cancel();
++    status_msg.status = explore_lite_msgs::msg::ExploreStatus::EXPLORATION_PAUSED;
++  } else {
++    status_msg.status =
++        explore_lite_msgs::msg::ExploreStatus::EXPLORATION_STARTED;
++  }
+   status_pub_->publish(status_msg);
+-  makePlan();
++  if (!start_paused_) {
++    makePlan();
++  }
+ }
+ 
+ Explore::~Explore()
+@@ -260,9 +269,9 @@ void Explore::makePlan()
+                          return goalOnBlacklist(f.centroid);
+                        });
+   if (frontier == frontiers.end()) {
+-    RCLCPP_WARN(logger_, "All frontiers traversed/tried out, stopping.");
++    RCLCPP_ERROR(logger_, "All remaining frontiers are blocked, stopping.");
+     auto status_msg = explore_lite_msgs::msg::ExploreStatus();
+-    status_msg.status = explore_lite_msgs::msg::ExploreStatus::EXPLORATION_COMPLETE;
++    status_msg.status = explore_lite_msgs::msg::ExploreStatus::EXPLORATION_BLOCKED;
+     status_pub_->publish(status_msg);
+     stop(true);
+     return;
+diff --git a/explore_lite_msgs/msg/ExploreStatus.msg b/explore_lite_msgs/msg/ExploreStatus.msg
+--- a/explore_lite_msgs/msg/ExploreStatus.msg
++++ b/explore_lite_msgs/msg/ExploreStatus.msg
+@@ -10,6 +10,7 @@ string EXPLORATION_STARTED=exploration_started
+ string EXPLORATION_IN_PROGRESS=exploration_in_progress
+ string EXPLORATION_PAUSED=exploration_paused
+ string EXPLORATION_COMPLETE=exploration_complete
++string EXPLORATION_BLOCKED=exploration_blocked
+ string RETURNING_TO_ORIGIN=returning_to_origin
+ string RETURNED_TO_ORIGIN=returned_to_origin
+ 

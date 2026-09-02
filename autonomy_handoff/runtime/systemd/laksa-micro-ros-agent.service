@@ -1,0 +1,19 @@
+[Unit]
+Description=LAKSA micro-ROS Agent for the ESP32-S3 USB interface
+After=docker.service systemd-udev-settle.service
+Requires=docker.service
+
+[Service]
+Type=simple
+Environment=ROS_DOMAIN_ID=0
+Environment=ROS_LOCALHOST_ONLY=1
+Environment=LAKSA_MICROROS_DEVICE=/dev/laksa_microros
+ExecStartPre=-/usr/bin/docker rm --force laksa-microros-agent
+ExecStart=/usr/local/lib/laksa/laksa-micro-ros-agent
+ExecStop=-/usr/bin/docker stop --time 2 laksa-microros-agent
+Restart=always
+RestartSec=2
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

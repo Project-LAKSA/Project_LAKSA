@@ -1,0 +1,13 @@
+[Unit]
+Description=Keep the paired LAKSA Xbox controller connected
+After=bluetooth.service
+Requires=bluetooth.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/lib/laksa/laksa-xbox-reconnect 78:86:2E:EE:89:6B
+Restart=always
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target

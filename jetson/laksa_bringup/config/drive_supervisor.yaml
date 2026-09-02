@@ -1,0 +1,65 @@
+joy_node:
+  ros__parameters:
+    device_id: 0
+    deadzone: 0.05
+    autorepeat_rate: 20.0
+    sticky_buttons: false
+
+drive_supervisor:
+  ros__parameters:
+    steering_axis: 2
+    forward_axis: 1
+    steering_sign: 1.0
+    forward_sign: 1.0
+    deadzone: 0.15
+    a_button: 0
+    b_button: 1
+    x_button: 2
+    y_button: 3
+    auto_hold_sec: 3.0
+    manual_speed_presets_erpm: [900, 1300, 1500, 2000, 3000]
+    default_manual_speed_erpm: 900
+    exploration_max_erpm: 1000.0
+    navigation_max_erpm: 1500.0
+    motor_pole_pairs: 2.0
+    gear_reduction: 11.82
+    wheel_diameter_m: 0.109
+    wheelbase_m: 0.324
+    max_steering_rad: 0.523
+    left_road_wheel_limit_rad: 0.523
+    right_road_wheel_limit_rad: 0.288
+    publish_rate_hz: 20.0
+    joy_timeout_sec: 0.50
+    nav_timeout_sec: 0.50
+    state_timeout_sec: 1.0
+    scan_timeout_sec: 0.75
+    odom_timeout_sec: 0.75
+    map_timeout_sec: 3.0
+
+vesc_ackermann_odometry:
+  ros__parameters:
+    odom_frame: laksa_odom
+    base_frame: laksa_base_footprint
+    motor_pole_pairs: 2.0
+    gear_reduction: 11.82
+    wheel_diameter_m: 0.109
+    wheelbase_m: 0.324
+    servo_reported_limit_rad: 0.523
+    left_road_wheel_limit_rad: 0.523
+    right_road_wheel_limit_rad: 0.288
+    forward_sign: 1.0
+    state_timeout_sec: 1.0
+    publish_rate_hz: 30.0
+
+frontier_explorer:
+  ros__parameters:
+    map_topic: /map
+    map_frame: map
+    base_frame: laksa_base_footprint
+    minimum_cluster_cells: 8
+    minimum_goal_distance_m: 0.60
+    goal_standoff_m: 0.25
+    blacklist_radius_m: 0.50
+    goal_timeout_sec: 45.0
+    completion_stability_sec: 10.0
+    maximum_consecutive_failures: 3

@@ -1,0 +1,38 @@
+ M firmware/esp32-s3/extra_ros_packages/laksa_interfaces/msg/DriveCommand.msg
+ M firmware/esp32-s3/extra_ros_packages/laksa_interfaces/msg/VescState.msg
+ M firmware/esp32-s3/jetson/laksa_bringup/CMakeLists.txt
+ M firmware/esp32-s3/jetson/laksa_bringup/README.md
+ M firmware/esp32-s3/jetson/laksa_bringup/config/xbox_drive.yaml
+ M firmware/esp32-s3/jetson/laksa_bringup/launch/xbox_drive.launch.py
+ M firmware/esp32-s3/jetson/laksa_bringup/package.xml
+ M firmware/esp32-s3/src/micro_ros_bridge.c
+ M firmware/esp32-s3/src/vesc_uart.cpp
+?? autonomy_handoff/
+?? firmware/esp32-s3/jetson/laksa_bringup/CMakeLists.txt.orig
+?? firmware/esp32-s3/jetson/laksa_bringup/config/drive_supervisor.yaml
+?? firmware/esp32-s3/jetson/laksa_bringup/config/explore_lite.yaml
+?? firmware/esp32-s3/jetson/laksa_bringup/config/frontier_exploration_mrtsp.yaml
+?? firmware/esp32-s3/jetson/laksa_bringup/config/lidar_filters.yaml
+?? firmware/esp32-s3/jetson/laksa_bringup/config/lidar_mapping.yaml
+?? firmware/esp32-s3/jetson/laksa_bringup/config/nav2_ackermann.yaml
+?? firmware/esp32-s3/jetson/laksa_bringup/config/nav2_ackermann.yaml.orig
+?? firmware/esp32-s3/jetson/laksa_bringup/config/navigate_ackermann.xml
+?? firmware/esp32-s3/jetson/laksa_bringup/config/navigate_through_poses_ackermann.xml
+?? firmware/esp32-s3/jetson/laksa_bringup/config/sensor_fusion.yaml
+?? firmware/esp32-s3/jetson/laksa_bringup/config/steering_calibration.yaml
+?? firmware/esp32-s3/jetson/laksa_bringup/config/zed2i_robot.yaml
+?? firmware/esp32-s3/jetson/laksa_bringup/config/zed_mount.yaml
+?? firmware/esp32-s3/jetson/laksa_bringup/laksa_system.launch.py
+?? firmware/esp32-s3/jetson/laksa_bringup/launch/laksa_3d_mapping.launch.py
+?? firmware/esp32-s3/jetson/laksa_bringup/launch/laksa_system.launch.py
+?? firmware/esp32-s3/jetson/laksa_bringup/launch/lidar_mapping.launch.py
+?? firmware/esp32-s3/jetson/laksa_bringup/launch/steering_calibration.launch.py
+?? firmware/esp32-s3/jetson/laksa_bringup/package.xml.orig
+?? firmware/esp32-s3/jetson/laksa_bringup/scripts/
+?? firmware/esp32-s3/jetson/laksa_bringup/test/
+?? firmware/esp32-s3/jetson/laksa_bringup/web/
+?? firmware/esp32-s3/jetson/patches/
+?? firmware/esp32-s3/jetson/scripts/
+?? firmware/esp32-s3/jetson/simulation/
+?? firmware/esp32-s3/jetson/systemd/
+?? jetson/

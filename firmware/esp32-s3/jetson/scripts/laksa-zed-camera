@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly ros_domain_id="${ROS_DOMAIN_ID:-0}"
+readonly retry_seconds="${LAKSA_ZED_RETRY_SECONDS:-2}"
+readonly zed_usb_id="2b03:f880"
+readonly zed_config="${LAKSA_ZED_CONFIG:-/home/ubuntu/laksa_ws/install/laksa_bringup/share/laksa_bringup/config/zed2i_robot.yaml}"
+
+while ! lsusb -d "${zed_usb_id}" >/dev/null 2>&1; do
+    echo "Waiting for the ZED 2i USB camera (${zed_usb_id})"
+    sleep "${retry_seconds}"
+done
+
+if [[ ! -r "${zed_config}" ]]; then
+    echo "ZED parameter file is not readable: ${zed_config}" >&2
+    exit 66
+fi
+
+set +u
+source /opt/ros/humble/setup.bash
+source /home/ubuntu/zed_ws/install/setup.bash
+source /home/ubuntu/third_party/third_party_ws/install/setup.bash
+source /home/ubuntu/laksa_ws/install/setup.bash
+set -u
+
+export ROS_DOMAIN_ID="${ros_domain_id}"
+
+echo "Starting the LAKSA ZED 2i camera in ROS domain ${ros_domain_id}"
+ros2 launch zed_wrapper zed_camera.launch.py \
+    camera_name:=zed \
+    camera_model:=zed2i \
+    publish_urdf:=true \
+    publish_tf:=false \
+    publish_map_tf:=false \
+    publish_imu_tf:=false \
+    ros_params_override_path:="${zed_config}" \
+    node_log_type:=screen &
+launch_pid=$!
+
+ros2 run laksa_bringup zed_health_monitor_node.py &
+health_pid=$!
+
+cleanup() {
+    if kill -0 "${health_pid}" >/dev/null 2>&1; then
+        kill "${health_pid}" >/dev/null 2>&1 || true
+        wait "${health_pid}" >/dev/null 2>&1 || true
+    fi
+    if kill -0 "${launch_pid}" >/dev/null 2>&1; then
+        kill "${launch_pid}" >/dev/null 2>&1 || true
+        wait "${launch_pid}" >/dev/null 2>&1 || true
+    fi
+}
+trap cleanup EXIT INT TERM
+
+set +e
+wait -n "${launch_pid}" "${health_pid}"
+result=$?
+set -e
+exit "${result}"

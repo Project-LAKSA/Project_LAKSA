@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+set -u
+
+echo "LAKSA ZED 2i diagnostic"
+echo
+echo "Platform"
+uname -a
+test -r /etc/nv_tegra_release && head -n 1 /etc/nv_tegra_release
+dpkg-query -W nvidia-jetpack 2>/dev/null || true
+echo
+echo "USB camera"
+lsusb -t
+lsusb | grep -Ei 'stereolabs|2b03:' || echo "No Stereolabs USB device found"
+echo
+echo "Video devices"
+for device in /dev/video*; do
+    [[ -e "${device}" ]] && ls -l "${device}"
+done
+echo
+echo "ZED SDK"
+if [[ -r /usr/local/zed/settings/version ]]; then
+    cat /usr/local/zed/settings/version
+elif [[ -d /usr/local/zed ]]; then
+    echo "ZED SDK directory exists, but no version file was found"
+else
+    echo "ZED SDK is not installed"
+fi
+command -v ZED_Explorer || true
+test -x /usr/local/zed/tools/ZED_Diagnostic && /usr/local/zed/tools/ZED_Diagnostic -c || true
+echo
+echo "ROS 2 ZED packages"
+bash --noprofile --norc -c '
+    source /opt/ros/humble/setup.bash 2>/dev/null || exit 0
+    ros2 pkg list | grep -E "^(zed|stereo)" || true
+'

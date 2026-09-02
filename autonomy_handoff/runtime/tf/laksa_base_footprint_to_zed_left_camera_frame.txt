@@ -1,0 +1,52 @@
+[INFO] [1788384090.509149792] [tf2_echo]: Waiting for transform laksa_base_footprint ->  zed_left_camera_frame: Invalid frame ID "laksa_base_footprint" passed to canTransform argument target_frame - frame does not exist
+At time 1788384091.239645744
+- Translation: [0.099, 0.060, 0.156]
+- Rotation: in Quaternion (xyzw) [0.000, 0.035, 0.000, 0.999]
+- Rotation: in RPY (radian) [0.000, 0.070, 0.000]
+- Rotation: in RPY (degree) [0.000, 4.000, 0.000]
+- Matrix:
+  0.998  0.000  0.070  0.099
+  0.000  1.000  0.000  0.060
+ -0.070  0.000  0.998  0.156
+  0.000  0.000  0.000  1.000
+At time 1788384092.239689744
+- Translation: [0.099, 0.060, 0.156]
+- Rotation: in Quaternion (xyzw) [0.000, 0.035, 0.000, 0.999]
+- Rotation: in RPY (radian) [0.000, 0.070, 0.000]
+- Rotation: in RPY (degree) [0.000, 4.000, 0.000]
+- Matrix:
+  0.998  0.000  0.070  0.099
+  0.000  1.000  0.000  0.060
+ -0.070  0.000  0.998  0.156
+  0.000  0.000  0.000  1.000
+At time 1788384093.206424744
+- Translation: [0.099, 0.060, 0.156]
+- Rotation: in Quaternion (xyzw) [0.000, 0.035, 0.000, 0.999]
+- Rotation: in RPY (radian) [0.000, 0.070, 0.000]
+- Rotation: in RPY (degree) [0.000, 4.000, 0.000]
+- Matrix:
+  0.998  0.000  0.070  0.099
+  0.000  1.000  0.000  0.060
+ -0.070  0.000  0.998  0.156
+  0.000  0.000  0.000  1.000
+At time 1788384094.206419744
+- Translation: [0.099, 0.060, 0.156]
+- Rotation: in Quaternion (xyzw) [0.000, 0.035, 0.000, 0.999]
+- Rotation: in RPY (radian) [0.000, 0.070, 0.000]
+- Rotation: in RPY (degree) [0.000, 4.000, 0.000]
+- Matrix:
+  0.998  0.000  0.070  0.099
+  0.000  1.000  0.000  0.060
+ -0.070  0.000  0.998  0.156
+  0.000  0.000  0.000  1.000
+At time 1788384094.406889744
+- Translation: [0.099, 0.060, 0.156]
+- Rotation: in Quaternion (xyzw) [0.000, 0.035, 0.000, 0.999]
+- Rotation: in RPY (radian) [0.000, 0.070, 0.000]
+- Rotation: in RPY (degree) [0.000, 4.000, 0.000]
+- Matrix:
+  0.998  0.000  0.070  0.099
+  0.000  1.000  0.000  0.060
+ -0.070  0.000  0.998  0.156
+  0.000  0.000  0.000  1.000
+[INFO] [1788384096.043320320] [rclcpp]: signal_handler(signum=15)

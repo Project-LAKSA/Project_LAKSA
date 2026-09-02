@@ -1,0 +1,5 @@
+ExecStart={ path=/usr/local/lib/laksa/laksa-zed-camera ; argv[]=/usr/local/lib/laksa/laksa-zed-camera ; ignore_errors=no ; start_time=[Thu 2026-09-03 05:12:11 CST] ; stop_time=[n/a] ; pid=3790669 ; code=(null) ; status=0/0 }
+Id=laksa-zed-camera.service
+ActiveState=active
+SubState=running
+FragmentPath=/etc/systemd/system/laksa-zed-camera.service

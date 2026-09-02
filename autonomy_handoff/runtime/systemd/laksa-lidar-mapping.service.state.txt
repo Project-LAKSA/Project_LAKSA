@@ -1,0 +1,5 @@
+ExecStart={ path=/usr/local/lib/laksa/laksa-lidar-mapping ; argv[]=/usr/local/lib/laksa/laksa-lidar-mapping ; ignore_errors=no ; start_time=[Thu 2026-09-03 04:59:13 CST] ; stop_time=[n/a] ; pid=3755052 ; code=(null) ; status=0/0 }
+Id=laksa-lidar-mapping.service
+ActiveState=active
+SubState=running
+FragmentPath=/etc/systemd/system/laksa-lidar-mapping.service

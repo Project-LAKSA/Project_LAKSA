@@ -1,0 +1,578 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index a300b1dcf05b0c2d5071ce49af080c92f8b7b485..31cb6dcb5c09216900cfd5339428a465de66c8cc 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -184,6 +184,21 @@ if(BUILD_TESTING)
+     nav_msgs
+   )
+ 
++  ament_add_gtest(test_completion_stability
++    test/test_completion_stability.cpp
++  )
++  target_link_libraries(test_completion_stability
++    ${PROJECT_NAME}_core
++  )
++  target_include_directories(test_completion_stability PRIVATE
++    ${CMAKE_CURRENT_SOURCE_DIR}/include
++  )
++  ament_target_dependencies(test_completion_stability
++    action_msgs
++    geometry_msgs
++    nav_msgs
++  )
++
+   ament_add_gtest(test_preemption_flow
+     test/test_preemption_flow.cpp
+   )
+diff --git a/README.md b/README.md
+index 20f90cafca96414f5eb122df49d456c2dccd8849..e31fd6e0476f8ef9dee492eab43b159cdeb83e2a 100644
+--- a/README.md
++++ b/README.md
+@@ -1501,7 +1501,7 @@ ros2 launch frontier_exploration_ros2 frontier_explorer.launch.py \
+ 
+ ### Completion Event Consumption
+ 
+-When `completion_event_enabled` is `true`, the explorer publishes one `std_msgs/msg/Empty` message when frontier exhaustion is observed.
++When `completion_event_enabled` is `true`, the explorer publishes one `std_msgs/msg/Empty` message after frontier exhaustion remains stable for both `completion_stability_sec` and `completion_min_empty_map_generations`. Repeated scheduler calls for the same raw map do not add evidence. If the known map area grows by at least `completion_known_area_growth_ratio` during verification, the evidence window restarts because SLAM is still revealing the environment.
+ 
+ Completion event QoS:
+ 
+@@ -1737,6 +1737,9 @@ The packaged launch path uses `config/params.yaml` as its baseline parameter fil
+ | `post_goal_settle_enabled`                  | `bool`   | `true`  | Enables a fixed post-goal cooldown before sending the next normal frontier goal                          | Immediate reselection/preemption replacements bypass this cooldown; packaged configs override this to `false`                                                                                                                                                                                                                |
+ | `post_goal_min_settle`                      | `double` | `0.80`  | Minimum time to wait after a normal frontier goal result                                                 | Used only when `post_goal_settle_enabled=true`                                                                                                                                                                                                                                                                               |
+ | `map_processing_rate_hz`                    | `double` | `1.0`   | Maximum `/map` processing rate for decision-map refresh and normal frontier scheduling                   | Set `<= 0.0` to process every map immediately; on first launch the node samples startup `/map` timing and caps the effective rate so it does not exceed the observed source rate; active-goal urgent preemption/completion checks can still react immediately without eagerly refreshing the decision map                    |
++| `completion_stability_sec`                  | `double` | `20.0`  | Minimum no-frontier stability time before completion                                                     | Combined with the distinct raw-map generation requirement                                                                                                                                                                                                                                                                   |
++| `completion_min_empty_map_generations`      | `int`    | `10`    | Minimum distinct raw-map generations with no frontiers                                                   | Repeated callbacks for one map generation count once                                                                                                                                                                                                                                                                        |
++| `completion_known_area_growth_ratio`        | `double` | `0.01`  | Known-area growth that restarts completion verification                                                  | Ratio is measured from the known-cell count at the start of the current evidence window                                                                                                                                                                                                                                     |
+ | `return_to_start_on_complete`               | `bool`   | `true`  | Returns to the recorded start pose after frontier exhaustion                                             | Sends a regular navigation goal back to the saved start pose; packaged configs override this to `false`                                                                                                                                                                                                                      |
+ | `all_frontiers_suppressed_behavior`         | `string` | `stay`  | Behavior used when frontiers exist but all detected candidates are temporarily suppressed                | Supported values: `stay`, `return_to_start`; other values are normalized to `stay`; packaged configs override this to `return_to_start`                                                                                                                                                                                      |
+ 
+@@ -1846,6 +1849,9 @@ frontier_explorer:
+ 
+     # Publish a completion event so product-specific integrations can react outside the package.
+     completion_event_enabled: true
++    completion_stability_sec: 20.0
++    completion_min_empty_map_generations: 10
++    completion_known_area_growth_ratio: 0.01
+ 
+     # Allow a farther frontier fallback until the first successful frontier.
+     # Useful if you have a very low range LiDAR or Depth sensor.
+diff --git a/config/params.yaml b/config/params.yaml
+index feaf55665e06b601a000c53a2764a92699b87824..443d91d356b657a4f3eb7897083c6d51d8f07791 100644
+--- a/config/params.yaml
++++ b/config/params.yaml
+@@ -69,6 +69,13 @@ frontier_explorer:
+     # Publish a completion event so product-specific integrations can react outside the package.
+     completion_event_enabled: true
+ 
++    # Require an empty frontier result to remain stable before declaring the
++    # live SLAM map complete. Only distinct raw-map generations are counted.
++    completion_stability_sec: 20.0
++    completion_min_empty_map_generations: 10
++    # Restart the evidence window if known map area grows by 1% or more.
++    completion_known_area_growth_ratio: 0.01
++
+     # Allow a farther frontier fallback until the first successful frontier.
+     # Useful if you have a very low range LiDAR or Depth sensor.
+     escape_enabled: true
+@@ -254,4 +261,3 @@ frontier_explorer:
+ 
+     # Maximum number of active suppressed regions kept in memory.
+     frontier_suppression_max_regions: 64
+-
+diff --git a/include/frontier_exploration_ros2/frontier_explorer_core.hpp b/include/frontier_exploration_ros2/frontier_explorer_core.hpp
+index 1db58e8fcb0582fa9f8a9f07160c4341179a0718..e6635639a83bdcfa05b88518695d32820beefd7b 100644
+--- a/include/frontier_exploration_ros2/frontier_explorer_core.hpp
++++ b/include/frontier_exploration_ros2/frontier_explorer_core.hpp
+@@ -111,6 +111,11 @@ struct FrontierExplorerCoreParams
+   bool post_goal_settle_enabled{true};
+   double post_goal_min_settle{0.80};
+   double map_processing_rate_hz{1.0};
++  // Frontier exhaustion must remain stable across time and distinct raw-map
++  // generations before it can terminate a live SLAM exploration session.
++  double completion_stability_sec{20.0};
++  int completion_min_empty_map_generations{10};
++  double completion_known_area_growth_ratio{0.01};
+   bool return_to_start_on_complete{true};
+   std::string all_frontiers_suppressed_behavior{"stay"};
+   bool frontier_suppression_enabled{false};
+@@ -420,6 +425,10 @@ public:
+   bool no_frontiers_reported{false};
+   bool no_reachable_frontier_reported{false};
+   bool all_frontiers_suppressed_reported{false};
++  std::optional<int64_t> no_frontier_since_ns;
++  std::optional<int> last_empty_map_generation;
++  int consecutive_empty_map_generations{0};
++  std::size_t completion_known_cells_baseline{0U};
+ 
+   // Post-goal settle and map-refresh gating state.
+   bool awaiting_map_refresh{false};
+@@ -467,6 +476,9 @@ private:
+   std::unordered_map<int, DispatchContext> dispatch_contexts;
+ 
+   bool debug_outputs_enabled() const;
++  void reset_completion_verification();
++  [[nodiscard]] std::size_t known_map_cell_count() const;
++  bool completion_verification_ready();
+   void throttled_debug(const std::string & message);
+   void log_frontier_snapshot_stats(
+     const FrontierSequence & frontiers,
+diff --git a/src/frontier_explorer_core_dispatch.cpp b/src/frontier_explorer_core_dispatch.cpp
+index ed1282be848dc8463ece58fb88412afe0a799e5e..43915fef59d732acf2a723c813a67de15d2347fa 100644
+--- a/src/frontier_explorer_core_dispatch.cpp
++++ b/src/frontier_explorer_core_dispatch.cpp
+@@ -29,6 +29,82 @@ limitations under the License.
+ namespace frontier_exploration_ros2
+ {
+ 
++void FrontierExplorerCore::reset_completion_verification()
++{
++  no_frontier_since_ns.reset();
++  last_empty_map_generation.reset();
++  consecutive_empty_map_generations = 0;
++  completion_known_cells_baseline = 0U;
++  no_frontiers_reported = false;
++}
++
++std::size_t FrontierExplorerCore::known_map_cell_count() const
++{
++  if (!map.has_value()) {
++    return 0U;
++  }
++
++  const auto & cells = map->map().data;
++  return static_cast<std::size_t>(std::count_if(
++      cells.begin(),
++      cells.end(),
++      [](int8_t value) {
++        return value != static_cast<int8_t>(OccupancyGrid2d::CostValues::NoInformation);
++      }));
++}
++
++bool FrontierExplorerCore::completion_verification_ready()
++{
++  const int64_t now_ns = callbacks.now_ns();
++  const std::size_t known_cells = known_map_cell_count();
++
++  if (!no_frontier_since_ns.has_value()) {
++    no_frontier_since_ns = now_ns;
++    last_empty_map_generation = map_generation;
++    consecutive_empty_map_generations = 1;
++    completion_known_cells_baseline = known_cells;
++    // A zero-duration, single-generation policy explicitly disables the
++    // debounce and preserves the package's historical immediate completion.
++    return params.completion_stability_sec <= 0.0 &&
++           params.completion_min_empty_map_generations <= 1;
++  }
++
++  if (!last_empty_map_generation.has_value() ||
++    *last_empty_map_generation != map_generation)
++  {
++    const std::size_t growth_cells = known_cells > completion_known_cells_baseline ?
++      known_cells - completion_known_cells_baseline : 0U;
++    const double growth_ratio = completion_known_cells_baseline == 0U ?
++      (growth_cells > 0U ? 1.0 : 0.0) :
++      static_cast<double>(growth_cells) /
++      static_cast<double>(completion_known_cells_baseline);
++
++    if (
++      growth_cells > 0U &&
++      growth_ratio >= params.completion_known_area_growth_ratio)
++    {
++      // A growing known region means SLAM is still revealing the environment.
++      // Start a new completion evidence window from this map generation.
++      no_frontier_since_ns = now_ns;
++      last_empty_map_generation = map_generation;
++      consecutive_empty_map_generations = 1;
++      completion_known_cells_baseline = known_cells;
++      callbacks.log_info(
++        "Known map area grew during completion verification; restarting the stability window");
++      return false;
++    }
++
++    last_empty_map_generation = map_generation;
++    consecutive_empty_map_generations += 1;
++  }
++
++  const double stable_seconds = std::max(
++    0.0,
++    static_cast<double>(now_ns - *no_frontier_since_ns) / 1e9);
++  return stable_seconds >= params.completion_stability_sec &&
++         consecutive_empty_map_generations >= params.completion_min_empty_map_generations;
++}
++
+ void FrontierExplorerCore::try_send_next_goal()
+ {
+   // Main scheduler entrypoint: exits early unless maps, pose, and lifecycle gates are ready.
+@@ -83,6 +159,9 @@ void FrontierExplorerCore::try_send_next_goal()
+   }
+ 
+   const FrontierSequence & frontiers = snapshot.frontiers;
++  if (!frontiers.empty()) {
++    reset_completion_verification();
++  }
+   FrontierSequence filtered_frontiers = filter_frontiers_for_suppression(frontiers);
+   bool escape_mode_active = false;
+   if (filtered_frontiers.empty() && !frontiers.empty()) {
+@@ -107,6 +186,9 @@ void FrontierExplorerCore::try_send_next_goal()
+     }
+ 
+     FrontierSequence escape_filtered_frontiers = filter_frontiers_for_suppression(escape_snapshot.frontiers);
++    if (!escape_snapshot.frontiers.empty()) {
++      reset_completion_verification();
++    }
+     if (escape_filtered_frontiers.empty() && !escape_snapshot.frontiers.empty()) {
+       no_frontiers_reported = false;
+       no_reachable_frontier_reported = false;
+@@ -135,17 +217,21 @@ void FrontierExplorerCore::try_send_next_goal()
+     no_reachable_frontier_reported = false;
+     publish_frontier_markers(filtered_frontiers);
+ 
+-    if (!no_frontiers_reported) {
+-      // Log once per no-frontier streak to avoid repetitive output.
+-      callbacks.log_info("No more frontiers found");
+-      no_frontiers_reported = true;
++    if (!completion_verification_ready()) {
++      if (!no_frontiers_reported) {
++        callbacks.log_info(
++          "No frontiers found; verifying completion across stable map updates");
++        no_frontiers_reported = true;
++      }
++      return;
+     }
+ 
++    callbacks.log_info("No more frontiers found after stable completion verification");
+     handle_exploration_complete(*current_pose);
+     return;
+   }
+ 
+-  no_frontiers_reported = false;
++  reset_completion_verification();
+   auto selection = select_frontier(filtered_frontiers, *current_pose);
+   if (escape_mode_active && selection.frontier.has_value()) {
+     selection.mode = "escape";
+@@ -182,7 +268,7 @@ void FrontierExplorerCore::reset_exploration_runtime_state(bool clear_maps)
+   clear_post_goal_wait_state();
+   clear_active_goal_progress_state();
+ 
+-  no_frontiers_reported = false;
++  reset_completion_verification();
+   no_reachable_frontier_reported = false;
+   all_frontiers_suppressed_reported = false;
+   return_to_start_started = false;
+diff --git a/src/frontier_explorer_core_init.cpp b/src/frontier_explorer_core_init.cpp
+index 594f0fcccef55b7d4aa9d14b91323c9c3bbd1c63..bef5d4bee608522cc2c5e07dda26b6e4081a9dde 100644
+--- a/src/frontier_explorer_core_init.cpp
++++ b/src/frontier_explorer_core_init.cpp
+@@ -36,6 +36,14 @@ FrontierExplorerCore::FrontierExplorerCore(
+     params.all_frontiers_suppressed_behavior);
+   params.post_goal_min_settle = std::max(0.0, params.post_goal_min_settle);
+   params.map_processing_rate_hz = std::max(0.0, params.map_processing_rate_hz);
++  params.completion_stability_sec = std::max(0.0, params.completion_stability_sec);
++  params.completion_min_empty_map_generations = std::max(
++    1,
++    params.completion_min_empty_map_generations);
++  params.completion_known_area_growth_ratio = std::clamp(
++    params.completion_known_area_growth_ratio,
++    0.0,
++    1.0);
+   params.frontier_suppression_attempt_threshold = std::max(
+     1,
+     params.frontier_suppression_attempt_threshold);
+diff --git a/src/frontier_explorer_node.cpp b/src/frontier_explorer_node.cpp
+index 06b99658511102fb2df1ae8b779116e2f0837514..e72da666a7036b16ef557c807bcc4a7854be084a 100644
+--- a/src/frontier_explorer_node.cpp
++++ b/src/frontier_explorer_node.cpp
+@@ -133,6 +133,9 @@ FrontierExplorerNode::FrontierExplorerNode(const rclcpp::NodeOptions & options)
+   this->declare_parameter<bool>("post_goal_settle_enabled", true);
+   this->declare_parameter<double>("post_goal_min_settle", 0.80);
+   this->declare_parameter<double>("map_processing_rate_hz", 1.0);
++  this->declare_parameter<double>("completion_stability_sec", 20.0);
++  this->declare_parameter<int>("completion_min_empty_map_generations", 10);
++  this->declare_parameter<double>("completion_known_area_growth_ratio", 0.01);
+   this->declare_parameter<bool>("return_to_start_on_complete", true);
+   this->declare_parameter<std::string>("all_frontiers_suppressed_behavior", "stay");
+   this->declare_parameter<bool>("frontier_suppression_enabled", false);
+@@ -214,6 +217,12 @@ FrontierExplorerNode::FrontierExplorerNode(const rclcpp::NodeOptions & options)
+   params_.post_goal_settle_enabled = this->get_parameter("post_goal_settle_enabled").as_bool();
+   params_.post_goal_min_settle = this->get_parameter("post_goal_min_settle").as_double();
+   params_.map_processing_rate_hz = this->get_parameter("map_processing_rate_hz").as_double();
++  params_.completion_stability_sec = this->get_parameter(
++    "completion_stability_sec").as_double();
++  params_.completion_min_empty_map_generations = this->get_parameter(
++    "completion_min_empty_map_generations").as_int();
++  params_.completion_known_area_growth_ratio = this->get_parameter(
++    "completion_known_area_growth_ratio").as_double();
+   params_.return_to_start_on_complete = this->get_parameter("return_to_start_on_complete").as_bool();
+   params_.all_frontiers_suppressed_behavior = this->get_parameter(
+     "all_frontiers_suppressed_behavior").as_string();
+diff --git a/test/test_completion_stability.cpp b/test/test_completion_stability.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..6a2f1398c238a3d4f7128f6690844aed89c03a00
+--- /dev/null
++++ b/test/test_completion_stability.cpp
+@@ -0,0 +1,221 @@
++/*
++Copyright 2026 Mert Güler
++
++Licensed under the Apache License, Version 2.0 (the "License");
++you may not use this file except in compliance with the License.
++You may obtain a copy of the License at
++
++    http://www.apache.org/licenses/LICENSE-2.0
++
++Unless required by applicable law or agreed to in writing, software
++distributed under the License is distributed on an "AS IS" BASIS,
++WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++See the License for the specific language governing permissions and
++limitations under the License.
++*/
++
++#include <gtest/gtest.h>
++
++#include <geometry_msgs/msg/pose.hpp>
++#include <nav_msgs/msg/occupancy_grid.hpp>
++
++#include <cstdint>
++#include <memory>
++#include <optional>
++
++#include "frontier_exploration_ros2/frontier_explorer_core.hpp"
++
++namespace frontier_exploration_ros2
++{
++namespace
++{
++
++nav_msgs::msg::OccupancyGrid build_grid(int known_cells)
++{
++  nav_msgs::msg::OccupancyGrid msg;
++  msg.info.width = 20U;
++  msg.info.height = 10U;
++  msg.info.resolution = 1.0;
++  msg.info.origin.orientation.w = 1.0;
++  msg.data.assign(200U, static_cast<int8_t>(-1));
++  for (int index = 0; index < known_cells; ++index) {
++    msg.data[static_cast<std::size_t>(index)] = 0;
++  }
++  return msg;
++}
++
++struct CompletionHarness
++{
++  std::shared_ptr<int64_t> now_ns;
++  std::shared_ptr<int> completion_calls;
++  std::shared_ptr<bool> report_frontier;
++  std::unique_ptr<FrontierExplorerCore> core;
++};
++
++CompletionHarness make_completion_harness(int known_cells = 100)
++{
++  CompletionHarness harness;
++  harness.now_ns = std::make_shared<int64_t>(0);
++  harness.completion_calls = std::make_shared<int>(0);
++  harness.report_frontier = std::make_shared<bool>(false);
++
++  FrontierExplorerCoreParams params;
++  params.frontier_map_optimization_enabled = false;
++  params.return_to_start_on_complete = false;
++  params.escape_enabled = false;
++  params.completion_stability_sec = 20.0;
++  params.completion_min_empty_map_generations = 10;
++  params.completion_known_area_growth_ratio = 0.01;
++
++  FrontierExplorerCoreCallbacks callbacks;
++  callbacks.now_ns = [now_ns = harness.now_ns]() {return *now_ns;};
++  callbacks.get_current_pose = []() {
++      geometry_msgs::msg::Pose pose;
++      pose.position.x = 2.0;
++      pose.position.y = 2.0;
++      pose.orientation.w = 1.0;
++      return std::optional<geometry_msgs::msg::Pose>(pose);
++    };
++  callbacks.wait_for_action_server = [](double) {return false;};
++  callbacks.on_exploration_complete = [calls = harness.completion_calls]() {
++      *calls += 1;
++    };
++  callbacks.log_debug = [](const std::string &) {};
++  callbacks.log_info = [](const std::string &) {};
++  callbacks.log_warn = [](const std::string &) {};
++  callbacks.log_error = [](const std::string &) {};
++  callbacks.frontier_search = [report_frontier = harness.report_frontier](
++    const geometry_msgs::msg::Pose &,
++    const OccupancyGrid2d &,
++    const OccupancyGrid2d &,
++    const std::optional<OccupancyGrid2d> &,
++    double,
++    bool)
++    {
++      FrontierSearchResult result;
++      result.robot_map_cell = {2, 2};
++      if (*report_frontier) {
++        result.frontiers = {FrontierCandidate{{4.0, 4.0}, {4.0, 4.0}, 8}};
++      }
++      return result;
++    };
++
++  harness.core = std::make_unique<FrontierExplorerCore>(params, callbacks);
++  harness.core->map = OccupancyGrid2d(build_grid(known_cells));
++  harness.core->costmap = OccupancyGrid2d(build_grid(200));
++  harness.core->map_generation = 1;
++  harness.core->costmap_generation = 1;
++  return harness;
++}
++
++void observe_generation(CompletionHarness & harness, int generation, int64_t now_ns)
++{
++  harness.core->map_generation = generation;
++  *harness.now_ns = now_ns;
++  harness.core->try_send_next_goal();
++}
++
++TEST(CompletionStabilityTests, RepeatedSchedulerCallsForOneMapCountOnce)
++{
++  auto harness = make_completion_harness();
++
++  observe_generation(harness, 1, 0);
++  observe_generation(harness, 1, 25'000'000'000);
++  observe_generation(harness, 1, 60'000'000'000);
++
++  EXPECT_EQ(*harness.completion_calls, 0);
++  EXPECT_EQ(harness.core->consecutive_empty_map_generations, 1);
++  EXPECT_FALSE(harness.core->return_to_start_completed);
++}
++
++TEST(CompletionStabilityTests, RequiresTenDistinctMapsAndTwentySeconds)
++{
++  auto harness = make_completion_harness();
++
++  for (int generation = 1; generation <= 9; ++generation) {
++    observe_generation(
++      harness,
++      generation,
++      static_cast<int64_t>(generation - 1) * 2'000'000'000);
++  }
++  EXPECT_EQ(*harness.completion_calls, 0);
++
++  observe_generation(harness, 10, 19'000'000'000);
++  EXPECT_EQ(harness.core->consecutive_empty_map_generations, 10);
++  EXPECT_EQ(*harness.completion_calls, 0);
++
++  // The same generation may satisfy the time half of the conjunction, but it
++  // does not add another map sample.
++  observe_generation(harness, 10, 20'000'000'000);
++  EXPECT_EQ(*harness.completion_calls, 1);
++  EXPECT_TRUE(harness.core->return_to_start_completed);
++}
++
++TEST(CompletionStabilityTests, AFrontierResetsTransientEmptyEvidence)
++{
++  auto harness = make_completion_harness();
++
++  observe_generation(harness, 1, 0);
++  *harness.report_frontier = true;
++  harness.core->frontier_snapshot.reset();
++  observe_generation(harness, 2, 5'000'000'000);
++
++  *harness.report_frontier = false;
++  harness.core->frontier_snapshot.reset();
++  observe_generation(harness, 3, 30'000'000'000);
++  observe_generation(harness, 3, 60'000'000'000);
++
++  EXPECT_EQ(*harness.completion_calls, 0);
++  EXPECT_EQ(harness.core->consecutive_empty_map_generations, 1);
++}
++
++TEST(CompletionStabilityTests, KnownAreaGrowthRestartsEvidenceWindow)
++{
++  auto harness = make_completion_harness(100);
++
++  observe_generation(harness, 1, 0);
++  // Exactly one percent growth meets the configured reset threshold.
++  harness.core->map = OccupancyGrid2d(build_grid(101));
++  harness.core->decision_map_dirty = true;
++  observe_generation(harness, 2, 21'000'000'000);
++
++  EXPECT_EQ(*harness.completion_calls, 0);
++  EXPECT_EQ(harness.core->consecutive_empty_map_generations, 1);
++  EXPECT_EQ(harness.core->completion_known_cells_baseline, 101U);
++
++  for (int generation = 3; generation <= 11; ++generation) {
++    observe_generation(
++      harness,
++      generation,
++      21'000'000'000 + static_cast<int64_t>(generation - 2) * 2'000'000'000);
++  }
++  EXPECT_EQ(*harness.completion_calls, 0);
++
++  observe_generation(harness, 12, 41'000'000'000);
++  EXPECT_EQ(*harness.completion_calls, 1);
++}
++
++TEST(CompletionStabilityTests, RestartClearsPriorEvidence)
++{
++  auto harness = make_completion_harness();
++  for (int generation = 1; generation <= 9; ++generation) {
++    observe_generation(
++      harness,
++      generation,
++      static_cast<int64_t>(generation - 1) * 2'000'000'000);
++  }
++
++  harness.core->start_exploration_session();
++  harness.core->map = OccupancyGrid2d(build_grid(100));
++  harness.core->costmap = OccupancyGrid2d(build_grid(200));
++  harness.core->map_generation = 1;
++  harness.core->costmap_generation = 1;
++  observe_generation(harness, 1, 40'000'000'000);
++  observe_generation(harness, 1, 70'000'000'000);
++
++  EXPECT_EQ(*harness.completion_calls, 0);
++  EXPECT_EQ(harness.core->consecutive_empty_map_generations, 1);
++}
++
++}  // namespace
++}  // namespace frontier_exploration_ros2
+diff --git a/test/test_frontier_snapshot_and_search.cpp b/test/test_frontier_snapshot_and_search.cpp
+index 62060fa3b7e419ab8a6dacb54d2a989219bf1518..d32bc8bc7ae7a1644b5d6bc15b0afc0aefeefd27 100644
+--- a/test/test_frontier_snapshot_and_search.cpp
++++ b/test/test_frontier_snapshot_and_search.cpp
+@@ -368,6 +368,8 @@ TEST(FrontierSearchTests, ExplorationCompleteCallbackRunsWhenNoFrontiersRemain)
+ {
+   auto core = make_snapshot_core();
+   core->params.return_to_start_on_complete = false;
++  core->params.completion_stability_sec = 0.0;
++  core->params.completion_min_empty_map_generations = 1;
+ 
+   int completion_calls = 0;
+   int frontier_search_calls = 0;
+diff --git a/test/test_frontier_suppression.cpp b/test/test_frontier_suppression.cpp
+index 61bdbb1d11dee07600df673ed56e4829eb93dc57..10efd070d820deffa1a6b6f13ccbbfbc49de0ba8 100644
+--- a/test/test_frontier_suppression.cpp
++++ b/test/test_frontier_suppression.cpp
+@@ -250,6 +250,11 @@ TEST(FrontierSuppressionCoreTests, RejectedFrontierBecomesSuppressedAndStopsRedi
+   core->try_send_next_goal();
+   EXPECT_EQ(dispatch_calls, 1);
+   EXPECT_FALSE(info_logs.empty());
++  // Suppressed candidates still exist in the raw frontier set. They must not
++  // be mistaken for evidence that the map is completely explored.
++  EXPECT_FALSE(core->no_frontier_since_ns.has_value());
++  EXPECT_EQ(core->consecutive_empty_map_generations, 0);
++  EXPECT_FALSE(core->return_to_start_completed);
+ }
+ 
+ TEST(FrontierSuppressionCoreTests, NoProgressTimeoutCanceledGoalCreatesSuppressedRegion)
+diff --git a/test/test_preemption_flow.cpp b/test/test_preemption_flow.cpp
+index c08bc8a21306ed6f05c58938d2bda2a652944880..6560eeb39232735b2659c66f4ead52c084b9386f 100644
+--- a/test/test_preemption_flow.cpp
++++ b/test/test_preemption_flow.cpp
+@@ -1277,6 +1277,8 @@ TEST(PreemptionFlowTests, CompletionDistanceCancelsWithoutReplacementAndAvoidsRe
+   core->params.goal_preemption_enabled = false;
+   core->params.goal_skip_on_blocked_goal = false;
+   core->params.goal_preemption_complete_if_within_m = 0.25;
++  core->params.completion_stability_sec = 0.0;
++  core->params.completion_min_empty_map_generations = 1;
+   core->replacement_required_hits = 1;
+   core->active_goal_frontier = FrontierCandidate{{4.0, 5.0}, {3.0, 5.0}, 8};
+   core->active_goal_frontiers = {*core->active_goal_frontier};
+

@@ -1,0 +1,15 @@
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <!-- Planning failures stop safely. Automatic reverse recovery is disabled
+         until localization under wheel slip has been validated outdoors. -->
+    <PipelineSequence name="NavigateWithSafeReplanning">
+      <!-- Preserve an Ackermann maneuver long enough to execute it. Frequent
+           one-hertz global replanning previously produced path churn and
+           repeated forward/reverse cusps while the live map expanded. -->
+      <RateController hz="0.2">
+        <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+      </RateController>
+      <FollowPath path="{path}" controller_id="FollowPath"/>
+    </PipelineSequence>
+  </BehaviorTree>
+</root>

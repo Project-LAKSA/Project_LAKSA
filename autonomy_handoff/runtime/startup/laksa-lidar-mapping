@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+readonly lidar_device="${LAKSA_LIDAR_DEVICE:-/dev/laksa_lidar}"
+readonly ros_domain_id="${ROS_DOMAIN_ID:-0}"
+readonly retry_seconds="${LAKSA_LIDAR_RETRY_SECONDS:-2}"
+readonly mapping_mode="${LAKSA_MAPPING_MODE:-2d}"
+readonly zed_mount_file="${LAKSA_ZED_MOUNT_FILE:-}"
+
+while [[ ! -c "${lidar_device}" ]]; do
+    echo "Waiting for ${lidar_device}"
+    sleep "${retry_seconds}"
+done
+
+set +u
+source /opt/ros/humble/setup.bash
+if [[ -f /home/ubuntu/zed_ws/install/setup.bash ]]; then
+    source /home/ubuntu/zed_ws/install/setup.bash
+fi
+source /home/ubuntu/third_party/third_party_ws/install/setup.bash
+source /home/ubuntu/laksa_ws/install/setup.bash
+set -u
+
+export ROS_DOMAIN_ID="${ros_domain_id}"
+
+echo "Starting LAKSA LiDAR mapping on ${lidar_device} in ROS domain ${ros_domain_id}"
+case "${mapping_mode}" in
+    2d)
+        exec ros2 launch laksa_bringup lidar_mapping.launch.py \
+            serial_port:="${lidar_device}"
+        ;;
+    3d)
+        launch_arguments=(serial_port:="${lidar_device}")
+        if [[ -n "${zed_mount_file}" ]]; then
+            launch_arguments+=(camera_mount_file:="${zed_mount_file}")
+        fi
+        # Launch immediately so LiDAR scanning and its watchdog stay available
+        # even while the independent ZED service is reconnecting. RTAB-Map
+        # automatically resumes synchronized RGB-D processing when ZED data
+        # returns.
+        echo "Starting calibrated ZED/RPLIDAR RTAB-Map mode"
+        exec ros2 launch laksa_bringup laksa_3d_mapping.launch.py \
+            "${launch_arguments[@]}"
+        ;;
+    *)
+        echo "Unsupported LAKSA_MAPPING_MODE=${mapping_mode}; expected 2d or 3d" >&2
+        exit 64
+        ;;
+esac

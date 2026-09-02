@@ -1,0 +1,16 @@
+/**:
+  ros__parameters:
+    filter1:
+      name: vehicle_self_filter
+      type: laser_filters/LaserScanBoxFilter
+      params:
+        # Remove returns from the chassis, electronics, wiring, and bumpers.
+        # Coordinates are expressed in laksa_base_footprint.
+        box_frame: laksa_base_footprint
+        min_x: -0.18
+        max_x: 0.45
+        min_y: -0.21
+        max_y: 0.21
+        min_z: -0.05
+        max_z: 0.25
+        invert: false

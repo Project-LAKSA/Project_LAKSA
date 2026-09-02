@@ -1,0 +1,802 @@
+--- repository/.pytest_cache/.gitignore
++++ active/.pytest_cache/.gitignore
+@@ -0,0 +1,2 @@
++# Created by pytest automatically.
++*
+--- repository/.pytest_cache/CACHEDIR.TAG
++++ active/.pytest_cache/CACHEDIR.TAG
+@@ -0,0 +1,4 @@
++Signature: 8a477f597d28d172789f06886806bc55
++# This file is a cache directory tag created by pytest.
++# For information about cache directory tags, see:
++#	http://www.bford.info/cachedir/spec.html
+--- repository/.pytest_cache/README.md
++++ active/.pytest_cache/README.md
+@@ -0,0 +1,8 @@
++# pytest cache directory #
++
++This directory contains data from the pytest's cache plugin,
++which provides the `--lf` and `--ff` options, as well as the `cache` fixture.
++
++**Do not** commit this to version control.
++
++See [the docs](https://docs.pytest.org/en/stable/cache.html) for more information.
+--- repository/.pytest_cache/v/cache/nodeids
++++ active/.pytest_cache/v/cache/nodeids
+@@ -0,0 +1,5 @@
++[
++  "test/test_zed_configuration.py::ZedConfigurationTest::test_launch_file_parses",
++  "test/test_zed_configuration.py::ZedConfigurationTest::test_mount_template_is_locked",
++  "test/test_zed_configuration.py::ZedConfigurationTest::test_zed_profile_has_deterministic_robot_limits"
++]--- repository/.pytest_cache/v/cache/stepwise
++++ active/.pytest_cache/v/cache/stepwise
+@@ -0,0 +1 @@
++[]--- repository/CMakeLists.txt.orig
++++ active/CMakeLists.txt.orig
+@@ -1,22 +0,0 @@
+-cmake_minimum_required(VERSION 3.8)
+-project(laksa_bringup)
+-
+-find_package(ament_cmake REQUIRED)
+-
+-install(PROGRAMS
+-  scripts/drive_supervisor_node.py
+-  scripts/dashboard_node.py
+-  scripts/laksa_control_math.py
+-  scripts/lidar_cruise_math.py
+-  scripts/lidar_cruise_node.py
+-  scripts/lidar_rollout_core.py
+-  scripts/lidar_watchdog_node.py
+-  scripts/steering_calibration_node.py
+-  DESTINATION lib/${PROJECT_NAME}
+-)
+-
+-install(DIRECTORY config launch web
+-  DESTINATION share/${PROJECT_NAME}
+-)
+-
+-ament_package()
+--- repository/config/nav2_ackermann.yaml.orig
++++ active/config/nav2_ackermann.yaml.orig
+@@ -1,285 +0,0 @@
+-controller_server:
+-  ros__parameters:
+-    use_sim_time: false
+-    # Ten hertz leaves enough CPU for SLAM and the planner on the Orin Nano.
+-    # The previous 20 Hz / 1800 sample combination repeatedly missed its loop.
+-    controller_frequency: 10.0
+-    min_x_velocity_threshold: 0.001
+-    min_y_velocity_threshold: 0.001
+-    min_theta_velocity_threshold: 0.001
+-    failure_tolerance: 0.5
+-    odom_topic: /laksa/odom
+-    speed_limit_topic: /speed_limit
+-    progress_checker_plugin: progress_checker
+-    goal_checker_plugins: [goal_checker]
+-    controller_plugins: [FollowPath]
+-    progress_checker:
+-      plugin: nav2_controller::SimpleProgressChecker
+-      required_movement_radius: 0.12
+-      movement_time_allowance: 30.0
+-    goal_checker:
+-      plugin: nav2_controller::SimpleGoalChecker
+-      stateful: true
+-      xy_goal_tolerance: 0.25
+-      yaw_goal_tolerance: 0.45
+-    FollowPath:
+-      # MPPI evaluates complete, collision-checked Ackermann trajectories.
+-      # Unlike Pure Pursuit, it preserves Reeds-Shepp direction changes so the
+-      # car can execute planned multi-point forward/reverse maneuvers.
+-      plugin: nav2_mppi_controller::MPPIController
+-      time_steps: 48
+-      model_dt: 0.10
+-      batch_size: 900
+-      iteration_count: 1
+-      vx_std: 0.12
+-      vy_std: 0.0
+-      wz_std: 0.25
+-      vx_max: 0.3621
+-      # Keep the base limits symmetric. The supervisor applies the active
+-      # mode's eRPM cap, while MPPI still needs a usable reverse command for
+-      # Reeds-Shepp cusps and multi-point maneuvers.
+-      # Global navigation is forward-only. Reverse is reserved for the
+-      # collision-checked BackUp recovery behavior in the behavior tree.
+-      vx_min: 0.0
+-      vy_max: 0.0
+-      wz_max: 0.80
+-      temperature: 0.30
+-      gamma: 0.015
+-      motion_model: Ackermann
+-      visualize: false
+-      retry_attempt_limit: 2
+-      reset_period: 1.0
+-      prune_distance: 1.5
+-      transform_tolerance: 0.20
+-      enforce_path_inversion: true
+-      inversion_xy_tolerance: 0.12
+-      inversion_yaw_tolerance: 0.35
+-      AckermannConstraints:
+-        # Conservative radius from 0.324 m wheelbase and the measured
+-        # 16.5-degree right steering limit: 0.324 / tan(16.5 deg) = 1.09 m.
+-        min_turning_r: 1.09
+-      critics:
+-        - ConstraintCritic
+-        - CostCritic
+-        - GoalCritic
+-        - GoalAngleCritic
+-        - PathAlignCritic
+-        - PathFollowCritic
+-        - PathAngleCritic
+-        - PreferForwardCritic
+-        - VelocityDeadbandCritic
+-      ConstraintCritic:
+-        enabled: true
+-        cost_power: 1
+-        cost_weight: 4.0
+-      CostCritic:
+-        enabled: true
+-        cost_power: 1
+-        cost_weight: 3.81
+-        critical_cost: 300.0
+-        consider_footprint: true
+-        collision_cost: 1000000.0
+-        near_goal_distance: 0.35
+-      GoalCritic:
+-        enabled: true
+-        cost_power: 1
+-        cost_weight: 5.0
+-        threshold_to_consider: 0.90
+-      GoalAngleCritic:
+-        enabled: true
+-        cost_power: 1
+-        cost_weight: 3.0
+-        threshold_to_consider: 0.35
+-      PathAlignCritic:
+-        enabled: true
+-        cost_power: 1
+-        cost_weight: 10.0
+-        max_path_occupancy_ratio: 0.10
+-        trajectory_point_step: 3
+-        threshold_to_consider: 0.35
+-        offset_from_furthest: 10
+-        use_path_orientations: true
+-      PathFollowCritic:
+-        enabled: true
+-        cost_power: 1
+-        cost_weight: 6.0
+-        offset_from_furthest: 5
+-        threshold_to_consider: 0.90
+-      PathAngleCritic:
+-        enabled: true
+-        cost_power: 1
+-        cost_weight: 2.0
+-        offset_from_furthest: 4
+-        threshold_to_consider: 0.35
+-        max_angle_to_furthest: 1.0
+-        # Score forward and reverse approaches symmetrically. Direction changes
+-        # remain constrained to the cusps requested by Smac Hybrid-A*.
+-        forward_preference: false
+-      PreferForwardCritic:
+-        enabled: true
+-        cost_power: 1
+-        cost_weight: 2.0
+-        threshold_to_consider: 0.50
+-      VelocityDeadbandCritic:
+-        enabled: true
+-        cost_power: 1
+-        cost_weight: 35.0
+-        # The drivetrain does not move reliably below roughly 900 eRPM.
+-        # Penalize trajectories that ask for an ineffective linear speed.
+-        deadband_velocities: [0.217, 0.0, 0.0]
+-
+-local_costmap:
+-  local_costmap:
+-    ros__parameters:
+-      use_sim_time: false
+-      update_frequency: 10.0
+-      publish_frequency: 2.0
+-      # A rolling local costmap must use the continuous odometry frame. Using
+-      # map here makes loop-closure corrections jump the costmap away from the
+-      # laser origin and invalidates every local trajectory at once.
+-      global_frame: laksa_odom
+-      robot_base_frame: laksa_base_footprint
+-      rolling_window: true
+-      width: 5
+-      height: 5
+-      resolution: 0.05
+-      footprint: "[[-0.15, -0.18], [-0.15, 0.18], [0.42, 0.18], [0.42, -0.18]]"
+-      footprint_padding: 0.02
+-      plugins: [obstacle_layer, inflation_layer]
+-      obstacle_layer:
+-        plugin: nav2_costmap_2d::ObstacleLayer
+-        enabled: true
+-        observation_sources: scan
+-        scan:
+-          topic: /scan
+-          data_type: LaserScan
+-          clearing: true
+-          marking: true
+-          obstacle_max_range: 8.0
+-          obstacle_min_range: 0.05
+-          raytrace_max_range: 10.0
+-          raytrace_min_range: 0.05
+-          max_obstacle_height: 1.0
+-      inflation_layer:
+-        plugin: nav2_costmap_2d::InflationLayer
+-        # A broad potential field keeps the full rectangular footprint near
+-        # passage centers and closes narrow SLAM artifacts before planning.
+-        inflation_radius: 0.55
+-        cost_scaling_factor: 3.0
+-      always_send_full_costmap: true
+-
+-global_costmap:
+-  global_costmap:
+-    ros__parameters:
+-      use_sim_time: false
+-      update_frequency: 2.0
+-      publish_frequency: 1.0
+-      global_frame: map
+-      robot_base_frame: laksa_base_footprint
+-      resolution: 0.05
+-      track_unknown_space: true
+-      footprint: "[[-0.15, -0.18], [-0.15, 0.18], [0.42, 0.18], [0.42, -0.18]]"
+-      footprint_padding: 0.02
+-      plugins: [static_layer, obstacle_layer, inflation_layer]
+-      static_layer:
+-        plugin: nav2_costmap_2d::StaticLayer
+-        map_subscribe_transient_local: true
+-      obstacle_layer:
+-        plugin: nav2_costmap_2d::ObstacleLayer
+-        enabled: true
+-        observation_sources: scan
+-        scan:
+-          topic: /scan
+-          data_type: LaserScan
+-          clearing: true
+-          marking: true
+-          obstacle_max_range: 8.0
+-          obstacle_min_range: 0.05
+-          raytrace_max_range: 10.0
+-          raytrace_min_range: 0.05
+-          max_obstacle_height: 1.0
+-      inflation_layer:
+-        plugin: nav2_costmap_2d::InflationLayer
+-        inflation_radius: 0.55
+-        cost_scaling_factor: 3.0
+-      always_send_full_costmap: true
+-
+-planner_server:
+-  ros__parameters:
+-    use_sim_time: false
+-    expected_planner_frequency: 0.5
+-    planner_plugins: [GridBased]
+-    GridBased:
+-      plugin: nav2_smac_planner/SmacPlannerHybrid
+-      tolerance: 0.25
+-      downsample_costmap: false
+-      allow_unknown: true
+-      max_iterations: 1000000
+-      max_on_approach_iterations: 1000
+-      max_planning_time: 3.0
+-      # Reeds-Shepp is the car-like model that supports forward and reverse
+-      # segments, including explicit cusps for safe direction changes.
+-      # Dubins prevents ordinary plans from selecting reverse segments.
+-      motion_model_for_search: DUBIN
+-      angle_quantization_bins: 72
+-      analytic_expansion_ratio: 3.5
+-      # Nav2 requires at least four to five times the 1.09 m turning radius.
+-      analytic_expansion_max_length: 5.0
+-      minimum_turning_radius: 1.09
+-      # Stay inside the official Humble tuning ranges. A small change penalty
+-      # permits the forward/reverse cusps required by tight Ackermann turns.
+-      reverse_penalty: 2.1
+-      change_penalty: 0.05
+-      non_straight_penalty: 1.20
+-      cost_penalty: 2.5
+-      retrospective_penalty: 0.015
+-      lookup_table_size: 10.0
+-      cache_obstacle_heuristic: false
+-      smooth_path: true
+-
+-bt_navigator:
+-  ros__parameters:
+-    use_sim_time: false
+-    global_frame: map
+-    robot_base_frame: laksa_base_footprint
+-    odom_topic: /laksa/odom
+-    bt_loop_duration: 20
+-    default_server_timeout: 20
+-    plugin_lib_names:
+-      - nav2_compute_path_to_pose_action_bt_node
+-      - nav2_compute_path_through_poses_action_bt_node
+-      - nav2_follow_path_action_bt_node
+-      - nav2_back_up_action_bt_node
+-      - nav2_clear_costmap_service_bt_node
+-      - nav2_goal_updated_condition_bt_node
+-      - nav2_pipeline_sequence_bt_node
+-      - nav2_rate_controller_bt_node
+-      - nav2_recovery_node_bt_node
+-      - nav2_round_robin_node_bt_node
+-      - nav2_wait_action_bt_node
+-
+-behavior_server:
+-  ros__parameters:
+-    use_sim_time: false
+-    costmap_topic: local_costmap/costmap_raw
+-    footprint_topic: local_costmap/published_footprint
+-    cycle_frequency: 10.0
+-    behavior_plugins: [backup, wait]
+-    backup:
+-      plugin: nav2_behaviors/BackUp
+-      acceleration_limit: 0.50
+-      deceleration_limit: -0.50
+-      minimum_speed: 0.217
+-    wait:
+-      plugin: nav2_behaviors/Wait
+-    global_frame: laksa_odom
+-    robot_base_frame: laksa_base_footprint
+-    transform_tolerance: 0.20
+-    simulate_ahead_time: 2.0
+-
+-lifecycle_manager_navigation:
+-  ros__parameters:
+-    use_sim_time: false
+-    autostart: true
+-    bond_timeout: 4.0
+-    node_names: [controller_server, planner_server, behavior_server, bt_navigator]
+--- repository/config/sensor_fusion.yaml
++++ active/config/sensor_fusion.yaml
+@@ -16,17 +16,20 @@
+     base_link_frame: laksa_base_footprint
+     world_frame: laksa_odom
+ 
+-    # RF2O is the locally continuous planar pose source. It no longer owns TF
+-    # in 3-D mode; the EKF below is the only odom->base broadcaster.
++    # RF2O absolute pose can jump catastrophically when scan matching becomes
++    # degenerate. Fuse only its measured planar twist; wheel velocity, gyro Z,
++    # and differential ZED motion keep the EKF continuous without allowing a
++    # single bad laser match to teleport the vehicle and both costmaps.
+     odom0: /laksa/rf2o_odom
+-    odom0_config: [true, true, false,
++    odom0_config: [false, false, false,
++                   false, false, false,
++                   true, true, false,
+                    false, false, true,
+-                   false, false, false,
+-                   false, false, false,
+                    false, false, false]
+     odom0_queue_size: 8
+     odom0_differential: false
+     odom0_relative: false
++    odom0_twist_rejection_threshold: 2.0
+ 
+     # ZED odometry already contains the camera's visual-inertial fusion.
+     # Differential mode contributes motion without creating a second global
+@@ -38,8 +41,9 @@
+                    false, false, false,
+                    false, false, false]
+     odom1_queue_size: 8
+-    odom1_differential: true
++    odom1_differential: false
+     odom1_relative: false
++    odom1_pose_rejection_threshold: 3.0
+ 
+     # Only measured longitudinal velocity is used from the VESC adapter.
+     odom2: /laksa/vesc_odom
+@@ -51,6 +55,7 @@
+     odom2_queue_size: 8
+     odom2_differential: false
+     odom2_relative: false
++    odom2_twist_rejection_threshold: 2.0
+ 
+     # The ESP32 IMU adapter explicitly marks orientation unavailable. Only
+     # base-aligned gyro Z is fused, avoiding the currently unreliable absolute
+@@ -65,6 +70,7 @@
+     imu0_differential: false
+     imu0_relative: false
+     imu0_remove_gravitational_acceleration: false
++    imu0_angular_velocity_rejection_threshold: 3.0
+ 
+     process_noise_covariance: [
+       0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+@@ -82,4 +88,3 @@
+       0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.05,0.0, 0.0,
+       0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.05,0.0,
+       0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06]
+-
+--- repository/launch/laksa_3d_mapping.launch.py
++++ active/launch/laksa_3d_mapping.launch.py
+@@ -81,6 +81,18 @@
+         }],
+         remappings=[("scan", raw_scan_topic)],
+     )
++    lidar_transform = Node(
++        package="tf2_ros",
++        executable="static_transform_publisher",
++        name="laksa_lidar_transform",
++        output="screen",
++        arguments=[
++            "--x", "0.31542", "--y", "0.0", "--z", "0.13542",
++            "--yaw", "3.14159265", "--pitch", "0.0", "--roll", "0.0",
++            "--frame-id", "laksa_base_footprint",
++            "--child-frame-id", "laksa_lidar",
++        ],
++    )
+     scan_filter = Node(
+         package="laser_filters",
+         executable="scan_to_scan_filter_chain",
+@@ -120,22 +132,16 @@
+         on_exit=[Shutdown(reason="LiDAR watchdog requested a stack restart")],
+     )
+ 
+-    tf_static_keepalive = Node(
+-        package="laksa_bringup",
+-        executable="tf_static_keepalive_node.py",
+-        name="laksa_tf_static_keepalive",
+-        output="screen",
+-        respawn=True,
+-        respawn_delay=1.0,
+-        parameters=[{
+-            "publish_period_sec": 0.1,
+-            "camera_x": x,
+-            "camera_y": y,
+-            "camera_z": z,
+-            "camera_roll": roll,
+-            "camera_pitch": pitch,
+-            "camera_yaw": yaw,
+-        }],
++    zed_mount_transform = Node(
++        package="tf2_ros",
++        executable="static_transform_publisher",
++        name="laksa_zed_mount_transform",
++        output="screen",
++        arguments=[
++            "--x", str(x), "--y", str(y), "--z", str(z),
++            "--roll", str(roll), "--pitch", str(pitch), "--yaw", str(yaw),
++            "--frame-id", parent, "--child-frame-id", child,
++        ],
+     )
+     zed = IncludeLaunchDescription(
+         PythonLaunchDescriptionSource(
+@@ -178,15 +184,25 @@
+         "--RGBD/ProximityBySpace true",
+         "--RGBD/LinearUpdate 0.08",
+         "--RGBD/AngularUpdate 0.05",
+-        "--Grid/Sensor 1",
+-        "--Grid/3D false",
++        # Build the persistent occupancy representation from both the planar
++        # LiDAR and ZED depth. Grid/3D is required for the OctoMap outputs;
++        # Nav2 still consumes the projected 2-D /map independently.
++        "--Grid/Sensor 2",
++        "--Grid/3D true",
++        "--Grid/RayTracing true",
+         "--Grid/CellSize 0.05",
+         "--Grid/RangeMax 8.0",
++        "--Grid/FootprintLength 0.57",
++        "--Grid/FootprintWidth 0.36",
++        "--Grid/FootprintHeight 0.30",
+         "--Grid/MaxGroundHeight 0.08",
+         "--Grid/MaxObstacleHeight 1.50",
+         "--RGBD/ProximityPathMaxNeighbors 10",
+         "--Mem/DepthCompressionFormat .png",
+         "--Rtabmap/DetectionRate 1.0",
++        # map_always_update is a ROS parameter of rtabmap_ros (not an
++        # RTAB-Map core argument and not a declared include-launch argument).
++        "--ros-args -p map_always_update:=true",
+     ])
+     rtabmap = IncludeLaunchDescription(
+         PythonLaunchDescriptionSource(
+@@ -225,10 +241,11 @@
+     )
+     return [
+         lidar,
++        lidar_transform,
+         scan_filter,
+         rf2o,
+         watchdog,
+-        tf_static_keepalive,
++        zed_mount_transform,
+         zed,
+         measurements,
+         ekf,
+--- repository/package.xml.orig
++++ active/package.xml.orig
+@@ -1,39 +0,0 @@
+-<?xml version="1.0"?>
+-<package format="3">
+-  <name>laksa_bringup</name>
+-  <version>0.1.0</version>
+-  <description>Jetson launch and configuration for the LAKSA vehicle.</description>
+-  <maintainer email="project-laksa@invalid.local">Project LAKSA</maintainer>
+-  <license>Apache-2.0</license>
+-
+-  <buildtool_depend>ament_cmake</buildtool_depend>
+-  <exec_depend>joy</exec_depend>
+-  <exec_depend>laser_filters</exec_depend>
+-  <exec_depend>action_msgs</exec_depend>
+-  <exec_depend>python3-aiohttp</exec_depend>
+-  <exec_depend>geometry_msgs</exec_depend>
+-  <exec_depend>laksa_interfaces</exec_depend>
+-  <exec_depend>launch</exec_depend>
+-  <exec_depend>launch_ros</exec_depend>
+-  <exec_depend>nav2_bt_navigator</exec_depend>
+-  <exec_depend>nav2_behaviors</exec_depend>
+-  <exec_depend>nav2_controller</exec_depend>
+-  <exec_depend>nav2_lifecycle_manager</exec_depend>
+-  <exec_depend>nav2_msgs</exec_depend>
+-  <exec_depend>nav2_planner</exec_depend>
+-  <exec_depend>nav2_mppi_controller</exec_depend>
+-  <exec_depend>nav2_smac_planner</exec_depend>
+-  <exec_depend>nav_msgs</exec_depend>
+-  <exec_depend>rclpy</exec_depend>
+-  <exec_depend>rf2o_laser_odometry</exec_depend>
+-  <exec_depend>sensor_msgs</exec_depend>
+-  <exec_depend>slam_toolbox</exec_depend>
+-  <exec_depend>sllidar_ros2</exec_depend>
+-  <exec_depend>std_srvs</exec_depend>
+-  <exec_depend>std_msgs</exec_depend>
+-  <exec_depend>tf2_ros</exec_depend>
+-
+-  <export>
+-    <build_type>ament_cmake</build_type>
+-  </export>
+-</package>
+--- repository/scripts/drive_supervisor_node.py
++++ active/scripts/drive_supervisor_node.py
+@@ -15,7 +15,7 @@
+ from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+ from rclpy.qos import qos_profile_sensor_data
+ from rclpy.time import Time
+-from sensor_msgs.msg import Joy, LaserScan
++from sensor_msgs.msg import Joy, LaserScan, PointCloud2
+ from std_msgs.msg import Bool, Empty, Int32, String
+ from tf2_ros import Buffer, TransformException, TransformListener
+ 
+@@ -71,7 +71,12 @@
+             "state_timeout_sec": 1.0,
+             "scan_timeout_sec": 0.75,
+             "odom_timeout_sec": 0.75,
+-            "map_timeout_sec": 3.0,
++            "zed_cloud_timeout_sec": 1.50,
++            "map_timeout_sec": 30.0,
++            "max_odom_linear_speed_mps": 1.5,
++            "max_odom_yaw_rate_rps": 4.0,
++            "odom_jump_position_margin_m": 0.15,
++            "odom_jump_yaw_margin_rad": 0.35,
+         }
+         for name, value in defaults.items():
+             self.declare_parameter(name, value)
+@@ -138,8 +143,23 @@
+         self._odom_timeout_ns = int(
+             float(self.get_parameter("odom_timeout_sec").value) * 1e9
+         )
++        self._zed_cloud_timeout_ns = int(
++            float(self.get_parameter("zed_cloud_timeout_sec").value) * 1e9
++        )
+         self._map_timeout_ns = int(
+             float(self.get_parameter("map_timeout_sec").value) * 1e9
++        )
++        self._max_odom_linear_speed = float(
++            self.get_parameter("max_odom_linear_speed_mps").value
++        )
++        self._max_odom_yaw_rate = float(
++            self.get_parameter("max_odom_yaw_rate_rps").value
++        )
++        self._odom_jump_position_margin = float(
++            self.get_parameter("odom_jump_position_margin_m").value
++        )
++        self._odom_jump_yaw_margin = float(
++            self.get_parameter("odom_jump_yaw_margin_rad").value
+         )
+         self._vesc_telemetry_timeout_ms = self._state_timeout_ns // 1_000_000
+ 
+@@ -205,6 +225,12 @@
+             qos_profile_sensor_data,
+         )
+         self.create_subscription(Odometry, "/laksa/odom", self._odom_callback, 10)
++        self.create_subscription(
++            PointCloud2,
++            "/zed/zed_node/point_cloud/cloud_registered",
++            self._zed_cloud_callback,
++            qos_profile_sensor_data,
++        )
+         self.create_subscription(OccupancyGrid, "/map", self._map_callback, mode_qos)
+         self.create_subscription(
+             Twist, "/laksa/nav_cmd_vel", self._nav_callback, 10
+@@ -267,7 +293,10 @@
+         self._last_state_ns = 0
+         self._last_scan_ns = 0
+         self._last_odom_ns = 0
++        self._last_zed_cloud_ns = 0
+         self._last_map_ns = 0
++        self._last_accepted_odom = None
++        self._odom_fault_reason = ""
+         self._map_geometry_valid = False
+         self._last_speed_limit_publish_ns = 0
+         self._vesc_telemetry_ok = False
+@@ -459,6 +488,9 @@
+             return
+         self._map_reset_in_progress = resetting
+         if resetting:
++            self._last_accepted_odom = None
++            self._last_odom_ns = 0
++            self._odom_fault_reason = ""
+             self._manual_neutral_required = True
+             self._abort_autonomy("map reset entered its protected window")
+             self.get_logger().warning("Map reset interlock engaged")
+@@ -590,6 +622,10 @@
+ 
+     def _scan_callback(self, _message: LaserScan) -> None:
+         self._last_scan_ns = self._now_ns()
++
++    def _zed_cloud_callback(self, message: PointCloud2) -> None:
++        if message.width > 0 and message.height > 0 and len(message.data) > 0:
++            self._last_zed_cloud_ns = self._now_ns()
+ 
+     def _odom_callback(self, message: Odometry) -> None:
+         pose = message.pose.pose
+@@ -627,7 +663,56 @@
+                 throttle_duration_sec=2.0,
+             )
+             return
+-        self._last_odom_ns = self._now_ns()
++        now_ns = self._now_ns()
++        yaw = math.atan2(
++            2.0 * (
++                pose.orientation.w * pose.orientation.z
++                + pose.orientation.x * pose.orientation.y
++            ),
++            1.0 - 2.0 * (
++                pose.orientation.y * pose.orientation.y
++                + pose.orientation.z * pose.orientation.z
++            ),
++        )
++        if self._last_accepted_odom is not None:
++            previous_ns, previous_x, previous_y, previous_yaw = (
++                self._last_accepted_odom
++            )
++            dt = max((now_ns - previous_ns) / 1e9, 1e-3)
++            distance = math.hypot(
++                pose.position.x - previous_x,
++                pose.position.y - previous_y,
++            )
++            yaw_delta = abs(
++                math.atan2(
++                    math.sin(yaw - previous_yaw),
++                    math.cos(yaw - previous_yaw),
++                )
++            )
++            position_limit = (
++                self._max_odom_linear_speed * dt
++                + self._odom_jump_position_margin
++            )
++            yaw_limit = self._max_odom_yaw_rate * dt + self._odom_jump_yaw_margin
++            if distance > position_limit or yaw_delta > yaw_limit:
++                self._last_odom_ns = 0
++                self._odom_fault_reason = (
++                    "odometry discontinuity "
++                    f"({distance:.2f} m, {yaw_delta:.2f} rad in {dt:.3f} s)"
++                )
++                self.get_logger().error(
++                    f"Rejected {self._odom_fault_reason}",
++                    throttle_duration_sec=2.0,
++                )
++                return
++        self._last_accepted_odom = (
++            now_ns,
++            float(pose.position.x),
++            float(pose.position.y),
++            yaw,
++        )
++        self._odom_fault_reason = ""
++        self._last_odom_ns = now_ns
+ 
+     def _map_callback(self, message: OccupancyGrid) -> None:
+         self._last_map_ns = self._now_ns()
+@@ -673,6 +758,11 @@
+             (self._last_state_ns, self._state_timeout_ns, "ESP32 state is stale"),
+             (self._last_scan_ns, self._scan_timeout_ns, "LiDAR scan is stale"),
+             (self._last_odom_ns, self._odom_timeout_ns, "odometry is stale"),
++            (
++                self._last_zed_cloud_ns,
++                self._zed_cloud_timeout_ns,
++                "ZED obstacle cloud is stale",
++            ),
+         ]
+         # Rollout cruise uses LiDAR odometry for visit memory and movement-gated
+         # recovery, but remains independent of the global map and map TF.
+@@ -684,6 +774,8 @@
+             )
+         for stamp, timeout, failure in checks:
+             if stamp == 0 or now_ns - stamp > timeout:
++                if failure == "odometry is stale" and self._odom_fault_reason:
++                    return False, self._odom_fault_reason
+                 return False, failure
+         if not self._vesc_telemetry_ok:
+             return False, "VESC telemetry is stale"
+--- repository/scripts/map_session_manager_node.py
++++ active/scripts/map_session_manager_node.py
+@@ -0,0 +1,83 @@
++#!/usr/bin/env python3
++
++"""Reset the systemd-managed SLAM mapping session on an explicit ROS request."""
++
++import subprocess
++import threading
++
++import rclpy
++from rclpy.node import Node
++from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
++from std_msgs.msg import Bool, String
++
++
++class MapSessionManager(Node):
++    def __init__(self) -> None:
++        super().__init__("map_session_manager")
++        latched = QoSProfile(depth=1)
++        latched.reliability = ReliabilityPolicy.RELIABLE
++        latched.durability = DurabilityPolicy.TRANSIENT_LOCAL
++        self._status = self.create_publisher(
++            String, "/laksa/map_reset_status", latched
++        )
++        self.create_subscription(
++            Bool, "/laksa/reset_map_requested", self._reset_callback, 10
++        )
++        self._resetting = False
++        self._publish_status("READY")
++
++    def _publish_status(self, status: str) -> None:
++        message = String()
++        message.data = status
++        self._status.publish(message)
++
++    def _reset_callback(self, message: Bool) -> None:
++        if not message.data or self._resetting:
++            return
++        self._resetting = True
++        self._publish_status("RESETTING")
++        self.get_logger().warn("Starting a fresh SLAM mapping session")
++        threading.Thread(target=self._restart_mapping, daemon=True).start()
++
++    def _restart_mapping(self) -> None:
++        try:
++            result = subprocess.run(
++                [
++                    "/usr/bin/systemctl",
++                    "restart",
++                    "laksa-lidar-mapping.service",
++                ],
++                check=False,
++                capture_output=True,
++                text=True,
++                timeout=30,
++            )
++        except (OSError, subprocess.TimeoutExpired) as error:
++            self._publish_status("ERROR")
++            self.get_logger().error(f"Map reset failed: {error}")
++            self._resetting = False
++            return
++        if result.returncode == 0:
++            self._publish_status("READY")
++            self.get_logger().info("Fresh SLAM mapping session started")
++        else:
++            detail = (result.stderr or result.stdout).strip()
++            self._publish_status("ERROR")
++            self.get_logger().error(f"Map reset failed: {detail}")
++        self._resetting = False
++
++
++def main(args=None) -> None:
++    rclpy.init(args=args)
++    node = MapSessionManager()
++    try:
++        rclpy.spin(node)
++    except KeyboardInterrupt:
++        pass
++    finally:
++        node.destroy_node()
++        rclpy.shutdown()
++
++
++if __name__ == "__main__":
++    main()

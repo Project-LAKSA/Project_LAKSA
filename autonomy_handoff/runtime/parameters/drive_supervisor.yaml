@@ -1,0 +1,44 @@
+/drive_supervisor:
+  ros__parameters:
+    a_button: 0
+    auto_hold_sec: 3.0
+    b_button: 1
+    deadzone: 0.15
+    default_manual_speed_erpm: 900
+    exploration_max_erpm: 1000.0
+    forward_axis: 1
+    forward_sign: 1.0
+    gear_reduction: 11.82
+    joy_timeout_sec: 0.5
+    left_road_wheel_limit_rad: 0.523
+    manual_speed_presets_erpm:
+    - 900
+    - 1300
+    - 1500
+    - 2000
+    - 3000
+    map_timeout_sec: 3.0
+    max_odom_linear_speed_mps: 1.5
+    max_odom_yaw_rate_rps: 4.0
+    max_steering_rad: 0.523
+    motor_pole_pairs: 2.0
+    nav_abort_timeout_sec: 6.0
+    nav_startup_timeout_sec: 5.0
+    nav_timeout_sec: 0.5
+    navigation_max_erpm: 1500.0
+    odom_jump_position_margin_m: 0.15
+    odom_jump_yaw_margin_rad: 0.35
+    odom_timeout_sec: 0.75
+    publish_rate_hz: 20.0
+    right_road_wheel_limit_rad: 0.288
+    scan_timeout_sec: 0.75
+    state_timeout_sec: 1.0
+    steering_axis: 2
+    steering_sign: 1.0
+    use_sim_time: false
+    wheel_diameter_m: 0.109
+    wheelbase_m: 0.324
+    x_button: 2
+    y_button: 3
+    zed_cloud_timeout_sec: 1.5
+

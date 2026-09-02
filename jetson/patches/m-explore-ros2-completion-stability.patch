@@ -1,0 +1,71 @@
+diff --git a/explore/include/explore/explore.h b/explore/include/explore/explore.h
+--- a/explore/include/explore/explore.h
++++ b/explore/include/explore/explore.h
+@@ -140,9 +140,11 @@ private:
+   double planner_frequency_;
+   double potential_scale_, orientation_scale_, gain_scale_;
+   double progress_timeout_;
++  double completion_stability_sec_;
+   bool visualize_;
+   bool return_to_init_;
+   bool start_paused_;
++  int64_t no_frontier_since_ns_{0};
+   std::string robot_base_frame_;
+   bool resuming_ = false;
+   bool goal_active_{false};
+diff --git a/explore/src/explore.cpp b/explore/src/explore.cpp
+--- a/explore/src/explore.cpp
++++ b/explore/src/explore.cpp
+@@ -70,6 +70,7 @@ Explore::Explore()
+   this->declare_parameter<float>("min_frontier_size", 0.5);
+   this->declare_parameter<bool>("return_to_init", false);
+   this->declare_parameter<bool>("start_paused", false);
++  this->declare_parameter<float>("completion_stability_sec", 15.0);
+ 
+   this->get_parameter("planner_frequency", planner_frequency_);
+   this->get_parameter("progress_timeout", timeout);
+@@ -83,6 +84,7 @@ Explore::Explore()
+   this->get_parameter("min_frontier_size", min_frontier_size);
+   this->get_parameter("return_to_init", return_to_init_);
+   this->get_parameter("start_paused", start_paused_);
++  this->get_parameter("completion_stability_sec", completion_stability_sec_);
+   this->get_parameter("robot_base_frame", robot_base_frame_);
+ 
+   progress_timeout_ = timeout;
+@@ -238,6 +240,22 @@ void Explore::makePlan()
+   }
+ 
+   if (frontiers.empty()) {
++    const int64_t now_ns = this->now().nanoseconds();
++    if (no_frontier_since_ns_ == 0) {
++      no_frontier_since_ns_ = now_ns;
++      RCLCPP_WARN(logger_,
++                  "No frontiers found; verifying map completion for %.1f seconds.",
++                  completion_stability_sec_);
++      return;
++    }
++    const double stable_sec =
++        static_cast<double>(now_ns - no_frontier_since_ns_) / 1e9;
++    if (stable_sec < completion_stability_sec_) {
++      RCLCPP_WARN_THROTTLE(
++          logger_, *this->get_clock(), 5000,
++          "No frontiers found; completion verification is still active.");
++      return;
++    }
+     RCLCPP_WARN(logger_, "No frontiers found, stopping.");
+     auto status_msg = explore_lite_msgs::msg::ExploreStatus();
+     status_msg.status = explore_lite_msgs::msg::ExploreStatus::EXPLORATION_COMPLETE;
+@@ -246,5 +262,6 @@ void Explore::makePlan()
+     return;
+   }
++  no_frontier_since_ns_ = 0;
+ 
+   // publish frontiers as visualization markers
+   if (visualize_) {
+@@ -469,5 +486,6 @@ void Explore::resume()
+ {
+   resuming_ = true;
++  no_frontier_since_ns_ = 0;
+   RCLCPP_INFO(logger_, "Exploration resuming.");
+   auto status_msg = explore_lite_msgs::msg::ExploreStatus();
+   status_msg.status = explore_lite_msgs::msg::ExploreStatus::EXPLORATION_IN_PROGRESS;

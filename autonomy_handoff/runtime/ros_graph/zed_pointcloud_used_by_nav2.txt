@@ -1,0 +1,1 @@
+ACTUAL_ZED_POINTCLOUD_USED_BY_NAV2=/zed/zed_node/point_cloud/cloud_registered

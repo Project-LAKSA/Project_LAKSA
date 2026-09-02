@@ -1,0 +1,5 @@
+[INFO] [1788384096.884186624] [tf2_echo]: Waiting for transform laksa_base_footprint ->  imu_link: Invalid frame ID "laksa_base_footprint" passed to canTransform argument target_frame - frame does not exist
+[INFO] [1788384098.432504384] [tf2_echo]: Waiting for transform laksa_base_footprint ->  imu_link: Invalid frame ID "imu_link" passed to canTransform argument source_frame - frame does not exist
+[INFO] [1788384099.432527904] [tf2_echo]: Waiting for transform laksa_base_footprint ->  imu_link: Invalid frame ID "imu_link" passed to canTransform argument source_frame - frame does not exist
+[INFO] [1788384101.432533696] [tf2_echo]: Waiting for transform laksa_base_footprint ->  imu_link: Invalid frame ID "imu_link" passed to canTransform argument source_frame - frame does not exist
+[INFO] [1788384102.051731072] [rclcpp]: signal_handler(signum=15)

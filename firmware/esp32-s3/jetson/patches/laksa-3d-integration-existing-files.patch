@@ -1,0 +1,175 @@
+diff --git a/jetson/laksa_bringup/CMakeLists.txt b/jetson/laksa_bringup/CMakeLists.txt
+index 6e8937a..11f176e 100644
+--- a/jetson/laksa_bringup/CMakeLists.txt
++++ b/jetson/laksa_bringup/CMakeLists.txt
+@@ -10,6 +10,7 @@ install(PROGRAMS
+   scripts/lidar_rollout_core.py
+   scripts/lidar_watchdog_node.py
+   scripts/steering_calibration_node.py
++  scripts/state_measurements_node.py
+   DESTINATION lib/${PROJECT_NAME}
+ )
+ 
+diff --git a/jetson/laksa_bringup/package.xml b/jetson/laksa_bringup/package.xml
+index 02b85c4..e92a011 100644
+--- a/jetson/laksa_bringup/package.xml
++++ b/jetson/laksa_bringup/package.xml
+@@ -8,6 +8,7 @@
+ 
+   <buildtool_depend>ament_cmake</buildtool_depend>
+   <exec_depend>joy</exec_depend>
++  <exec_depend>diagnostic_msgs</exec_depend>
+   <exec_depend>laser_filters</exec_depend>
+   <exec_depend>action_msgs</exec_depend>
+   <exec_depend>python3-aiohttp</exec_depend>
+@@ -24,11 +25,14 @@
+   <exec_depend>nav2_smac_planner</exec_depend>
+   <exec_depend>nav_msgs</exec_depend>
+   <exec_depend>rclpy</exec_depend>
++  <exec_depend>robot_localization</exec_depend>
+   <exec_depend>rf2o_laser_odometry</exec_depend>
++  <exec_depend>rtabmap_launch</exec_depend>
+   <exec_depend>sensor_msgs</exec_depend>
+   <exec_depend>slam_toolbox</exec_depend>
+   <exec_depend>sllidar_ros2</exec_depend>
+   <exec_depend>std_srvs</exec_depend>
+   <exec_depend>std_msgs</exec_depend>
+   <exec_depend>tf2_ros</exec_depend>
++  <exec_depend>zed_wrapper</exec_depend>
+ 
+   <export>
+diff --git a/jetson/laksa_bringup/config/nav2_ackermann.yaml b/jetson/laksa_bringup/config/nav2_ackermann.yaml
+index aac870a..928758d 100644
+--- a/jetson/laksa_bringup/config/nav2_ackermann.yaml
++++ b/jetson/laksa_bringup/config/nav2_ackermann.yaml
+@@ -145,7 +145,7 @@ local_costmap:
+       resolution: 0.05
+       footprint: "[[-0.15, -0.18], [-0.15, 0.18], [0.42, 0.18], [0.42, -0.18]]"
+       footprint_padding: 0.02
+-      plugins: [obstacle_layer, inflation_layer]
++      plugins: [obstacle_layer, zed_voxel_layer, inflation_layer]
+       obstacle_layer:
+         plugin: nav2_costmap_2d::ObstacleLayer
+         enabled: true
+@@ -162,5 +162,28 @@ local_costmap:
+           raytrace_min_range: 0.05
+           max_obstacle_height: 1.0
++      zed_voxel_layer:
++        plugin: nav2_costmap_2d::VoxelLayer
++        enabled: true
++        publish_voxel_map: false
++        origin_z: 0.0
++        z_resolution: 0.10
++        z_voxels: 16
++        unknown_threshold: 15
++        mark_threshold: 0
++        combination_method: 1
++        observation_sources: zed_cloud
++        zed_cloud:
++          topic: /zed/zed_node/point_cloud/cloud_registered
++          data_type: PointCloud2
++          transport_type: raw
++          marking: true
++          clearing: true
++          obstacle_min_range: 0.20
++          obstacle_max_range: 4.0
++          raytrace_min_range: 0.20
++          raytrace_max_range: 5.0
++          min_obstacle_height: 0.05
++          max_obstacle_height: 1.50
+       inflation_layer:
+         plugin: nav2_costmap_2d::InflationLayer
+         # A broad potential field keeps the full rectangular footprint near
+@@ -180,6 +201,6 @@ global_costmap:
+       footprint: "[[-0.15, -0.18], [-0.15, 0.18], [0.42, 0.18], [0.42, -0.18]]"
+       footprint_padding: 0.02
+-      plugins: [static_layer, obstacle_layer, inflation_layer]
++      plugins: [static_layer, obstacle_layer, zed_voxel_layer, inflation_layer]
+       static_layer:
+         plugin: nav2_costmap_2d::StaticLayer
+         map_subscribe_transient_local: true
+@@ -200,5 +221,28 @@ global_costmap:
+           raytrace_min_range: 0.05
+           max_obstacle_height: 1.0
++      zed_voxel_layer:
++        plugin: nav2_costmap_2d::VoxelLayer
++        enabled: true
++        publish_voxel_map: false
++        origin_z: 0.0
++        z_resolution: 0.10
++        z_voxels: 16
++        unknown_threshold: 15
++        mark_threshold: 0
++        combination_method: 1
++        observation_sources: zed_cloud
++        zed_cloud:
++          topic: /zed/zed_node/point_cloud/cloud_registered
++          data_type: PointCloud2
++          transport_type: raw
++          marking: true
++          clearing: true
++          obstacle_min_range: 0.20
++          obstacle_max_range: 4.0
++          raytrace_min_range: 0.20
++          raytrace_max_range: 5.0
++          min_obstacle_height: 0.05
++          max_obstacle_height: 1.50
+       inflation_layer:
+         plugin: nav2_costmap_2d::InflationLayer
+         inflation_radius: 0.55
+diff --git a/jetson/scripts/laksa-lidar-mapping b/jetson/scripts/laksa-lidar-mapping
+index 2113c69..1ee3002 100755
+--- a/jetson/scripts/laksa-lidar-mapping
++++ b/jetson/scripts/laksa-lidar-mapping
+@@ -5,6 +5,8 @@ set -euo pipefail
+ readonly lidar_device="${LAKSA_LIDAR_DEVICE:-/dev/laksa_lidar}"
+ readonly ros_domain_id="${ROS_DOMAIN_ID:-0}"
+ readonly retry_seconds="${LAKSA_LIDAR_RETRY_SECONDS:-2}"
++readonly mapping_mode="${LAKSA_MAPPING_MODE:-2d}"
++readonly zed_mount_file="${LAKSA_ZED_MOUNT_FILE:-}"
+ 
+ while [[ ! -c "${lidar_device}" ]]; do
+     echo "Waiting for ${lidar_device}"
+@@ -20,5 +22,22 @@ set -u
+ export ROS_DOMAIN_ID="${ros_domain_id}"
+ 
+ echo "Starting LAKSA LiDAR mapping on ${lidar_device} in ROS domain ${ros_domain_id}"
+-exec ros2 launch laksa_bringup lidar_mapping.launch.py \
+-    serial_port:="${lidar_device}"
++case "${mapping_mode}" in
++    2d)
++        exec ros2 launch laksa_bringup lidar_mapping.launch.py \
++            serial_port:="${lidar_device}"
++        ;;
++    3d)
++        launch_arguments=(serial_port:="${lidar_device}")
++        if [[ -n "${zed_mount_file}" ]]; then
++            launch_arguments+=(camera_mount_file:="${zed_mount_file}")
++        fi
++        echo "Starting calibrated ZED/RPLIDAR RTAB-Map mode"
++        exec ros2 launch laksa_bringup laksa_3d_mapping.launch.py \
++            "${launch_arguments[@]}"
++        ;;
++    *)
++        echo "Unsupported LAKSA_MAPPING_MODE=${mapping_mode}; expected 2d or 3d" >&2
++        exit 64
++        ;;
++esac
+diff --git a/jetson/systemd/laksa-lidar-mapping.service b/jetson/systemd/laksa-lidar-mapping.service
+index 0187a28..87c18b0 100644
+--- a/jetson/systemd/laksa-lidar-mapping.service
++++ b/jetson/systemd/laksa-lidar-mapping.service
+@@ -1,5 +1,5 @@
+ [Unit]
+-Description=LAKSA RPLIDAR A2M12 and SLAM Toolbox mapping
++Description=LAKSA selectable 2-D LiDAR or calibrated 3-D ZED mapping
+ After=laksa-micro-ros-agent.service
+ Wants=laksa-micro-ros-agent.service
+ 
+@@ -11,5 +11,6 @@ Environment=ROS_DOMAIN_ID=0
+ Environment=ROS_LOCALHOST_ONLY=1
+ Environment=LAKSA_LIDAR_DEVICE=/dev/laksa_lidar
++EnvironmentFile=-/etc/laksa/mapping.conf
+ ExecStart=/usr/local/lib/laksa/laksa-lidar-mapping
+ Restart=always
+ RestartSec=3

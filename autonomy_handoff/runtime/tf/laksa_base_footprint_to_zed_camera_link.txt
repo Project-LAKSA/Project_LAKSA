@@ -1,0 +1,33 @@
+[INFO] [1788384084.420366784] [tf2_echo]: Waiting for transform laksa_base_footprint ->  zed_camera_link: Invalid frame ID "laksa_base_footprint" passed to canTransform argument target_frame - frame does not exist
+[INFO] [1788384086.365890144] [tf2_echo]: Waiting for transform laksa_base_footprint ->  zed_camera_link: Invalid frame ID "laksa_base_footprint" passed to canTransform argument target_frame - frame does not exist
+At time 0.0
+- Translation: [0.108, 0.000, 0.140]
+- Rotation: in Quaternion (xyzw) [0.000, 0.035, 0.000, 0.999]
+- Rotation: in RPY (radian) [0.000, 0.070, 0.000]
+- Rotation: in RPY (degree) [0.000, 4.000, 0.000]
+- Matrix:
+  0.998  0.000  0.070  0.108
+  0.000  1.000  0.000  0.000
+ -0.070  0.000  0.998  0.140
+  0.000  0.000  0.000  1.000
+At time 0.0
+- Translation: [0.108, 0.000, 0.140]
+- Rotation: in Quaternion (xyzw) [0.000, 0.035, 0.000, 0.999]
+- Rotation: in RPY (radian) [0.000, 0.070, 0.000]
+- Rotation: in RPY (degree) [0.000, 4.000, 0.000]
+- Matrix:
+  0.998  0.000  0.070  0.108
+  0.000  1.000  0.000  0.000
+ -0.070  0.000  0.998  0.140
+  0.000  0.000  0.000  1.000
+At time 0.0
+- Translation: [0.108, 0.000, 0.140]
+- Rotation: in Quaternion (xyzw) [0.000, 0.035, 0.000, 0.999]
+- Rotation: in RPY (radian) [0.000, 0.070, 0.000]
+- Rotation: in RPY (degree) [0.000, 4.000, 0.000]
+- Matrix:
+  0.998  0.000  0.070  0.108
+  0.000  1.000  0.000  0.000
+ -0.070  0.000  0.998  0.140
+  0.000  0.000  0.000  1.000
+[INFO] [1788384090.034879616] [rclcpp]: signal_handler(signum=15)
