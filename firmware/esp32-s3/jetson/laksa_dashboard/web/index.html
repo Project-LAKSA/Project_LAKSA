@@ -1,27 +1,55 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#07111f"><title>LAKSA Mapping Cockpit</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07111f">
+  <title>Project LAKSA Field Lab</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <header><div><span class="eyebrow">PROJECT LAKSA</span><h1>Mapping Cockpit</h1></div><div id="connection" class="pill warn">CONNECTING</div></header>
+  <header>
+    <div class="brand"><span class="eyebrow">PROJECT LAKSA</span><h1>FIELD LAB</h1><p>Mapping &amp; Systems Control</p></div>
+    <div id="connection" class="pill standby">CONNECTING</div>
+  </header>
   <main>
     <section class="hero card">
-      <div><span class="label">MAPPING STATE</span><strong id="mappingState">IDLE</strong><p id="sessionLine">Ready for a new manual session.</p></div>
+      <div class="mode-block"><span class="label">SYSTEM MODE</span><strong id="mappingState">IDLE</strong><p id="sessionLine">Ready for a new manual session.</p></div>
       <div class="controls">
-        <select id="profile" aria-label="Mapping profile"><option value="indoor_live">Indoor Live</option><option value="indoor_high_quality">Indoor High Quality</option><option value="outdoor_structured">Outdoor Structured · Provisional</option><option value="outdoor_open_field">Outdoor Open Field · Provisional</option></select>
-        <label class="toggle"><input id="recordSvo" type="checkbox"><span>Record lossless SVO</span></label>
+        <div class="profile-control">
+          <label for="profile">Mapping profile</label>
+          <select id="profile" aria-label="Mapping profile">
+            <option value="indoor_live">Indoor • Performance</option>
+            <option value="indoor_high_quality">Indoor • Quality</option>
+            <option value="outdoor_structured">Outdoor • Structured</option>
+            <option value="outdoor_open_field">Outdoor • Open Field</option>
+          </select>
+          <small id="profileHelp">Recommended · GEN_3 + NEURAL_LIGHT · Lower compute load</small>
+        </div>
+        <div class="svo-control">
+          <label class="toggle"><input id="recordSvo" type="checkbox"><span>Record Lossless SVO</span></label>
+          <small>Save the raw ZED stereo + IMU session for later reprocessing. Uses significant storage. <span id="diskHint"></span></small>
+        </div>
         <button id="mappingButton" class="primary">START MAPPING</button>
       </div>
-      <p class="safety">Manual Xbox control only. This cockpit cannot command throttle, steering, Nav2, or autonomous motion.</p>
+      <p class="safety">Manual Xbox control only. Field Lab cannot command throttle, steering, Nav2, or autonomous motion.</p>
     </section>
 
     <section class="visual-grid">
-      <article class="card map3d"><div class="panel-title"><h2>Live 3D Map</h2><span id="pointCount">0 points</span></div><div id="threeView"></div></article>
-      <article class="card"><div class="panel-title"><h2>2D Occupancy</h2><span id="gridSize">Waiting</span></div><canvas id="occupancy"></canvas></article>
-      <article class="card camera"><div class="panel-title"><h2>ZED2i Live</h2><span>diagnostic preview</span></div><img id="cameraFeed" alt="ZED2i camera stream"></article>
+      <article class="card map3d">
+        <div class="panel-title"><h2>Live 3D Map</h2><span id="pointCount">0 points</span></div>
+        <div id="threeView" aria-label="Interactive 3D map">
+          <div class="map-tools" role="toolbar" aria-label="3D map controls">
+            <button id="zoomIn" title="Zoom in" aria-label="Zoom in"><b>+</b><span>Zoom</span></button>
+            <button id="zoomOut" title="Zoom out" aria-label="Zoom out"><b>−</b><span>Zoom</span></button>
+            <button id="panMode" class="mode" aria-pressed="false"><b>↔</b><span>Pan</span></button>
+            <button id="rotateMode" class="mode active" aria-pressed="true"><b>↻</b><span>Rotate</span></button>
+            <button id="followRobot" class="mode" aria-pressed="false"><b>◎</b><span>Follow</span></button>
+            <button id="fitView" title="Reset or fit map"><b>⌂</b><span>Fit</span></button>
+          </div>
+        </div>
+      </article>
+      <article class="card occupancy-card"><div class="panel-title"><h2>2D Occupancy</h2><span id="gridSize">Waiting</span></div><canvas id="occupancy"></canvas></article>
     </section>
 
     <section class="card"><div class="panel-title"><h2>Subsystem Health</h2><span id="healthStamp">No telemetry</span></div><div id="healthGrid" class="health-grid"></div></section>
@@ -29,7 +57,12 @@
       <article class="card"><h2>Battery / VESC</h2><div id="battery" class="metrics"></div></article>
       <article class="card"><h2>Jetson</h2><div id="jetson" class="metrics"></div></article>
       <article class="card"><h2>Robot</h2><div id="robot" class="metrics"></div></article>
-      <article class="card"><h2>Network</h2><div id="network" class="metrics"></div></article>
+      <article class="card"><h2>Network</h2><div id="network" class="metrics"></div><details><summary>Interface details</summary><div id="networkDetails" class="details"></div></details></article>
+    </section>
+
+    <section class="card diagnostics">
+      <div class="panel-title"><div><span class="label">ADVANCED</span><h2>Diagnostics</h2></div><button id="cameraToggle" class="secondary" aria-expanded="false">SHOW ZED CAMERA</button></div>
+      <div id="cameraPanel" class="camera-panel" hidden><p>Diagnostic ZED RGB preview only. Not required for normal operation.</p><img id="cameraFeed" alt="Diagnostic ZED2i camera stream"></div>
     </section>
   </main>
   <div id="toast" role="status"></div>

@@ -9,6 +9,7 @@ import math
 import os
 from pathlib import Path
 import socket
+import subprocess
 import time
 
 import psutil
@@ -30,6 +31,8 @@ class HealthMonitor(Node):
         self._state = None
         self._vesc = None
         self._mapping = {"state": "IDLE"}
+        self._network_cache = self._network()
+        self._network_checked = time.monotonic()
         qos = QoSProfile(depth=1); qos.reliability = ReliabilityPolicy.RELIABLE; qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
         self._summary_pub = self.create_publisher(String, "/laksa/health/summary", qos)
         self._battery_pub = self.create_publisher(BatteryState, "/laksa/battery_state", 10)
@@ -68,31 +71,22 @@ class HealthMonitor(Node):
     @staticmethod
     def _temperatures() -> dict:
         values = {}
-        try:
-            groups = psutil.sensors_temperatures()
-        except (AttributeError, OSError, TypeError, ValueError):
-            groups = {}
+        try: groups = psutil.sensors_temperatures()
+        except (AttributeError, OSError, TypeError, ValueError): groups = {}
         for group, entries in groups.items():
             for index, entry in enumerate(entries):
                 if math.isfinite(entry.current): values[f"{group}:{entry.label or index}"] = round(entry.current, 1)
         if not values:
             for temp_path in glob.glob("/sys/class/thermal/thermal_zone*/temp"):
                 try:
-                    zone = Path(temp_path).parent
-                    name = (zone / "type").read_text().strip()
-                    value = float(Path(temp_path).read_text().strip()) / 1000.0
+                    zone = Path(temp_path).parent; name = (zone / "type").read_text().strip(); value = float(Path(temp_path).read_text().strip()) / 1000.0
                     if math.isfinite(value): values[name] = round(value, 1)
-                except (OSError, AttributeError, TypeError, ValueError):
-                    continue
+                except (OSError, AttributeError, TypeError, ValueError): continue
         return values
 
     @staticmethod
     def _gpu_percent():
-        candidates = [
-            "/sys/devices/platform/17000000.gpu/devfreq/17000000.gpu/load",
-            "/sys/class/devfreq/17000000.gpu/load",
-            "/sys/devices/gpu.0/load",
-        ] + glob.glob("/sys/class/devfreq/*/load")
+        candidates = ["/sys/devices/platform/17000000.gpu/devfreq/17000000.gpu/load", "/sys/class/devfreq/17000000.gpu/load", "/sys/devices/gpu.0/load"] + glob.glob("/sys/class/devfreq/*/load")
         for path in candidates:
             try:
                 raw = float(Path(path).read_text().strip())
@@ -104,57 +98,53 @@ class HealthMonitor(Node):
     @staticmethod
     def _network() -> dict:
         interfaces = []
+        stats = psutil.net_if_stats()
         for name, addresses in psutil.net_if_addrs().items():
             ipv4 = [a.address for a in addresses if a.family == socket.AF_INET and not a.address.startswith("127.")]
-            if ipv4 and psutil.net_if_stats().get(name) and psutil.net_if_stats()[name].isup:
-                interfaces.append({"name": name, "ipv4": ipv4})
-        return {"connected": bool(interfaces), "interfaces": interfaces, "hostname": socket.gethostname()}
+            if ipv4 and stats.get(name) and stats[name].isup: interfaces.append({"name": name, "ipv4": ipv4})
+        wifi = {"connected": False, "interface": None, "ssid": None, "ipv4": None}
+        try:
+            result = subprocess.run(["nmcli", "-t", "--escape", "no", "-f", "DEVICE,TYPE,STATE,CONNECTION", "device", "status"], capture_output=True, text=True, timeout=1.0, check=False)
+            for line in result.stdout.splitlines():
+                fields = line.split(":", 3)
+                if len(fields) == 4 and fields[1] == "wifi" and fields[2] in ("connected", "connecting"):
+                    wifi.update({"connected": fields[2] == "connected", "interface": fields[0], "ssid": fields[3] if fields[3] not in ("", "--") else None})
+                    match = next((item for item in interfaces if item["name"] == fields[0]), None)
+                    wifi["ipv4"] = match["ipv4"][0] if match and match["ipv4"] else None
+                    break
+        except (OSError, subprocess.SubprocessError): pass
+        return {"connected": bool(interfaces), "interfaces": interfaces, "hostname": socket.gethostname(), "wifi": wifi}
 
     def _battery(self):
         source = self._vesc or (self._state.vesc if self._state is not None else None)
         if source is None or not bool(source.telemetry_fresh): return None
         msg = BatteryState(); msg.header.stamp = self.get_clock().now().to_msg(); msg.header.frame_id = "base_footprint"
-        msg.voltage = float(source.input_voltage_v); msg.current = -float(source.input_current_a)
-        msg.percentage = float("nan"); msg.capacity = float("nan"); msg.design_capacity = float("nan"); msg.charge = float("nan")
+        msg.voltage = float(source.input_voltage_v); msg.current = -float(source.input_current_a); msg.percentage = float("nan"); msg.capacity = float("nan"); msg.design_capacity = float("nan"); msg.charge = float("nan")
         msg.power_supply_status = BatteryState.POWER_SUPPLY_STATUS_DISCHARGING if source.input_current_a > 0.1 else BatteryState.POWER_SUPPLY_STATUS_NOT_CHARGING
         msg.power_supply_health = BatteryState.POWER_SUPPLY_HEALTH_UNKNOWN; msg.power_supply_technology = BatteryState.POWER_SUPPLY_TECHNOLOGY_LIPO
         self._battery_pub.publish(msg)
         return {"available": True, "voltage_v": round(float(source.input_voltage_v), 2), "input_current_a": round(float(source.input_current_a), 2), "motor_current_a": round(float(source.motor_current_a), 2), "soc_percent": None, "soc_note": "Unavailable: no validated battery model"}
 
     def _publish(self) -> None:
-        disk = psutil.disk_usage("/")
-        mem = psutil.virtual_memory(); swap = psutil.swap_memory()
-        battery = self._battery() or {"available": False, "soc_percent": None}
-        vesc = self._vesc or (self._state.vesc if self._state is not None else None)
+        disk = psutil.disk_usage("/"); mem = psutil.virtual_memory(); swap = psutil.swap_memory(); battery = self._battery() or {"available": False, "soc_percent": None}; vesc = self._vesc or (self._state.vesc if self._state is not None else None)
+        if time.monotonic() - self._network_checked >= 5.0:
+            self._network_cache = self._network(); self._network_checked = time.monotonic()
         health = {
             "zed": {"connected": self._fresh("zed_rgb", 2.0) and self._fresh("zed_odom", 2.0), "rgb_age_sec": self._age("zed_rgb"), "odom_age_sec": self._age("zed_odom")},
             "lidar": {"connected": self._fresh("lidar", 2.0), "age_sec": self._age("lidar")},
             "bno08x": {"connected": self._fresh("bno08x", 1.0), "age_sec": self._age("bno08x"), "imu_available": bool(self._state.imu_available) if self._state else False},
             "esp32": {"connected": self._fresh("esp32", 1.0), "age_sec": self._age("esp32")},
             "vesc": {"connected": bool(vesc and vesc.telemetry_fresh and self._fresh("vesc_topic", 2.0)), "age_sec": self._age("vesc_topic"), "fault_code": int(vesc.fault_code) if vesc else None, "brake_active": bool(vesc.brake_active) if vesc else None, "measured_erpm": round(float(vesc.measured_erpm), 1) if vesc else None},
-            "xbox": {"connected": self._fresh("xbox", 1.0), "age_sec": self._age("xbox")},
-            "mapping": self._mapping,
+            "xbox": {"connected": self._fresh("xbox", 1.0), "age_sec": self._age("xbox")}, "mapping": self._mapping,
         }
-        payload = {
-            "stamp": time.time(), "health": health, "battery": battery,
-            "vehicle": {"steering_target_rad": float(self._state.steering_target_rad) if self._state else None, "steering_current_rad": float(self._state.steering_current_rad) if self._state else None, "linear_velocity_mps": float(vesc.vehicle_linear_velocity_mps) if vesc else None},
-            "jetson": {"cpu_percent": psutil.cpu_percent(None), "ram_percent": mem.percent, "ram_used_gb": round(mem.used / 1e9, 2), "swap_percent": swap.percent, "disk_free_gb": round(disk.free / 1e9, 1), "disk_percent": disk.percent, "gpu_percent": self._gpu_percent(), "temperatures_c": self._temperatures()},
-            "network": self._network(),
-        }
-        try:
-            encoded = json.dumps(payload, separators=(",", ":"), allow_nan=False)
-        except ValueError:
-            encoded = json.dumps(self._finite_payload(payload), separators=(",", ":"), allow_nan=False)
-        self._summary_pub.publish(String(data=encoded))
-        statuses = []
+        payload = {"stamp": time.time(), "health": health, "battery": battery, "vehicle": {"steering_target_rad": float(self._state.steering_target_rad) if self._state else None, "steering_current_rad": float(self._state.steering_current_rad) if self._state else None, "linear_velocity_mps": float(vesc.vehicle_linear_velocity_mps) if vesc else None}, "jetson": {"cpu_percent": psutil.cpu_percent(None), "ram_percent": mem.percent, "ram_used_gb": round(mem.used / 1e9, 2), "swap_percent": swap.percent, "disk_free_gb": round(disk.free / 1e9, 1), "disk_percent": disk.percent, "gpu_percent": self._gpu_percent(), "temperatures_c": self._temperatures()}, "network": self._network_cache}
+        try: encoded = json.dumps(payload, separators=(",", ":"), allow_nan=False)
+        except ValueError: encoded = json.dumps(self._finite_payload(payload), separators=(",", ":"), allow_nan=False)
+        self._summary_pub.publish(String(data=encoded)); statuses = []
         for name, details in health.items():
-            connected = details.get("connected", details.get("state") not in ("ERROR", None))
-            level = DiagnosticStatus.OK if connected else DiagnosticStatus.WARN
-            status = DiagnosticStatus(level=level, name=f"laksa_health/{name}", hardware_id=name, message="healthy" if connected else "unavailable or stale")
-            status.values = [KeyValue(key=k, value=str(v)) for k, v in details.items() if not isinstance(v, (dict, list))]
-            statuses.append(status)
-        array = DiagnosticArray(); array.header.stamp = self.get_clock().now().to_msg(); array.status = statuses
-        self._diag_pub.publish(array)
+            connected = details.get("connected", details.get("state") not in ("ERROR", None)); level = DiagnosticStatus.OK if connected else DiagnosticStatus.WARN
+            status = DiagnosticStatus(level=level, name=f"laksa_health/{name}", hardware_id=name, message="healthy" if connected else "unavailable or stale"); status.values = [KeyValue(key=k, value=str(v)) for k, v in details.items() if not isinstance(v, (dict, list))]; statuses.append(status)
+        array = DiagnosticArray(); array.header.stamp = self.get_clock().now().to_msg(); array.status = statuses; self._diag_pub.publish(array)
 
     @classmethod
     def _finite_payload(cls, value):
