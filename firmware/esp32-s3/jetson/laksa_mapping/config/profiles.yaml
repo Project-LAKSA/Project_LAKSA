@@ -1,0 +1,21 @@
+profiles:
+  indoor_live:
+    status: validated
+    source: C1_gen3/run_20260905T024235Z
+    zed_config: indoor_live_zed.yaml
+    rtab_config: rtabmap_common.yaml
+  indoor_high_quality:
+    status: validated
+    source: C3_gen3_neural/run_20260905T051453Z
+    zed_config: indoor_high_quality_zed.yaml
+    rtab_config: rtabmap_common.yaml
+  outdoor_structured:
+    status: provisional_unvalidated
+    source: indoor_live_starting_point_requires_outdoor_svo
+    zed_config: indoor_live_zed.yaml
+    rtab_config: rtabmap_common.yaml
+  outdoor_open_field:
+    status: provisional_unvalidated
+    source: GEN_1_fallback_not_yet_tuned_requires_outdoor_svo
+    zed_config: indoor_live_zed.yaml
+    rtab_config: rtabmap_common.yaml
