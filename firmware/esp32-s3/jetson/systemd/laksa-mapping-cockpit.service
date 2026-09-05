@@ -1,0 +1,19 @@
+[Unit]
+Description=LAKSA manual mapping cockpit (no motion authority)
+After=network-online.target laksa-micro-ros-agent.service laksa-control-navigation.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+Environment=ROS_DOMAIN_ID=0
+Environment=ROS_LOCALHOST_ONLY=1
+ExecStart=/usr/local/lib/laksa/laksa-mapping-cockpit
+Restart=on-failure
+RestartSec=3
+KillMode=control-group
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

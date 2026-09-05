@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>laksa_health</name>
+  <version>0.1.0</version>
+  <description>Standard diagnostics and normalized telemetry for LAKSA.</description>
+  <maintainer email="project-laksa@invalid.local">Project LAKSA</maintainer>
+  <license>Apache-2.0</license>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>diagnostic_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>laksa_interfaces</exec_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>
