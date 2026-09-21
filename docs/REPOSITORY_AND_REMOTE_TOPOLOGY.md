@@ -2,10 +2,9 @@
 
 ## Current state
 
-`jetson` is the intended name for the direct deployment checkout. At this
-checkpoint it is still named `origin`; no repository script references the Git
-remote name, but it is not renamed until a central remote is configured in all
-worktrees together.
+`jetson` is the direct deployment checkout. It was renamed from `origin` only
+after a repository-wide search confirmed no script or deployment configuration
+depended on the old remote name. Its deployment role is unchanged.
 
 There is currently **no configured central review remote**. The only known URL
 is the Jetson checkout (`ssh://ubuntu@192.168.0.244/...`), which is not the
