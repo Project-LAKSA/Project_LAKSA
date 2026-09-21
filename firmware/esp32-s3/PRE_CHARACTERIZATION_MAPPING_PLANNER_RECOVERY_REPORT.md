@@ -79,14 +79,18 @@ runners, and deployers are not included.
 ## Validation and blockers
 
 - Git source reconstruction: PASS locally.
-- Static YAML/launch review: PASS for included files.
+- Isolated Jetson `colcon build`: PASS, 8 packages.
+- Source-to-isolated-install SHA-256: PASS for the ZED config, RTAB config,
+  mapping launch, Nav2 planner config, and supervisor config.
+- Static launch resolution: BLOCKED because `zed_wrapper` is not registered in
+  the isolated environment; no node was started.
 - Current Jetson source/install hashes and runtime evidence are preserved under
   `/private/tmp/laksa-forensic-20260921` and in the accompanying JSON.
 - Current Jetson source was dirty; it was not overwritten.
 - Remote ROS graph/rate capture was inconclusive because the shell did not join
   the running discovery context. No runtime claim is made from that capture.
-- No deployment, service restart, repeated reset test, or planner action test
-  has been performed.
+- No production deployment or service restart, repeated reset test, or planner
+  action test has been performed.
 
 The VESC is physically disconnected and is `EXPECTED_DISCONNECTED`, not a
 software acceptance failure. Xbox is optional for stationary validation.
@@ -115,9 +119,9 @@ CHARACTERIZATION_BOUNDARY=2026-09-17/source capability boundary
 HISTORICAL_GOOD_STATE_EXACT_COMMIT=NONE
 RECOVERY_TARGET_TYPE=COMPOSITE_RECONSTRUCTION
 RECOVERY_BRANCH=recovery/pre-characterization-mapping-planner-good
-RECOVERY_HEAD=31be8d7d4643f29f51e8fe523b010013d13eb08c
-JETSON_DEPLOYED_HEAD=NONE
-JETSON_HASH_MATCH=NO
+RECOVERY_HEAD=ab82b0cba7b320f26986b94b3d6175791b735e8a
+JETSON_DEPLOYED_HEAD=ab82b0cba7b320f26986b94b3d6175791b735e8a (isolated workspace only)
+JETSON_HASH_MATCH=YES (isolated source/install subset)
 MAPPING_RUNTIME_RESTORED=NO
 ZED_TRACKING=FAIL
 RTAB_RUNTIME=FAIL
@@ -130,8 +134,8 @@ IS_PATH_VALID=FAIL
 CONTROLLER_VALIDATION=OUT_OF_SCOPE
 CHARACTERIZATION_ENABLED=NO
 VESC_STATUS=EXPECTED_DISCONNECTED
-SAFE_NO_MOTION_VALIDATION=FAIL
+SAFE_NO_MOTION_VALIDATION=PASS (isolated build only; no runtime nodes started)
 CHARACTERIZATION_MAPPING_REGRESSION=INCONCLUSIVE
 PHYSICAL_MAPPING_QUALITY_REVALIDATED=PENDING
-BLOCKER=No isolated Jetson deployment/runtime validation has been performed; current installed workspace is dirty and the remote ROS shell did not observe the running discovery context.
+BLOCKER=Production runtime was not switched; isolated launch validation is blocked by missing zed_wrapper registration, and five reset cycles plus planner action tests remain pending.
 ```

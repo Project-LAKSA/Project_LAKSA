@@ -31,9 +31,10 @@
     "supervisor_starts_disarmed": true
   },
   "deployment": {
-    "jetson_deployed_head": null,
-    "hash_match": false,
-    "isolated_workspace": false,
+    "jetson_deployed_head": "ab82b0cba7b320f26986b94b3d6175791b735e8a",
+    "hash_match": true,
+    "hash_scope": "isolated source/install subset only; production workspace untouched",
+    "isolated_workspace": "/home/ubuntu/laksa_ws_recovery_ab82b0c2",
     "forensic_snapshot": "/private/tmp/laksa-forensic-20260921"
   }
 }
