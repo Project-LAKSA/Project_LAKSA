@@ -2,6 +2,7 @@
   "recovery_target_type": "COMPOSITE_RECONSTRUCTION",
   "baseline_commit": "b178a91f3a87f90ae289f62588744bd7936a43f4",
   "branch": "recovery/pre-characterization-mapping-planner-good",
+  "recovery_head_before_this_metadata_commit": "31be8d7d4643f29f51e8fe523b010013d13eb08c",
   "characterization_boundary": {
     "date": "2026-09-17",
     "basis": "first Jetson source capability containing drive_supervisor characterization request/enable paths and characterization runners"
