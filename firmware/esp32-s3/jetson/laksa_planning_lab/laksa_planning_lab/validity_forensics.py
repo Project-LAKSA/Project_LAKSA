@@ -139,31 +139,32 @@ def main(argv=None):
     worker, cases = None, []
     rclpy.init(args=[])
     try:
-        first = scenarios[0]
-        worker = PlannerWorker(context, "HYBRID_PRODUCTION", configuration, digest, entries[first["map_id"]], maps[first["map_id"]])
-        current_map = first["map_id"]
-        worker.client.settle_costmap()
         for scenario in scenarios:
             map_id = scenario["map_id"]
-            if map_id != current_map:
-                worker.switch_map(entries[map_id], maps[map_id])
-                current_map = map_id
+            # A fresh planner stack makes the lab's sole map->base transform
+            # exactly the requested start, with no duplicate TF authority.
+            context.base_tf = scenario["start"]
+            worker = PlannerWorker(context, "HYBRID_PRODUCTION", configuration, digest + scenario["scenario_id"], entries[map_id], maps[map_id])
+            try:
                 worker.client.settle_costmap()
-            poses, planning_ms, smoothing_ms, total_ms = worker.client.plan(scenario)
-            path = copy.deepcopy(worker.client.last_path)
-            official = worker.client.validate_path(path)
-            independent = evaluate_path(poses, scenario, maps[map_id])
-            cases.append({
-                "case": scenario["scenario_id"], "map": entries[map_id], "start": scenario["start"], "goal": scenario["goal"],
-                "compute_path_to_pose": {"success": True, "planning_time_ms": planning_ms, "smoothing_time_ms": smoothing_ms, "total_pipeline_time_ms": total_ms},
-                "returned_path": _path_dict(path), "returned_path_sha256": stable_hash(_path_dict(path)),
-                "runtime_costmap": copy.deepcopy(worker.client.costmap_snapshot),
-                "source_map_cells_sha256": stable_hash(maps[map_id].cells),
-                "nav2_is_path_valid": official, "independent_validator": independent,
-                "agreement": official["is_valid"] == bool(independent["collision_free"] and independent["kinematically_feasible"]),
-                "primary_classification": _classification(official, independent),
-                "motion": _direction_report(poses), "first_independent_failure": _first_failure(poses, independent),
-            })
+                poses, planning_ms, smoothing_ms, total_ms = worker.client.plan(scenario)
+                path = copy.deepcopy(worker.client.last_path)
+                official = worker.client.validate_path(path)
+                independent = evaluate_path(poses, scenario, maps[map_id])
+                cases.append({
+                    "case": scenario["scenario_id"], "map": entries[map_id], "start": scenario["start"], "goal": scenario["goal"],
+                    "compute_path_to_pose": {"success": True, "planning_time_ms": planning_ms, "smoothing_time_ms": smoothing_ms, "total_pipeline_time_ms": total_ms},
+                    "returned_path": _path_dict(path), "returned_path_sha256": stable_hash(_path_dict(path)),
+                    "runtime_costmap": copy.deepcopy(worker.client.costmap_snapshot),
+                    "source_map_cells_sha256": stable_hash(maps[map_id].cells),
+                    "nav2_is_path_valid": official, "independent_validator": independent,
+                    "agreement": official["is_valid"] == bool(independent["collision_free"] and independent["kinematically_feasible"]),
+                    "primary_classification": _classification(official, independent),
+                    "motion": _direction_report(poses), "first_independent_failure": _first_failure(poses, independent),
+                })
+            finally:
+                worker.close()
+                worker = None
         payload = {
             "schema_version": 1,
             "safety": {"ros_domain_id": os.environ["ROS_DOMAIN_ID"], "ros_localhost_only": os.environ["ROS_LOCALHOST_ONLY"], "follow_path_created": False, "controller_started": False},

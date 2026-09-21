@@ -367,6 +367,12 @@ class PlannerWorker:
                 f"map:={entry['yaml']}", f"params_file:={runtime_path}",
                 f"use_smoother:={'true' if self.method == 'HYBRID_CONSTRAINED' else 'false'}",
             ]
+            base_tf = getattr(self.runner, "base_tf", None)
+            if base_tf is not None:
+                command.extend((
+                    f"base_x:={base_tf['x']}", f"base_y:={base_tf['y']}",
+                    f"base_yaw:={base_tf['yaw']}",
+                ))
             environment = os.environ.copy()
             environment["ROS_DOMAIN_ID"], environment["ROS_LOCALHOST_ONLY"] = "71", "1"
             self.process = subprocess.Popen(
