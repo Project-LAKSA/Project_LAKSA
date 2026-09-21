@@ -6,10 +6,11 @@ Frozen forensic reference: `baseline/legacy-recovered-mapping-2026-09-21` at
 `a4c321fc5c1cff3f99e443b24f97f9ac3c2d8bf5`, tagged
 `laksa-legacy-recovered-baseline-2026-09-21`.
 
-Central review remote: **not configured yet**. The existing `origin` is the
-Jetson deployment checkout and is not a shared source of truth. Once a clearly
-personal/private remote is configured as `review`, inspect V2 first, then the
-frozen baseline and this recovery branch. Do not modify the frozen baseline.
+Central review remote: public GitHub repository
+`Project-LAKSA/Project_LAKSA` (`git@github.com:Project-LAKSA/Project_LAKSA.git`)
+as remote `github`. `jetson` remains the direct deployment checkout and is not
+the shared source of truth. Inspect V2 first, then the frozen baseline and this
+recovery branch. Do not modify the frozen baseline.
 
 ## Entrypoints
 
