@@ -1,0 +1,13 @@
+COMPONENT,CURRENT_ROLE,CURRENT_DEPENDENCIES,PROBLEM,TARGET_ROLE,DISPOSITION,OFFICIAL_REPLACEMENT,MIGRATION_PHASE,EVIDENCE
+laksa_description,visual URDF,ZED-rooted legacy TF,Camera is semantic root,canonical base_link robot model,REWIRE,robot_state_publisher + URDF/xacro,1-2,ADR-002
+laksa_mapping,RTAB/ZED mapping,ZED RTAB TF,Recovered and frozen baseline,3D reconstruction adapter,ISOLATE,RTAB-Map,4,ADR-004
+laksa_bringup,launch and Nav2 config,services sensors supervisor,Incremental shared ownership,V2 composition entrypoints,REWIRE,Nav2 lifecycle bringup,2-10,architecture audit
+laksa_planning_lab,offline forensics,Nav2 maps fixtures,Not production planner,qualification harness,KEEP,Nav2 actions,3-6,planner forensics
+legacy Smac Hybrid,global planner,Nav2 Humble,Proven collision semantic defects,comparison/fallback only,DEPRECATE,Smac State Lattice,6,PLANNER_INTERNAL_COLLISION_FORENSICS.json
+legacy controller config,MPPI/custom history,Nav2 controller,Not independently qualified,benchmark candidate,ISOLATE,MPPI/RPP/Vector Pursuit,8,ADR-007
+drive_supervisor,motion authority,ESP32 Xbox Nav2,Must remain sole arbiter,authority boundary,KEEP,N/A,9,ADR-005
+ESP32 firmware,hardware safety,micro-ROS VESC servo,Hardware unavailable,unchanged safety endpoint,KEEP,N/A,12,hardware gate
+laksa_dashboard,Field Lab UI,ROS websocket,Must never command motion,observer/health UI,REWIRE,N/A,10,ADR-010
+laksa_health,health reporting,ROS topics,Needs canonical contracts,health aggregator,REWIRE,diagnostic_msgs,10,ADR-010
+laksa_lidar,LiDAR ownership,USB ROS scan,Hardware unavailable,perception source adapter,KEEP,Nav2 ObstacleLayer,5,hardware gate
+V004 twin,evidence model,offline tools,Not ROS-native yet,ros_gz/loopback plugin parameters,REWIRE,ros_gz + Nav2 Loopback,11,ADR-009

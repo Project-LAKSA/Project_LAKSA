@@ -1,0 +1,29 @@
+# LAKSA Navigation V2 canonical vehicle contract.
+# Values retain provenance; consumers must not silently promote estimates.
+schema_version: 1
+frame: base_link
+geometry:
+  wheelbase_m: {value: 0.324, provenance: MEASURED}
+  footprint_m:
+    front: {value: 0.419, provenance: MEASURED}
+    rear: {value: 0.149, provenance: MEASURED}
+    left: {value: 0.148, provenance: MEASURED}
+    right: {value: 0.148, provenance: MEASURED}
+  footprint_padding_m: {value: 0.020, provenance: SAFETY_MARGIN}
+  minimum_turning_radius_m: {value: 1.09, provenance: DERIVED_FROM_MEASURED}
+  wheel_radius_m: {value: null, provenance: UNKNOWN}
+  track_width_m: {value: null, provenance: UNKNOWN}
+limits:
+  linear_speed_mps: {value: 0.15, provenance: TEMPORARY_SAFETY_LIMIT}
+  linear_accel_mps2: {value: null, provenance: UNKNOWN}
+  steering_limit_rad: {value: 0.287979, provenance: MEASURED_RIGHT_LIMIT}
+  reverse_policy: AUTONOMY_DISABLED_EXCEPT_EXPLICIT_RECOVERY
+sensors:
+  zed_pitch_rad: {value: 0.06981317008, provenance: MEASURED}
+  lidar_extrinsic: {provenance: RECOVERED_MAPPING_BASELINE}
+  imu_extrinsic: {value: null, provenance: UNKNOWN}
+twin_v004:
+  mass_kg: {value: 3.750, provenance: MEASURED}
+  speed_per_erpm_mps: {value: 0.000143738, provenance: MEASURED}
+  steering_map: {provenance: MEASURED_ASYMMETRIC_T20}
+  uncertainty: REQUIRED_FOR_SIMULATION
