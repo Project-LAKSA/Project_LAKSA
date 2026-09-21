@@ -137,6 +137,7 @@ def main(argv=None):
     runtime = args.output.parent / "runtime" / f"validity_forensics_{digest[:12]}.yaml"
     # PlannerWorker renders the immutable production REEDS_SHEPP config.
     worker, cases = None, []
+    last_runtime_costmap, last_runtime_footprint = None, None
     rclpy.init(args=[])
     try:
         for scenario in scenarios:
@@ -151,6 +152,8 @@ def main(argv=None):
                 path = copy.deepcopy(worker.client.last_path)
                 official = worker.client.validate_path(path)
                 independent = evaluate_path(poses, scenario, maps[map_id])
+                last_runtime_costmap = copy.deepcopy(worker.client.costmap_snapshot)
+                last_runtime_footprint = list(worker.client.published_footprint)
                 cases.append({
                     "case": scenario["scenario_id"], "map": entries[map_id], "start": scenario["start"], "goal": scenario["goal"],
                     "compute_path_to_pose": {"success": True, "planning_time_ms": planning_ms, "smoothing_time_ms": smoothing_ms, "total_pipeline_time_ms": total_ms},
@@ -171,7 +174,7 @@ def main(argv=None):
             "official_validator": {"service": "/laksa_planning_lab/is_path_valid", "interface": "nav2_msgs/srv/IsPathValid", "owner": "nav2_planner/planner_server"},
             "planner": {"plugin": "nav2_smac_planner/SmacPlannerHybrid", "motion_model": "REEDS_SHEPP", "runtime_params_file": str(runtime)},
             "scenarios_source": str(args.scenarios.resolve()), "scenarios_sha256": stable_hash(scenarios),
-            "runtime_costmap": worker.client.costmap_snapshot, "runtime_footprint": worker.client.published_footprint,
+            "runtime_costmap": last_runtime_costmap, "runtime_footprint": last_runtime_footprint,
             "cases": cases,
         }
         args.output.write_text(json.dumps(payload, indent=2, sort_keys=True, allow_nan=False) + "\n", encoding="utf-8")
