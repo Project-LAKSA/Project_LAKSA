@@ -1,5 +1,5 @@
 {
-  "qualification_timestamp_utc": "2026-09-21T19:39:00Z",
+  "qualification_timestamp_utc": "2026-09-21T20:50:00Z",
   "recovery": {
     "branch": "recovery/pre-characterization-mapping-planner-good",
     "deployed_source_head": "8236ec5eea77ff46cb3b19497b4a40495c98c61d",
@@ -29,12 +29,12 @@
       "vehicle_motion": "none"
     },
     "mapping": {
-      "zed_tracking": "PASS",
-      "zed_odometry": "PASS",
+      "zed_tracking": "PASS_HISTORICAL_QUALIFICATION; CURRENT_STREAM_BLOCKED",
+      "zed_odometry": "PASS_HISTORICAL_QUALIFICATION; CURRENT_STREAM_BLOCKED",
       "rtab_runtime": "PASS",
       "field_lab_runtime": "PASS",
       "tf_topology": "BLOCKED",
-      "tf_blocker": "Persistent observer could not obtain dynamic samples because stationary session 20260921T120201Z failed at ZED SDK camera open: CAMERA STREAM FAILED TO START. No TF configuration was changed.",
+      "tf_blocker": "CAMERA_PHYSICALLY_UNAVAILABLE: ZED2i USB identities enumerate but ZED SDK 5.4.1 reports no camera and the wrapper fails CAMERA STREAM FAILED TO START. No TF configuration was changed.",
       "session_cycles": ["PASS", "PASS", "PASS", "PASS", "PASS"],
       "cycle_evidence": "/home/ubuntu/laksa_phase2_rollback_20260921T100000Z/reset_cycles_final_20260921T1127Z.log",
       "stationary_sessions": [
@@ -51,13 +51,16 @@
       "motion_model": "REEDS_SHEPP",
       "compute_path_to_pose": "PASS",
       "is_path_valid": "FAIL",
-      "planner_only_results_dir": "/home/ubuntu/laksa_phase2_planner_20260921T1131Z",
+      "planner_only_results_dir": "/home/ubuntu/laksa_final_closure_20260921T124706Z",
       "five_case_validation": {
         "action_successes": 5,
-        "official_is_path_valid_successes": 3,
-        "independent_successes": 1,
+        "official_is_path_valid_successes": 2,
+        "continuous_collision_successes": 2,
+        "ackermann_kinematic_successes": 3,
+        "independent_full_successes": 1,
         "collision_failures": 3,
-        "kinematic_failures": 1
+        "kinematic_failures": 2,
+        "closure_forensics": "PLANNER_FINAL_CLOSURE_FORENSICS.json"
       }
     }
   },
@@ -77,6 +80,6 @@
     "vesc": "EXPECTED_DISCONNECTED",
     "physical_mapping_quality_revalidated": "PENDING",
     "characterization_mapping_regression": "INCONCLUSIVE",
-    "blocker": "TF numerical proof is blocked by current ZED camera stream availability; anchored official IsPathValid accepts 3/5 paths, with S000001 and S000003 confirmed footprint collisions."
+    "blocker": "TF numerical proof is blocked by CAMERA_PHYSICALLY_UNAVAILABLE. Production-aligned planner replay yields 2/5 official IsPathValid passes; S000001 exits the map and S000003 intersects occupied cells before smoothing."
   }
 }

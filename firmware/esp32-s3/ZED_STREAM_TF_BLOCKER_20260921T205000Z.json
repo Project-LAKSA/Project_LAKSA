@@ -1,0 +1,15 @@
+{
+  "timestamp_utc": "2026-09-21T20:50:00Z",
+  "classification": "CAMERA_PHYSICALLY_UNAVAILABLE",
+  "zed_stream": "BLOCKED",
+  "tf_observer": "BLOCKED",
+  "tf_topology": "BLOCKED",
+  "evidence": {
+    "usb_enumeration": "Stereolabs ZED 2i 2b03:f880 and HID 2b03:f881 enumerate; /dev/video0 and /dev/video1 exist.",
+    "sdk": "ZED SDK 5.4.1 diagnostic reports USB Camera: No Camera detected.",
+    "wrapper": "Session 20260921T120201Z repeatedly reports CAMERA STREAM FAILED TO START, then Camera detection timeout.",
+    "contention": "No process held /dev/video0 or /dev/video1 during the diagnostic.",
+    "permissions": "Video device nodes are group video and the ubuntu account has video access."
+  },
+  "conclusion": "USB enumeration alone does not provide an SDK-openable camera stream. No mapping parameter, TF transform, or camera extrinsic was changed. Numerical TF observation remains blocked until the physical camera stream is restored."
+}

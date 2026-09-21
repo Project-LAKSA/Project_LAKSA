@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "timestamp_utc": "2026-09-21T20:50:00Z",
+  "safety": {
+    "ros_domain_id": 71,
+    "ros_localhost_only": true,
+    "controller_started": false,
+    "follow_path_created": false,
+    "vehicle_motion": "none"
+  },
+  "baseline_head": "a65065dda72310f204088f160fa821e9701426b6",
+  "production_configuration": {
+    "source": "jetson/laksa_bringup/config/nav2_ackermann.yaml",
+    "planner": "nav2_smac_planner/SmacPlannerHybrid",
+    "motion_model": "REEDS_SHEPP",
+    "minimum_turning_radius_m": 1.09,
+    "allow_unknown": true,
+    "downsample_costmap": false,
+    "footprint": [[-0.15, -0.18], [-0.15, 0.18], [0.42, 0.18], [0.42, -0.18]],
+    "footprint_padding_m": 0.02,
+    "inflation_radius_m": 0.55,
+    "cost_scaling_factor": 3.0
+  },
+  "isolated_lab_alignment": {
+    "source": "jetson/laksa_planning_lab/config/hybrid_production.yaml",
+    "status": "MATCHES_PRODUCTION_PLANNER_AND_STATIC_COSTMAP_SEMANTICS",
+    "intentional_difference": "No live obstacle observations are present in an immutable offline occupancy-map replay.",
+    "published_runtime_footprint_dimensions_m": {"longitudinal": 0.61, "lateral": 0.40}
+  },
+  "artifacts": {
+    "smoothed": "/home/ubuntu/laksa_final_closure_20260921T124706Z/FINAL_SMOOTHED_PATH_FORENSICS.json",
+    "raw": "/home/ubuntu/laksa_final_closure_20260921T124706Z/RAW_UNSMOOTHED_PATH_FORENSICS.json",
+    "allow_unknown_experiment": "/home/ubuntu/laksa_final_closure_20260921T124706Z/S000001_ALLOW_UNKNOWN_FALSE.json",
+    "analytic_expansion_experiment": "/home/ubuntu/laksa_final_closure_20260921T124706Z/S000003_ANALYTIC_DEFERRED.json"
+  },
+  "counts": {
+    "compute_path_to_pose": "5/5",
+    "raw_nav2_discrete_footprint_valid": "2/5",
+    "final_nav2_discrete_footprint_valid": "2/5",
+    "final_laksa_continuous_collision_valid": "2/5",
+    "final_laksa_ackermann_kinematic_valid": "3/5"
+  },
+  "cases": {
+    "S000001": {
+      "classification": "PLANNER_ACTUAL_INVALID_PATH",
+      "start_and_goal_discrete_footprint_valid": true,
+      "raw_nav2_valid": false,
+      "smoothed_nav2_valid": false,
+      "first_continuous_failure": {
+        "mechanism": "footprint_outside_map",
+        "raw_path_index": 6,
+        "sample_fraction": 0.5,
+        "distance_along_path_m": 0.6180866810933396,
+        "xy_yaw": [-0.615069604740583, -2.072826644373338, 2.0507619380950928],
+        "offending_cells": [[28, -1], [29, -1]]
+      },
+      "causality": "The same out-of-map trajectory is returned with internal Smac smoothing disabled. An isolated allow_unknown=false replay also returned the same invalid trajectory; smoothing and that flag are therefore not a proven corrective mechanism."
+    },
+    "S000003": {
+      "classification": "PLANNER_ACTUAL_INVALID_PATH",
+      "start_and_goal_discrete_footprint_valid": true,
+      "raw_nav2_valid": false,
+      "smoothed_nav2_valid": false,
+      "first_continuous_failure": {
+        "mechanism": "footprint_intersects_unknown_or_occupied_cell",
+        "raw_path_index": 51,
+        "sample_fraction": 0.0,
+        "distance_along_path_m": 4.849601508400622,
+        "xy_yaw": [-0.2408614365884887, 2.629931138007805, 2.4434611797332764],
+        "offending_cells": [[31, 102], [32, 102]]
+      },
+      "causality": "The raw unsmoothed path already intersects occupied cells. Deferring analytic expansion changes the returned path but still produces an invalid out-of-map path, so it does not establish a safe correction."
+    },
+    "S000002": {
+      "classification": "PLANNER_ACTUAL_INVALID_PATH",
+      "note": "Under production-aligned footprint and inflation semantics this case is no longer Nav2-discretely valid; its final path first leaves the map between returned poses."
+    },
+    "S000004": {
+      "classification": "KINEMATIC_MODEL_MISMATCH",
+      "note": "Nav2 discrete footprint validation passes, while continuous collision validation passes and the independent Ackermann check finds a 0.7530 m implied radius below the 1.09 m limit."
+    }
+  },
+  "conclusion": {
+    "planner_root_cause": "The production-aligned isolated SmacPlannerHybrid lab returns paths that PlannerServer's official footprint validator rejects; S000001 exits the map and S000003 intersects occupied cells before any external controller is involved.",
+    "planner_fix": "NONE: a production configuration change is not justified until a safe alternative path is demonstrated for the same valid endpoint pairs.",
+    "planner_qualification": "FAIL",
+    "mapping_files_changed": false
+  }
+}

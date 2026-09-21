@@ -249,3 +249,52 @@ S000003, with additional validator-semantic differences for S000002 and
 S000004. A 5/5 official qualification requires a separately evidenced planner
 or costmap configuration correction; speculative tuning is intentionally out
 of scope for this forensic recovery.
+
+## Final closure evidence — production-aligned planner laboratory (2026-09-21)
+
+The original planner laboratory was itself a test-harness mismatch: it used a
+0.588 x 0.316 m footprint with implicit 0.01 m padding, no static-costmap
+inflation, `allow_unknown=false`, and several non-production Smac values.
+Only the isolated `laksa_planning_lab` was corrected. It now mirrors the
+recovered production `nav2_ackermann.yaml` planner, static costmap footprint
+(`[-0.15,-0.18]..[0.42,0.18]`), 0.02 m padding, 0.55 m inflation, and planner
+parameters. The live published footprint measures 0.61 x 0.40 m after padding.
+No production mapping or planner source was changed.
+
+The five preserved cases were replayed in the localhost-only lab with both
+Smac internal `smooth_path=true` and `smooth_path=false`. Both variants return
+five paths, but each has only 2/5 official Nav2 discrete-footprint passes. The
+continuous LAKSA collision layer accepts 2/5 and the independent Ackermann
+layer accepts 3/5. Consequently the planner is **not qualified** for the
+five-case acceptance corpus; no production planner fix was committed.
+
+- **S000001:** start and goal are individually valid. The raw path first exits
+  the map between poses 6 and 7, at 0.6181 m (`x=-0.6151, y=-2.0728,
+  yaw=2.0508`), with footprint cells `(28,-1)` and `(29,-1)` outside the map.
+  It remains invalid without smoothing. The isolated `allow_unknown=false`
+  experiment also returned that same invalid route, so that switch is not a
+  demonstrated fix.
+- **S000003:** start and goal are individually valid. The raw path first
+  intersects occupied cells `(31,102)` and `(32,102)` at pose 51, 4.8496 m
+  (`x=-0.2409, y=2.6299, yaw=2.4435`). It is invalid before smoothing.
+  Deferring analytic expansion changes the path but produces another
+  out-of-map collision, so it is not a demonstrated fix either.
+- **S000002:** became Nav2-invalid when the lab adopted the actual larger,
+  padded production footprint; it leaves the map between returned poses.
+- **S000004:** Nav2 and continuous collision checks pass, while the independent
+  Ackermann check reports 0.7530 m implied radius, below the 1.09 m constraint.
+
+Full preserved raw paths, returned paths, costmap identity, footprint data,
+and experiment results are referenced in
+`PLANNER_FINAL_CLOSURE_FORENSICS.json`. This separates Nav2's discrete
+footprint predicate from LAKSA continuous-collision and kinematic predicates;
+the independent validator was not weakened to make it agree.
+
+The latest ZED diagnostic does not prove a TF defect. The USB identities and
+`/dev/video0`/`/dev/video1` enumerate, but ZED SDK 5.4.1 reports no camera and
+the wrapper reports `CAMERA STREAM FAILED TO START` followed by camera
+detection timeout. No holder or permissions conflict was observed. This is
+classified `CAMERA_PHYSICALLY_UNAVAILABLE`; the persistent numerical TF
+observer and TF qualification remain **BLOCKED**, with evidence in
+`ZED_STREAM_TF_BLOCKER_20260921T205000Z.json`. Mapping configuration and
+extrinsics remain frozen.
