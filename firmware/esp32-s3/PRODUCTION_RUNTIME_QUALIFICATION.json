@@ -2,7 +2,7 @@
   "qualification_timestamp_utc": "2026-09-21T19:39:00Z",
   "recovery": {
     "branch": "recovery/pre-characterization-mapping-planner-good",
-    "source_head": "8236ec5eea77ff46cb3b19497b4a40495c98c61d",
+    "deployed_source_head": "8236ec5eea77ff46cb3b19497b4a40495c98c61d",
     "historical_exact_commit": null,
     "target_type": "COMPOSITE_RECONSTRUCTION",
     "characterization_boundary": "2026-09-17/source capability boundary"
