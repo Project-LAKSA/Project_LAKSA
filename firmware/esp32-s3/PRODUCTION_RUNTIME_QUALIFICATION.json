@@ -1,0 +1,81 @@
+{
+  "qualification_timestamp_utc": "2026-09-21T19:39:00Z",
+  "recovery": {
+    "branch": "recovery/pre-characterization-mapping-planner-good",
+    "source_head": "8236ec5eea77ff46cb3b19497b4a40495c98c61d",
+    "historical_exact_commit": null,
+    "target_type": "COMPOSITE_RECONSTRUCTION",
+    "characterization_boundary": "2026-09-17/source capability boundary"
+  },
+  "deployment": {
+    "previous_production_head": "ab82b0cba7b320f26986b94b3d6175791b735e8a",
+    "rollback_manifest": "/home/ubuntu/laksa_phase2_rollback_20260921T100000Z/ROLLBACK_MANIFEST.txt",
+    "staging_source_hash_match": true,
+    "staging_install_hash_match": true,
+    "production_source_hash_match": true,
+    "production_install_hash_match": true,
+    "production_runtime_match": true,
+    "notes": [
+      "The Jetson workspace is symlink-install based; resolved active scripts point to the deployed workspace source.",
+      "The retained Jetson Git checkout metadata was dirty and was preserved. Runtime provenance is established by file hashes, installed paths, systemd units, and process command lines."
+    ]
+  },
+  "runtime": {
+    "safety": {
+      "actuation_enabled": false,
+      "autonomy_enabled": false,
+      "characterization_enabled": false,
+      "command_authority": "drive_supervisor is the sole /laksa/command publisher",
+      "vehicle_motion": "none"
+    },
+    "mapping": {
+      "zed_tracking": "PASS",
+      "zed_odometry": "PASS",
+      "rtab_runtime": "PASS",
+      "field_lab_runtime": "PASS",
+      "tf_topology": "BLOCKED",
+      "tf_blocker": "The running topology/process remaps are evidenced, but numerical tf2_echo samples and live parameter services timed out in the CLI discovery context.",
+      "session_cycles": ["PASS", "PASS", "PASS", "PASS", "PASS"],
+      "cycle_evidence": "/home/ubuntu/laksa_phase2_rollback_20260921T100000Z/reset_cycles_final_20260921T1127Z.log",
+      "stationary_sessions": [
+        "20260921T112746Z",
+        "20260921T112816Z",
+        "20260921T112846Z",
+        "20260921T112916Z",
+        "20260921T112946Z"
+      ]
+    },
+    "planner": {
+      "runtime": "PASS",
+      "plugin": "nav2_smac_planner/SmacPlannerHybrid",
+      "motion_model": "REEDS_SHEPP",
+      "compute_path_to_pose": "PASS",
+      "is_path_valid": "NOT_RUN",
+      "planner_only_results_dir": "/home/ubuntu/laksa_phase2_planner_20260921T1131Z",
+      "five_case_validation": {
+        "action_successes": 5,
+        "independent_successes": 1,
+        "collision_failures": 3,
+        "kinematic_failures": 1
+      }
+    }
+  },
+  "source_install_hashes": {
+    "indoor_live_zed.yaml": "aae8a161eea00f556e6f9b519cd9d68834613513fb26ac7c9cdc445af141ab15",
+    "rtabmap_common.yaml": "041e1fab86b32deb14f67318d11272a86a28101844996d3b46596a9dd50b96b2",
+    "mapping_stack.launch.py": "e624b4d6548d74930dd50b109ea7b57807aaa587c3647c9e04ffb4859a93a1b2",
+    "laksa_visualization.urdf": "6585fb50553fd464f0172198f34b0a9e9c8f209d003a403c4c857d8c68648a5a",
+    "nav2_ackermann.yaml": "51eeee409bf3054a427dc2c7d61fd21862b15cee8d9926eb3a776183f246cb12",
+    "drive_supervisor_node.py": "2d4cce2a2b6295a48b07647e34102dd7ae773ad11ba3f08072544e0f8b2ac5ea",
+    "health_monitor.py": "b12653ad4ef3f1dcb27ddb66416e17f57fb8f60e2870fc416e43e0eaf48060bf",
+    "laksa-mapping-cockpit.service": "40aeea43f94518979fda09b469d00bffd1259adeafa4e242fc2053c45950fa86",
+    "ros-runtime.env": "3bf02627b58c06b8fc0cd626f0ace5d11bcd69e85722e5c27314e18f326ffb54",
+    "cyclonedds.xml": "dde4aba35e7d853cbb29e0f0c4975dd032e36ef507bf997c4112aa12a6089052"
+  },
+  "limitations": {
+    "vesc": "EXPECTED_DISCONNECTED",
+    "physical_mapping_quality_revalidated": "PENDING",
+    "characterization_mapping_regression": "INCONCLUSIVE",
+    "blocker": "Do not declare total production recovery: TF numerical authority verification is blocked, official IsPathValid was not run, and only one of five planner action-success paths passed independent collision/kinematic validation."
+  }
+}

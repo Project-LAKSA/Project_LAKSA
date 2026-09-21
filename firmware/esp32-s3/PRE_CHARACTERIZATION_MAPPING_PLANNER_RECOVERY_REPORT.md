@@ -142,3 +142,63 @@ CHARACTERIZATION_MAPPING_REGRESSION=INCONCLUSIVE
 PHYSICAL_MAPPING_QUALITY_REVALIDATED=PENDING
 BLOCKER=Production runtime was not switched; five reset cycles and planner action tests remain pending, and current live sensor state still cannot prove mapping quality.
 ```
+
+## Phase 2 controlled production runtime qualification (2026-09-21)
+
+The recovered composite was deployed by source/install file identity, with a
+rollback snapshot at `/home/ubuntu/laksa_phase2_rollback_20260921T100000Z`.
+The prior live checkout was preserved rather than reset. Two narrow,
+post-deployment recovery compatibility commits were necessary because the
+historical interface intentionally lacks later fields: the supervisor no
+longer accesses `DriveCommand.brake`, the VESC freshness test uses the
+historical `telemetry_fresh`, and Health reports unavailable historical
+`brake_active` telemetry as `null`. A separate service contract commit aligns
+the cockpit with the same CycloneDDS environment already used by control and
+LiDAR. None modifies mapping parameters, planner behavior, characterization,
+or actuator authority.
+
+The canonical stationary manager ran five clean sessions:
+`20260921T112746Z`, `20260921T112816Z`, `20260921T112846Z`,
+`20260921T112916Z`, and `20260921T112946Z`. Every session reached `COMPLETE`,
+used a new database path, presented fresh ZED RGB/odometry to Field Lab, and
+had no remaining `/zed/zed_node` or `/zed_rtabmap/rtabmap` graph nodes before
+the next session. Evidence is retained on Jetson at
+`/home/ubuntu/laksa_phase2_rollback_20260921T100000Z/reset_cycles_final_20260921T1127Z.log`.
+This establishes reset behavior only; it does not establish mapping quality
+without physical manual driving.
+
+ZED and RTAB were live in each cycle. The live mapping launch process used
+the session copies of `indoor_live_zed.yaml` (SHA-256
+`aae8a161...141ab15`) and `rtabmap.yaml`, with RTAB explicitly remapped to
+`/zed/zed_node/odom`. RTAB processed frames at its configured 1 Hz mapping
+rate. The Field Lab health/API observed fresh RGB and odometry. Numerical
+`tf2_echo` and live parameter-service requests from the CLI discovery context
+timed out, so TF numerical authority is explicitly **BLOCKED**, not passed.
+
+The isolated `ROS_DOMAIN_ID=71` planner lab loaded `SmacPlannerHybrid` with
+the recovered `REEDS_SHEPP` configuration and returned a `ComputePathToPose`
+action result for all five deterministic cases. Independent path validation
+accepted one case and rejected four (three collision failures, one kinematic
+violation). The official `IsPathValid` interface was not invoked and therefore
+is `NOT_RUN`. These are recovery results, not controller execution; no path
+was sent to the vehicle.
+
+Machine-readable evidence is in `PRODUCTION_RUNTIME_QUALIFICATION.json`.
+The authoritative current qualification conclusion is:
+
+```text
+MAPPING_RUNTIME_RESTORED=YES
+ZED_TRACKING=PASS
+ZED_ODOMETRY=PASS
+RTAB_RUNTIME=PASS
+FIELD_LAB_RUNTIME=PASS
+REPEATED_SESSION_RESET=PASS
+SMAC_PLANNER=PASS
+COMPUTE_PATH_TO_POSE=PASS
+IS_PATH_VALID=NOT_RUN
+TF_TOPOLOGY=BLOCKED
+PLANNER_RUNTIME_RESTORED=YES
+PHYSICAL_MAPPING_QUALITY_REVALIDATED=PENDING
+PRODUCTION_RUNTIME_RESTORED=NO
+BLOCKER=TF numerical verification is blocked; official IsPathValid is not run; only 1/5 planner paths passes independent collision/kinematic validation.
+```
