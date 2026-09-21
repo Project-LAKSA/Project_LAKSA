@@ -38,5 +38,6 @@ setup(
         "planning_lab_maps = laksa_planning_lab.map_dataset:main",
         "planning_lab_scenarios = laksa_planning_lab.scenario_generator:main",
         "planning_lab_lattice = laksa_planning_lab.lattice_tools:main",
+        "planning_lab_validity_forensics = laksa_planning_lab.validity_forensics:main",
     ]},
 )
