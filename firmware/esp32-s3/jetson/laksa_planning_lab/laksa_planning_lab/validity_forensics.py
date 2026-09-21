@@ -131,6 +131,10 @@ def main(argv=None):
     parser.add_argument("--case", action="append", dest="cases", help="Replay only this preserved scenario id; repeatable")
     parser.add_argument("--smooth-path", choices=("true", "false"), default="true",
                         help="Explicit isolated experiment override; default preserves recovered configuration")
+    parser.add_argument("--allow-unknown", choices=("true", "false"),
+                        help="Isolated planner-search experiment; never changes production configuration")
+    parser.add_argument("--analytic-expansion-ratio", type=float,
+                        help="Isolated Smac analytic-expansion experiment; never changes production configuration")
     args = parser.parse_args(argv)
     if os.environ.get("ROS_DOMAIN_ID") != "71" or os.environ.get("ROS_LOCALHOST_ONLY") != "1":
         raise SystemExit("Safety gate: set ROS_DOMAIN_ID=71 and ROS_LOCALHOST_ONLY=1")
@@ -150,7 +154,12 @@ def main(argv=None):
             raise SystemExit(f"Map hash drift for {item['scenario_id']}: {item['map_id']}")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     context = _Context(args.output.parent)
-    configuration = {"method": "HYBRID_PRODUCTION", "planner": {"smooth_path": args.smooth_path == "true"}}
+    planner_overrides = {"smooth_path": args.smooth_path == "true"}
+    if args.allow_unknown is not None:
+        planner_overrides["allow_unknown"] = args.allow_unknown == "true"
+    if args.analytic_expansion_ratio is not None:
+        planner_overrides["analytic_expansion_ratio"] = args.analytic_expansion_ratio
+    configuration = {"method": "HYBRID_PRODUCTION", "planner": planner_overrides}
     digest = stable_hash({"forensics": "official-is-path-valid-v1", "scenarios": scenarios})
     maps = {map_id: load_map(Path(entry["yaml"]), map_id) for map_id, entry in entries.items()}
     runtime = args.output.parent / "runtime" / f"validity_forensics_{digest[:12]}.yaml"
