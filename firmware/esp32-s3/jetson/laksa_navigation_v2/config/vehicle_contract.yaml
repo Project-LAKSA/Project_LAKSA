@@ -1,15 +1,51 @@
 {
-  "schema_version": 1,
-  "frame": "base_link",
-  "geometry": {
-    "wheelbase_m": {"value": 0.324, "provenance": "MEASURED"},
-    "track_width_m": {"value": 0.17165, "provenance": "IDENTIFIED_EXISTING_PROJECT_MEASUREMENT"},
-    "wheel_radius_m": {"value": 0.0545, "provenance": "IDENTIFIED_EXISTING_PROJECT_MEASUREMENT"},
-    "footprint_m": {"front": {"value": 0.419, "provenance": "MEASURED"}, "rear": {"value": 0.149, "provenance": "MEASURED"}, "left": {"value": 0.148, "provenance": "MEASURED"}, "right": {"value": 0.148, "provenance": "MEASURED"}},
-    "footprint_padding_m": {"value": 0.020, "provenance": "DERIVED_SAFETY_MARGIN"},
-    "minimum_turning_radius_m": {"value": 1.09, "provenance": "DERIVED_FROM_MEASURED"}
+  "contract_version": 2,
+  "identity": {
+    "vehicle": "LAKSA",
+    "body_frame": "base_link",
+    "navigation_frame": "base_footprint",
+    "coordinate_convention": "REP_103"
   },
-  "limits": {"linear_speed_mps": {"value": 0.15, "provenance": "ESTIMATED_TEMPORARY_SAFETY_LIMIT"}, "linear_accel_mps2": {"value": null, "provenance": "UNKNOWN"}, "steering_limit_left_rad": {"value": 0.523, "provenance": "IDENTIFIED"}, "steering_limit_right_rad": {"value": 0.288, "provenance": "MEASURED"}, "reverse_policy": "AUTONOMY_DISABLED_EXCEPT_EXPLICIT_RECOVERY"},
-  "sensors": {"zed": {"xyz_m": [0.108069263, 0.0, 0.140001506], "rpy_rad": [0.0, 0.06981317008, 0.0], "provenance": "MEASURED"}, "lidar": {"xyz_m": [0.31542, 0.0, 0.13542], "rpy_rad": [0.0, 0.0, 3.14159265359], "provenance": "MEASURED"}, "imu": {"xyz_m": null, "rpy_rad": null, "provenance": "UNKNOWN"}},
-  "twin_v004": {"mass_kg": {"value": 3.750, "provenance": "MEASURED"}, "speed_per_erpm_mps": {"value": 0.000143738, "provenance": "MEASURED"}, "cg": {"value": null, "provenance": "UNKNOWN"}, "uncertainty": "REQUIRED_FOR_SIMULATION"}
+  "geometry": {
+    "wheelbase_m": {"value": 0.324, "units": "m", "provenance": {"classification": "MEASURED", "evidence": ["legacy drive_supervisor and planning geometry"]}},
+    "track_width_m": {"value": 0.17165, "units": "m", "provenance": {"classification": "IDENTIFIED", "evidence": ["legacy vehicle_dimensions.yaml"]}},
+    "wheel_radius_m": {"value": 0.0545, "units": "m", "provenance": {"classification": "IDENTIFIED", "evidence": ["legacy vehicle_dimensions.yaml"]}},
+    "footprint_m": {
+      "front": {"value": 0.419, "units": "m", "provenance": {"classification": "MEASURED", "evidence": ["historical planner geometry"]}},
+      "rear": {"value": 0.149, "units": "m", "provenance": {"classification": "MEASURED", "evidence": ["historical planner geometry"]}},
+      "left": {"value": 0.148, "units": "m", "provenance": {"classification": "MEASURED", "evidence": ["historical planner geometry"]}},
+      "right": {"value": 0.148, "units": "m", "provenance": {"classification": "MEASURED", "evidence": ["historical planner geometry"]}}
+    },
+    "footprint_padding_m": {"value": 0.02, "units": "m", "provenance": {"classification": "DERIVED", "evidence": ["V2 explicit safety margin"]}}
+  },
+  "steering": {
+    "left_limit_rad": {"value": 0.523, "units": "rad", "semantics": "EQUIVALENT_BICYCLE_STEERING_ANGLE", "provenance": {"classification": "IDENTIFIED", "evidence": ["drive_supervisor left_road_wheel_limit_rad", "laksa_control_math atan(wheelbase * curvature)"]}},
+    "right_limit_rad": {"value": 0.288, "units": "rad", "semantics": "EQUIVALENT_BICYCLE_STEERING_ANGLE", "provenance": {"classification": "IDENTIFIED", "evidence": ["drive_supervisor right_road_wheel_limit_rad", "nav2_ackermann 16.5-degree road-wheel comment", "laksa_control_math atan(wheelbase * curvature)"]}},
+    "actuator_interface": "ASYMMETRIC_SERVO_TRAVEL_NORMALIZED_FROM_EQUIVALENT_BICYCLE_ANGLE"
+  },
+  "kinematics": {
+    "geometric_radius_left_m": {"derivation": "wheelbase_m / tan(abs(left_limit_rad))", "provenance": "DERIVED_FROM_EQUIVALENT_BICYCLE_STEERING"},
+    "geometric_radius_right_m": {"derivation": "wheelbase_m / tan(abs(right_limit_rad))", "provenance": "DERIVED_FROM_EQUIVALENT_BICYCLE_STEERING"},
+    "measured_effective_radius_left_m": {"value": null, "units": "m", "provenance": "EFFECTIVE_RADIUS_NEEDS_FUTURE_PHYSICAL_MEASUREMENT"},
+    "measured_effective_radius_right_m": {"value": null, "units": "m", "provenance": "EFFECTIVE_RADIUS_NEEDS_FUTURE_PHYSICAL_MEASUREMENT"},
+    "planner_radius_selection_policy": "MAX_OF_DIRECTIONAL_GEOMETRIC_RADII_UNTIL_EFFECTIVE_RADII_ARE_MEASURED"
+  },
+  "legacy_assumptions": {
+    "minimum_turning_radius_m": {"value": 0.9, "units": "m", "classification": "LEGACY_ASSUMPTION_NOT_ACTIVE_V2", "evidence": ["historical legacy planning configuration"]}
+  },
+  "limits": {
+    "linear_speed_mps": {"value": 0.15, "units": "m/s", "provenance": {"classification": "ESTIMATED", "evidence": ["temporary V2 safety limit"]}},
+    "linear_accel_mps2": {"value": null, "units": "m/s^2", "provenance": {"classification": "UNKNOWN", "evidence": []}},
+    "reverse_policy": "AUTONOMY_DISABLED_EXCEPT_EXPLICIT_RECOVERY"
+  },
+  "sensors": {
+    "zed": {"xyz_m": [0.108069263, 0.0, 0.140001506], "rpy_rad": [0.0, 0.06981317008, 0.0], "provenance": {"classification": "MEASURED", "evidence": ["legacy vehicle_dimensions.yaml"]}},
+    "lidar": {"xyz_m": [0.31542, 0.0, 0.13542], "rpy_rad": [0.0, 0.0, 3.14159265359], "provenance": {"classification": "MEASURED", "evidence": ["legacy vehicle_dimensions.yaml"]}},
+    "imu": {"xyz_m": null, "rpy_rad": null, "provenance": {"classification": "UNKNOWN", "evidence": ["HARDWARE_MEASUREMENT_REQUIRED"]}}
+  },
+  "twin_v004": {
+    "mass_kg": {"value": 3.75, "units": "kg", "provenance": {"classification": "MEASURED", "evidence": ["V004 evidence"]}},
+    "speed_per_erpm_mps": {"value": 0.000143738, "units": "m/s/eRPM", "provenance": {"classification": "MEASURED", "evidence": ["T22 evidence"]}},
+    "cg": {"value": null, "units": "m", "provenance": {"classification": "UNKNOWN", "evidence": []}}
+  }
 }

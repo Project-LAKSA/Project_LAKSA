@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "LAKSA V2 canonical vehicle contract",
+  "type": "object",
+  "required": ["contract_version", "identity", "geometry", "steering", "kinematics", "sensors"],
+  "properties": {
+    "contract_version": {"const": 2},
+    "identity": {"type": "object", "required": ["body_frame", "navigation_frame", "coordinate_convention"]},
+    "geometry": {"type": "object", "required": ["wheelbase_m", "track_width_m", "wheel_radius_m", "footprint_m", "footprint_padding_m"]},
+    "steering": {"type": "object", "required": ["left_limit_rad", "right_limit_rad", "actuator_interface"]},
+    "kinematics": {"type": "object", "required": ["geometric_radius_left_m", "geometric_radius_right_m", "measured_effective_radius_left_m", "measured_effective_radius_right_m", "planner_radius_selection_policy"]},
+    "legacy_assumptions": {"type": "object"},
+    "limits": {"type": "object"},
+    "sensors": {"type": "object", "required": ["zed", "lidar", "imu"]},
+    "twin_v004": {"type": "object"}
+  },
+  "additionalProperties": false
+}

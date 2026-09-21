@@ -1,0 +1,13 @@
+{
+  "contract_version": 2,
+  "directional_geometric_radius_m": {
+    "left": 0.5619612805670269,
+    "right": 1.0937226373133722
+  },
+  "formulas": {
+    "left": "wheelbase_m / tan(abs(left_limit_rad))",
+    "right": "wheelbase_m / tan(abs(right_limit_rad))"
+  },
+  "planner_min_turning_radius_m": 1.0937226373133722,
+  "planner_radius_selection_policy": "MAX_OF_DIRECTIONAL_GEOMETRIC_RADII_UNTIL_EFFECTIVE_RADII_ARE_MEASURED"
+}

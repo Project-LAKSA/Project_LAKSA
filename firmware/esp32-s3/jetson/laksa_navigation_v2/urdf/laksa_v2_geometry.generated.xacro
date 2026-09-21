@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="laksa_v2_geometry">
+  <xacro:property name="wheelbase_m" value="0.324"/>
+  <xacro:property name="track_width_m" value="0.17165"/>
+  <xacro:property name="wheel_radius_m" value="0.0545"/>
+  <xacro:property name="zed_x_m" value="0.108069263"/>
+  <xacro:property name="zed_y_m" value="0"/>
+  <xacro:property name="zed_z_m" value="0.140001506"/>
+  <xacro:property name="zed_roll_rad" value="0"/>
+  <xacro:property name="zed_pitch_rad" value="0.06981317008"/>
+  <xacro:property name="zed_yaw_rad" value="0"/>
+  <xacro:property name="lidar_x_m" value="0.31542"/>
+  <xacro:property name="lidar_y_m" value="0"/>
+  <xacro:property name="lidar_z_m" value="0.13542"/>
+  <xacro:property name="lidar_roll_rad" value="0"/>
+  <xacro:property name="lidar_pitch_rad" value="0"/>
+  <xacro:property name="lidar_yaw_rad" value="3.14159265359"/>
+</robot>

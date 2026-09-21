@@ -1,15 +1,43 @@
 <?xml version="1.0"?>
-<!-- V2 mechanical description. Its values are validated against vehicle_contract.yaml. -->
-<robot name="laksa_v2">
-  <link name="base_link"/><link name="chassis_link"/>
-  <joint name="base_to_chassis" type="fixed"><parent link="base_link"/><child link="chassis_link"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
-  <link name="zed_camera_link"/>
-  <joint name="base_to_zed" type="fixed"><parent link="base_link"/><child link="zed_camera_link"/><origin xyz="0.108069263 0 0.140001506" rpy="0 0.06981317008 0"/></joint>
-  <link name="lidar_link"/>
-  <joint name="base_to_lidar" type="fixed"><parent link="base_link"/><child link="lidar_link"/><origin xyz="0.31542 0 0.13542" rpy="0 0 3.14159265359"/></joint>
-  <!-- IMU edge is deliberately absent until measured. -->
+<!--
+  Mechanical description only. All dimensions and measured sensor extrinsics
+  are generated from config/vehicle_contract.yaml into the included property
+  file. Dynamic navigation/body TF edges intentionally do not belong in URDF.
+-->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="laksa_v2">
+  <xacro:include filename="laksa_v2_geometry.generated.xacro"/>
+
+  <link name="base_footprint"/>
+  <link name="base_link"/>
+  <!-- base_footprint -> base_link is published dynamically by the future body
+       attitude projection adapter, never as this static mechanical joint. -->
+  <link name="chassis_link"/>
+  <joint name="base_to_chassis" type="fixed">
+    <parent link="base_link"/><child link="chassis_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
+
   <link name="rear_axle_link"/>
-  <joint name="base_to_rear_axle" type="fixed"><parent link="base_link"/><child link="rear_axle_link"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
+  <joint name="base_to_rear_axle" type="fixed">
+    <parent link="base_link"/><child link="rear_axle_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+  </joint>
   <link name="front_axle_link"/>
-  <joint name="rear_to_front_axle" type="fixed"><parent link="rear_axle_link"/><child link="front_axle_link"/><origin xyz="0.324 0 0" rpy="0 0 0"/></joint>
+  <joint name="rear_to_front_axle" type="fixed">
+    <parent link="rear_axle_link"/><child link="front_axle_link"/>
+    <origin xyz="${wheelbase_m} 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="zed_camera_link"/>
+  <joint name="base_to_zed" type="fixed">
+    <parent link="base_link"/><child link="zed_camera_link"/>
+    <origin xyz="${zed_x_m} ${zed_y_m} ${zed_z_m}" rpy="${zed_roll_rad} ${zed_pitch_rad} ${zed_yaw_rad}"/>
+  </joint>
+  <link name="lidar_link"/>
+  <joint name="base_to_lidar" type="fixed">
+    <parent link="base_link"/><child link="lidar_link"/>
+    <origin xyz="${lidar_x_m} ${lidar_y_m} ${lidar_z_m}" rpy="${lidar_roll_rad} ${lidar_pitch_rad} ${lidar_yaw_rad}"/>
+  </joint>
+  <!-- imu_link is deliberately absent: its physical extrinsic is UNKNOWN and
+       must not be fabricated for a visually convenient TF tree. -->
 </robot>

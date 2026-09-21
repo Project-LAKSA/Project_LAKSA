@@ -1,0 +1,7 @@
+{
+  "left_limit_rad": 0.523,
+  "right_limit_rad": 0.288,
+  "track_width_m": 0.17165,
+  "wheel_radius_m": 0.0545,
+  "wheelbase_m": 0.324
+}

@@ -1,0 +1,207 @@
+{
+  "derivation_formulas": {
+    "padded_footprint": "axis-aligned footprint extents expanded by footprint_padding_m",
+    "planner_radius": "max(geometric_radius_left_m, geometric_radius_right_m)",
+    "radius": "wheelbase_m / tan(abs(equivalent_bicycle_steering_angle_rad))"
+  },
+  "derived_values": {
+    "canonical_footprint": [
+      [
+        0.419,
+        0.148
+      ],
+      [
+        0.419,
+        -0.148
+      ],
+      [
+        -0.149,
+        -0.148
+      ],
+      [
+        -0.149,
+        0.148
+      ]
+    ],
+    "footprint_padding_m": 0.02,
+    "geometric_radius_left_m": 0.5619612805670269,
+    "geometric_radius_right_m": 1.0937226373133722,
+    "lidar": {
+      "provenance": {
+        "classification": "MEASURED",
+        "evidence": [
+          "legacy vehicle_dimensions.yaml"
+        ]
+      },
+      "rpy_rad": [
+        0.0,
+        0.0,
+        3.14159265359
+      ],
+      "xyz_m": [
+        0.31542,
+        0.0,
+        0.13542
+      ]
+    },
+    "mass_kg": 3.75,
+    "padded_footprint": [
+      [
+        0.439,
+        0.16799999999999998
+      ],
+      [
+        0.439,
+        -0.16799999999999998
+      ],
+      [
+        -0.16899999999999998,
+        -0.16799999999999998
+      ],
+      [
+        -0.16899999999999998,
+        0.16799999999999998
+      ]
+    ],
+    "planner_min_turning_radius_m": 1.0937226373133722,
+    "planner_radius_selection_policy": "MAX_OF_DIRECTIONAL_GEOMETRIC_RADII_UNTIL_EFFECTIVE_RADII_ARE_MEASURED",
+    "speed_per_erpm_mps": 0.000143738,
+    "steering_left_rad": 0.523,
+    "steering_right_rad": 0.288,
+    "track_width_m": 0.17165,
+    "wheel_radius_m": 0.0545,
+    "wheelbase_m": 0.324,
+    "zed": {
+      "provenance": {
+        "classification": "MEASURED",
+        "evidence": [
+          "legacy vehicle_dimensions.yaml"
+        ]
+      },
+      "rpy_rad": [
+        0.0,
+        0.06981317008,
+        0.0
+      ],
+      "xyz_m": [
+        0.108069263,
+        0.0,
+        0.140001506
+      ]
+    }
+  },
+  "generated_artifact_paths": [
+    "VEHICLE_GEOMETRY_SOURCE_AUDIT.json",
+    "config/generated/gazebo_v004_geometry.json",
+    "config/generated/kinematics.json",
+    "config/generated/mppi_ackermann_geometry.json",
+    "config/generated/nav2_footprints.json",
+    "config/generated/ros2_control_geometry.json",
+    "config/generated/state_lattice_geometry.json",
+    "config/tf_authority_contract.json",
+    "urdf/laksa_v2_geometry.generated.xacro"
+  ],
+  "generator_version": "1.0.0",
+  "output_sha256": {
+    "VEHICLE_GEOMETRY_SOURCE_AUDIT.json": "82886c749ae90318aa02cefe2b57f01e47a50887a054f468c94bf35054f0c751",
+    "config/generated/gazebo_v004_geometry.json": "626904211c12f30b7e98395488dd7bfccd7786f18eab0599f1bcaeeac5e78090",
+    "config/generated/kinematics.json": "b5b8a2a4a8e9efc5e5fee437a9626f7fb85b2c23f9619d95771ad6c83e170896",
+    "config/generated/mppi_ackermann_geometry.json": "36a71e4990274db558dbf9fa65c1f64c36599b7aea89f0544ec39106bb7d1bd0",
+    "config/generated/nav2_footprints.json": "dbe286cb4ad0a0ff46a9c2d6f5f99571f628a998020a32ea73fe08ad8f5e6240",
+    "config/generated/ros2_control_geometry.json": "b45ea93eabde9b536fba7e69f190aee65494722f1a73d91cd48de24e348e80f5",
+    "config/generated/state_lattice_geometry.json": "16def4451e378de6cc46a3165d17ac84fac21d3477997c3e868b3169ec1b4a0f",
+    "config/tf_authority_contract.json": "ad8249b6b46934c7bc6f53054be687c1e7c06fb93c6f1264eec8d03cdea300a2",
+    "urdf/laksa_v2_geometry.generated.xacro": "bf6a0b77fcf141e161c2c1c0703553951774c2ada6cdc8783c8f21a726c772cb"
+  },
+  "provenance_references": {
+    "legacy_radius": {
+      "minimum_turning_radius_m": {
+        "classification": "LEGACY_ASSUMPTION_NOT_ACTIVE_V2",
+        "evidence": [
+          "historical legacy planning configuration"
+        ],
+        "units": "m",
+        "value": 0.9
+      }
+    },
+    "sensors": {
+      "imu": {
+        "provenance": {
+          "classification": "UNKNOWN",
+          "evidence": [
+            "HARDWARE_MEASUREMENT_REQUIRED"
+          ]
+        },
+        "rpy_rad": null,
+        "xyz_m": null
+      },
+      "lidar": {
+        "provenance": {
+          "classification": "MEASURED",
+          "evidence": [
+            "legacy vehicle_dimensions.yaml"
+          ]
+        },
+        "rpy_rad": [
+          0.0,
+          0.0,
+          3.14159265359
+        ],
+        "xyz_m": [
+          0.31542,
+          0.0,
+          0.13542
+        ]
+      },
+      "zed": {
+        "provenance": {
+          "classification": "MEASURED",
+          "evidence": [
+            "legacy vehicle_dimensions.yaml"
+          ]
+        },
+        "rpy_rad": [
+          0.0,
+          0.06981317008,
+          0.0
+        ],
+        "xyz_m": [
+          0.108069263,
+          0.0,
+          0.140001506
+        ]
+      }
+    },
+    "steering": {
+      "actuator_interface": "ASYMMETRIC_SERVO_TRAVEL_NORMALIZED_FROM_EQUIVALENT_BICYCLE_ANGLE",
+      "left_limit_rad": {
+        "provenance": {
+          "classification": "IDENTIFIED",
+          "evidence": [
+            "drive_supervisor left_road_wheel_limit_rad",
+            "laksa_control_math atan(wheelbase * curvature)"
+          ]
+        },
+        "semantics": "EQUIVALENT_BICYCLE_STEERING_ANGLE",
+        "units": "rad",
+        "value": 0.523
+      },
+      "right_limit_rad": {
+        "provenance": {
+          "classification": "IDENTIFIED",
+          "evidence": [
+            "drive_supervisor right_road_wheel_limit_rad",
+            "nav2_ackermann 16.5-degree road-wheel comment",
+            "laksa_control_math atan(wheelbase * curvature)"
+          ]
+        },
+        "semantics": "EQUIVALENT_BICYCLE_STEERING_ANGLE",
+        "units": "rad",
+        "value": 0.288
+      }
+    }
+  },
+  "schema": "config/vehicle_contract.schema.json",
+  "source_contract": "config/vehicle_contract.yaml",
+  "source_contract_sha256": "23b4753e518465350d7a968416fc5e0116c980ea862dc989c91d5f3881dc97b2"
+}

@@ -1,0 +1,15 @@
+{
+  "test_only": true,
+  "purpose": "G1 synthetic REP-105 contract observation; never production",
+  "publishers": [
+    "g1_test_only_global_localization",
+    "g1_test_only_local_state_estimator",
+    "g1_test_only_body_attitude_adapter"
+  ],
+  "edges": [
+    "map->odom",
+    "odom->base_footprint",
+    "base_footprint->base_link"
+  ],
+  "forbidden": ["sensor drivers", "Nav2 planner", "Nav2 controller", "motion command publishers"]
+}
