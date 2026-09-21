@@ -82,15 +82,18 @@ runners, and deployers are not included.
 - Isolated Jetson `colcon build`: PASS, 8 packages.
 - Source-to-isolated-install SHA-256: PASS for the ZED config, RTAB config,
   mapping launch, Nav2 planner config, and supervisor config.
-- Static launch resolution: BLOCKED because `zed_wrapper` is not registered in
-  the isolated environment; no node was started.
+- Static mapping launch resolution: PASS when the existing `/home/ubuntu/zed_ws`
+  install is sourced; no node was started.
+- Static planner and Field Lab launch-argument resolution: PASS; no node was
+  started.
 - Current Jetson source/install hashes and runtime evidence are preserved under
   `/private/tmp/laksa-forensic-20260921` and in the accompanying JSON.
 - Current Jetson source was dirty; it was not overwritten.
 - Remote ROS graph/rate capture was inconclusive because the shell did not join
   the running discovery context. No runtime claim is made from that capture.
 - No production deployment or service restart, repeated reset test, or planner
-  action test has been performed.
+  action test has been performed. The isolated build/install is a deployment
+  rehearsal, not a production activation.
 
 The VESC is physically disconnected and is `EXPECTED_DISCONNECTED`, not a
 software acceptance failure. Xbox is optional for stationary validation.
@@ -137,5 +140,5 @@ VESC_STATUS=EXPECTED_DISCONNECTED
 SAFE_NO_MOTION_VALIDATION=PASS (isolated build only; no runtime nodes started)
 CHARACTERIZATION_MAPPING_REGRESSION=INCONCLUSIVE
 PHYSICAL_MAPPING_QUALITY_REVALIDATED=PENDING
-BLOCKER=Production runtime was not switched; isolated launch validation is blocked by missing zed_wrapper registration, and five reset cycles plus planner action tests remain pending.
+BLOCKER=Production runtime was not switched; five reset cycles and planner action tests remain pending, and current live sensor state still cannot prove mapping quality.
 ```
