@@ -717,20 +717,11 @@ class DriveSupervisor(Node):
         self._cruise_twist = message
 
     def _characterization_callback(self, message: DriveCommand) -> None:
-        """Accept only bounded, explicitly enabled test requests.
-
-        The request is in the ordinary SI ``DriveCommand`` domain.  It cannot
-        write eRPM, UART, PCA9685, or the canonical output topic directly.
-        Xbox and the e-stop remain above it in the command selection below.
-        """
-        if not self._characterization_enabled:
-            return
-        maximum_speed = self._erpm_to_mps(self._characterization_max_erpm)
-        if not bounded_request(float(message.speed_mps), float(message.steering_angle_rad), maximum_speed, self._left_wheel_limit, self._right_wheel_limit):
-            self.get_logger().error("Rejected out-of-bounds characterization request")
-            return
-        self._characterization_command = message
-        self._last_characterization_ns = self._now_ns()
+        """Reject characterization requests in the production recovery build."""
+        self.get_logger().warning(
+            "Characterization request rejected: production recovery is observer-only",
+            throttle_duration_sec=5.0,
+        )
 
     def _characterization_enable_callback(self, message: Bool) -> None:
         """Explicit test gate; false revokes immediately, default is false.
@@ -738,11 +729,7 @@ class DriveSupervisor(Node):
         This is not an actuator command.  Motion still requires a separate,
         bounded, fresh request and all normal Xbox/e-stop/telemetry interlocks.
         """
-        enabled = bool(message.data)
-        if enabled and self._estop_latched:
-            self.get_logger().warning("Rejected characterization enable while e-stop is latched")
-            return
-        self._set_characterization_enabled(enabled, "campaign gate")
+        self._set_characterization_enabled(False, "production recovery disables characterization")
 
     def _publish_characterization_enabled(self) -> None:
         state = Bool()
@@ -1107,10 +1094,10 @@ class DriveSupervisor(Node):
         characterization_ready, characterization_health = self._characterization_ready(
             now_ns, joy_fresh, state_fresh
         )
-        characterization_fresh = (
-            self._last_characterization_ns != 0
-            and now_ns - self._last_characterization_ns <= self._characterization_timeout_ns
-        )
+        # Characterization is deliberately not an input mode in this recovery
+        # build. It may be analyzed offline in a separate workstream, but it
+        # cannot become a production command source through ROS.
+        characterization_fresh = False
         # In MANUAL, report readiness for the A-button LiDAR Cruise. Global
         # point navigation performs its stricter map/odom/TF check on entry.
         autonomy_ready, autonomy_health = self._autonomy_ready(

@@ -72,8 +72,9 @@ explicitly not included.
 The branch includes a manual-control service contract and a single
 `drive_supervisor` command arbiter. It starts disarmed with actuation disabled;
 all Nav2 nodes are opt-in. The supervisor is the only final command publisher.
-Safety predicates are named `production_safety.py`; characterization runners,
-campaign runners, stage runners, and deployers are not included.
+Safety predicates are named `production_safety.py`; characterization requests
+are rejected by this recovery build, and runners, campaign runners, stage
+runners, and deployers are not included.
 
 ## Validation and blockers
 
@@ -114,7 +115,7 @@ CHARACTERIZATION_BOUNDARY=2026-09-17/source capability boundary
 HISTORICAL_GOOD_STATE_EXACT_COMMIT=NONE
 RECOVERY_TARGET_TYPE=COMPOSITE_RECONSTRUCTION
 RECOVERY_BRANCH=recovery/pre-characterization-mapping-planner-good
-RECOVERY_HEAD=TO_BE_FILLED_AFTER_METADATA_COMMIT
+RECOVERY_HEAD=TO_BE_FILLED_AFTER_FINAL_SAFETY_COMMIT
 JETSON_DEPLOYED_HEAD=NONE
 JETSON_HASH_MATCH=NO
 MAPPING_RUNTIME_RESTORED=NO
