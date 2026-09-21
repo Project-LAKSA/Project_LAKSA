@@ -19,7 +19,7 @@ import traceback
 from ament_index_python.packages import get_package_share_directory
 import rclpy
 import yaml
-from nav_msgs.msg import Path
+from nav_msgs.msg import Path as NavPath
 
 from .benchmark_runner import LabFailure, PlannerWorker, _path_tuples, _pose_message
 from .geometry import signed_segment_lengths, stable_hash
@@ -49,7 +49,7 @@ def _path_dict(path):
 
 def _single_pose_path(values):
     """Construct a one-pose map path for official start/goal collision checks."""
-    path = Path()
+    path = NavPath()
     path.header.frame_id = "map"
     pose = _pose_message(values, rclpy.time.Time().to_msg())
     path.header.stamp = pose.header.stamp
