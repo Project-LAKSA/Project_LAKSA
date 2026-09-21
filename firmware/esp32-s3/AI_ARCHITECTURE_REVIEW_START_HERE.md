@@ -12,7 +12,9 @@ Do not modify the frozen baseline. Compare recommendations to V2 ADRs and cite
 concrete files and upstream evidence. Treat legacy Smac paths as unqualified;
 do not infer execution safety from planner success.
 
-Central review publication is currently blocked pending a clearly personal,
-private project remote. When that remote is configured, inspect
-`architecture/navigation-v2` first, then the frozen baseline and recovery
-branch; never modify the frozen baseline.
+The central review repository is public at
+`git@github.com:Project-LAKSA/Project_LAKSA.git`. Inspect
+`architecture/navigation-v2` first, then
+`baseline/legacy-recovered-mapping-2026-09-21` and
+`recovery/pre-characterization-mapping-planner-good`; never modify the frozen
+baseline.
