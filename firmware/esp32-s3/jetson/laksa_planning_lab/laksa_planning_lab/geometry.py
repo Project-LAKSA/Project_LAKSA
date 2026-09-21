@@ -10,7 +10,10 @@ from typing import Any, Iterable, Sequence
 WHEELBASE_M = 0.324
 LEFT_STEERING_LIMIT_RAD = 0.523
 RIGHT_STEERING_LIMIT_RAD = -0.288
-FOOTPRINT = ((0.419, 0.148), (0.419, -0.148), (-0.149, -0.148), (-0.149, 0.148))
+# Production Nav2 footprint plus its 0.02 m footprint_padding. The continuous
+# validator must conservatively test the same physical envelope that Nav2
+# publishes, rather than the older, narrower planning-lab rectangle.
+FOOTPRINT = ((0.44, 0.20), (0.44, -0.20), (-0.17, -0.20), (-0.17, 0.20))
 CONSERVATIVE_RADIUS_M = 1.09
 KINEMATIC_RELATIVE_TOLERANCE = 0.05
 MIN_KINEMATIC_SEGMENT_M = 1.0e-3

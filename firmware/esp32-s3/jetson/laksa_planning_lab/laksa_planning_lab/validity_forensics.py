@@ -19,8 +19,9 @@ import traceback
 from ament_index_python.packages import get_package_share_directory
 import rclpy
 import yaml
+from nav_msgs.msg import Path
 
-from .benchmark_runner import LabFailure, PlannerWorker, _path_tuples
+from .benchmark_runner import LabFailure, PlannerWorker, _path_tuples, _pose_message
 from .geometry import signed_segment_lengths, stable_hash
 from .map_dataset import discover_maps, load_map
 from .metrics import evaluate_path
@@ -44,6 +45,16 @@ def _path_dict(path):
             for pose in path.poses
         ],
     }
+
+
+def _single_pose_path(values):
+    """Construct a one-pose map path for official start/goal collision checks."""
+    path = Path()
+    path.header.frame_id = "map"
+    pose = _pose_message(values, rclpy.time.Time().to_msg())
+    path.header.stamp = pose.header.stamp
+    path.poses = [pose]
+    return path
 
 
 def _distance_at(poses, index, fraction=0.0):
@@ -162,13 +173,22 @@ def main(argv=None):
                 independent = evaluate_path(poses, scenario, maps[map_id])
                 last_runtime_costmap = copy.deepcopy(worker.client.costmap_snapshot)
                 last_runtime_footprint = list(worker.client.published_footprint)
+                start_official = worker.client.validate_path(_single_pose_path(scenario["start"]))
+                goal_official = worker.client.validate_path(_single_pose_path(scenario["goal"]))
                 cases.append({
                     "case": scenario["scenario_id"], "map": entries[map_id], "start": scenario["start"], "goal": scenario["goal"],
                     "compute_path_to_pose": {"success": True, "planning_time_ms": planning_ms, "smoothing_time_ms": smoothing_ms, "total_pipeline_time_ms": total_ms},
                     "returned_path": _path_dict(path), "returned_path_sha256": stable_hash(_path_dict(path)),
                     "runtime_costmap": copy.deepcopy(worker.client.costmap_snapshot),
+                    "runtime_footprint": list(worker.client.published_footprint),
                     "source_map_cells_sha256": stable_hash(maps[map_id].cells),
                     "nav2_is_path_valid": official, "independent_validator": independent,
+                    "validation_layers": {
+                        "nav2_discrete_footprint_validity": official["is_valid"],
+                        "laksa_continuous_collision_validity": independent["collision_free"],
+                        "laksa_ackermann_kinematic_validity": independent["kinematically_feasible"],
+                    },
+                    "input_discrete_footprint_validity": {"start": start_official, "goal": goal_official},
                     "agreement": official["is_valid"] == bool(independent["collision_free"] and independent["kinematically_feasible"]),
                     "primary_classification": _classification(official, independent),
                     "motion": _direction_report(poses), "first_independent_failure": _first_failure(poses, independent),
