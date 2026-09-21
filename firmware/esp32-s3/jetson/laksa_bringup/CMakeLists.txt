@@ -12,6 +12,7 @@ install(PROGRAMS
   scripts/laksa_control_math.py
   scripts/drivetrain_conversion.py
   scripts/production_safety.py
+  scripts/lidar_watchdog_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
