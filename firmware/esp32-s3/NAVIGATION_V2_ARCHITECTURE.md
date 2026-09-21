@@ -8,7 +8,8 @@ offline replay supply the same ROS interfaces; they do not fork navigation
 logic.
 
 ```text
-ZED VIO / IMU / speed  -> robot_localization -> odom -> base_link
+ZED VIO / IMU / speed  -> robot_localization -> odom -> base_footprint
+body attitude adapter  -> base_footprint -> base_link
 SLAM/localization      -> one authority       -> map  -> odom
 LiDAR / depth          -> Nav2 layered costmaps
 costmaps -> State Lattice primary / Hybrid comparison -> candidate Path
@@ -26,7 +27,7 @@ contracts; it does not overwrite its launch/configuration files.
 
 ```mermaid
 flowchart TB
-  map --> odom --> base_link
+  map --> odom --> base_footprint --> base_link
   base_link --> zed_camera_link
   base_link --> lidar_link
   base_link --> imu_link
