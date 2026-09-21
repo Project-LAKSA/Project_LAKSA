@@ -909,11 +909,10 @@ class DriveSupervisor(Node):
 
     def _state_callback(self, message: VehicleState) -> None:
         self._last_state_ns = self._now_ns()
-        self._vesc_telemetry_ok = (
-            int(message.vesc.telemetry_sequence) > 0
-            and int(message.vesc.telemetry_age_ms)
-            <= self._vesc_telemetry_timeout_ms
-        )
+        # The recovered pre-characterization interface exposes telemetry
+        # freshness directly.  Later interface revisions replaced it with a
+        # sequence/age pair; do not require those absent fields here.
+        self._vesc_telemetry_ok = bool(message.vesc.telemetry_fresh)
         self._vesc_fault_code = int(message.vesc.fault_code)
         if self._vesc_fault_code != 0:
             self._latch_estop(
