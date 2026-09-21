@@ -768,7 +768,6 @@ class DriveSupervisor(Node):
         command = DriveCommand()
         command.speed_mps = self._characterization_command.speed_mps
         command.steering_angle_rad = self._characterization_command.steering_angle_rad
-        command.brake = bool(self._characterization_command.brake)
         return command
 
     def _valid_twist(self, message: Twist, source: str) -> bool:
@@ -1187,7 +1186,6 @@ class DriveSupervisor(Node):
             reason = "Manual throttle must return to neutral"
         if reason:
             command.speed_mps = 0.0
-            command.brake = True
             if not self._autonomous:
                 # Health/map/controller faults may clear while the operator is
                 # still holding throttle. Require a fresh neutral sample before
@@ -1197,11 +1195,12 @@ class DriveSupervisor(Node):
                 self.get_logger().warn(reason)
         self._reported_reason = reason
         self._candidate_command_pub.publish(command)
+        brake_requested = bool(reason)
         if not self._actuation_enabled:
             command = DriveCommand()
-            command.brake = True
+            brake_requested = True
         brake = Bool()
-        brake.data = command.brake
+        brake.data = brake_requested
         self._brake_pub.publish(brake)
         self._command_pub.publish(command)
 
