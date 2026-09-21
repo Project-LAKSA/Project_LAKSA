@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!-- V2 mechanical description. Its values are validated against vehicle_contract.yaml. -->
+<robot name="laksa_v2">
+  <link name="base_link"/><link name="chassis_link"/>
+  <joint name="base_to_chassis" type="fixed"><parent link="base_link"/><child link="chassis_link"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
+  <link name="zed_camera_link"/>
+  <joint name="base_to_zed" type="fixed"><parent link="base_link"/><child link="zed_camera_link"/><origin xyz="0.108069263 0 0.140001506" rpy="0 0.06981317008 0"/></joint>
+  <link name="lidar_link"/>
+  <joint name="base_to_lidar" type="fixed"><parent link="base_link"/><child link="lidar_link"/><origin xyz="0.31542 0 0.13542" rpy="0 0 3.14159265359"/></joint>
+  <!-- IMU edge is deliberately absent until measured. -->
+  <link name="rear_axle_link"/>
+  <joint name="base_to_rear_axle" type="fixed"><parent link="base_link"/><child link="rear_axle_link"/><origin xyz="0 0 0" rpy="0 0 0"/></joint>
+  <link name="front_axle_link"/>
+  <joint name="rear_to_front_axle" type="fixed"><parent link="rear_axle_link"/><child link="front_axle_link"/><origin xyz="0.324 0 0" rpy="0 0 0"/></joint>
+</robot>

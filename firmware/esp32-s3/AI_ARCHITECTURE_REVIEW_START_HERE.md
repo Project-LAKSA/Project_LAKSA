@@ -11,3 +11,8 @@ assumptions, tests, duplicated configuration, race conditions, and dead code.
 Do not modify the frozen baseline. Compare recommendations to V2 ADRs and cite
 concrete files and upstream evidence. Treat legacy Smac paths as unqualified;
 do not infer execution safety from planner success.
+
+Central review publication is currently blocked pending a clearly personal,
+private project remote. When that remote is configured, inspect
+`architecture/navigation-v2` first, then the frozen baseline and recovery
+branch; never modify the frozen baseline.

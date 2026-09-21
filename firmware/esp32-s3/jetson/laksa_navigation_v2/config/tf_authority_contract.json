@@ -1,0 +1,11 @@
+{
+  "root": "map",
+  "edges": [
+    {"parent": "map", "child": "odom", "authority": "global_localization", "type": "dynamic", "failure": "autonomy_disarm"},
+    {"parent": "odom", "child": "base_link", "authority": "local_state_estimator", "type": "dynamic", "failure": "autonomy_disarm"},
+    {"parent": "base_link", "child": "base_footprint", "authority": "v2_planar_frame_adapter", "type": "dynamic_derived", "failure": "autonomy_disarm"},
+    {"parent": "base_link", "child": "zed_camera_link", "authority": "robot_state_publisher", "type": "static", "failure": "sensor_unavailable"},
+    {"parent": "base_link", "child": "lidar_link", "authority": "robot_state_publisher", "type": "static", "failure": "sensor_unavailable"}
+  ],
+  "unmeasured_edges": ["base_link->imu_link"]
+}
