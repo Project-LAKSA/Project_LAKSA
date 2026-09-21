@@ -9,6 +9,7 @@ User=ubuntu
 Group=ubuntu
 Environment=ROS_DOMAIN_ID=0
 Environment=ROS_LOCALHOST_ONLY=1
+EnvironmentFile=/etc/laksa/ros-runtime.env
 ExecStart=/usr/local/lib/laksa/laksa-mapping-cockpit
 Restart=on-failure
 RestartSec=3
