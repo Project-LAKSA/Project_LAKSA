@@ -1,0 +1,10 @@
+file,historical_good_version_hash,source,source_commit_if_any,deployed_evidence,date,confidence,decision,reason
+jetson/laksa_mapping/config/indoor_live_zed.yaml,aae8a161eea00f556e6f9b519cd9d68834613513fb26ac7c9cdc445af141ab15,EXACT_GIT_BLOB,b178a91,Jetson source and installed historical match,2026-09-06,HIGH,KEEP,Matches GEN_3/IMU-fusion/no-area-memory fingerprint
+jetson/laksa_mapping/config/rtabmap_common.yaml,041e1fab86b32deb14f67318d11272a86a28101844996d3b46596a9dd50b96b2,EXACT_GIT_BLOB,b178a91,Jetson source baseline,2026-09-06,HIGH,KEEP,Single RTAB authority and direct ZED odometry contract
+jetson/laksa_mapping/launch/mapping_stack.launch.py,e624b4d6548d74930dd50b109ea7b57807aaa587c3647c9e04ffb4859a93a1b2,EXACT_GIT_BLOB,b178a91,Jetson source baseline,2026-09-06,HIGH,KEEP,ZED TF enabled and no fused duplicate authority
+jetson/laksa_description/urdf/laksa_visualization.urdf,6585fb50553fd464f0172198f34b0a9e9c8f209d003a403c4c857d8c68648a5a,EXACT_GIT_BLOB,b178a91,Jetson source baseline,2026-09-06,HIGH,KEEP,Preserves measured +4 degree camera mount and original frame direction
+jetson/laksa_planning_lab/,MULTI_FILE,Jetson source,uncommitted,Jetson timestamps 2026-09-09 and planner reports,2026-09-09,HIGH,RECONSTRUCT,Pre-characterization planner package with REEDS_SHEPP evidence
+jetson/laksa_bringup/config/nav2_ackermann.yaml,MULTI_FILE,Jetson source,uncommitted,Planner release tests and A029 notes,2026-09-14,MEDIUM,RECONSTRUCT,Historical Smac Hybrid configuration; exact commit absent
+jetson/laksa_bringup/config/drive_supervisor.yaml,MULTI_FILE,Jetson source,uncommitted,Installed runtime only,2026-09-17,MEDIUM,RECONSTRUCT,Retained safe arbiter contract; characterization input disabled
+jetson/systemd/laksa-control-navigation.service,MULTI_FILE,Jetson source,uncommitted,Installed process topology,2026-09-13,MEDIUM,RECONSTRUCT,Pre-characterization startup contract
+jetson/laksa_bringup/scripts/characterization_*,REJECTED,Jetson source,uncommitted,File timestamps 2026-09-17 onward,2026-09-17,HIGH,REJECT,Characterization must not own production deployment/runtime

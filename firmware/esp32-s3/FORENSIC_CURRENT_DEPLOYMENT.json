@@ -1,0 +1,35 @@
+{
+  "capture_date": "2026-09-21",
+  "host": "laksa",
+  "source_repo": "/home/ubuntu/src/Project_LAKSA",
+  "workspace": "/home/ubuntu/laksa_ws",
+  "source_head": "b178a91f3a87f90ae289f62588744bd7936a43f4",
+  "source_status": "DIRTY",
+  "source_remote": "git@github.com:Project-LAKSA/Project_LAKSA.git",
+  "service_observation": {
+    "laksa-control-navigation.service": "not present in the captured systemd manager; manually launched ROS processes were present",
+    "running_processes": ["manual_control.launch.py", "cockpit.launch.py", "lidar_mapping.launch.py", "drive_supervisor_node.py", "mapping_session_manager", "laksa_health_monitor"]
+  },
+  "live_safety": {
+    "speed_command_zero": true,
+    "autonomy_disarmed": true,
+    "characterization_gate_false": true,
+    "vesc": "EXPECTED_DISCONNECTED",
+    "physical_motion_performed": false
+  },
+  "historical_source_hashes": {
+    "firmware/esp32-s3/jetson/laksa_mapping/config/indoor_live_zed.yaml": "aae8a161eea00f556e6f9b519cd9d68834613513fb26ac7c9cdc445af141ab15",
+    "firmware/esp32-s3/jetson/laksa_mapping/launch/mapping_stack.launch.py": "e624b4d6548d74930dd50b109ea7b57807aaa587c3647c9e04ffb4859a93a1b2",
+    "firmware/esp32-s3/jetson/laksa_mapping/config/rtabmap_common.yaml": "041e1fab86b32deb14f67318d11272a86a28101844996d3b46596a9dd50b96b2"
+  },
+  "installed_hashes_observed_before_recovery": {
+    "/home/ubuntu/laksa_ws/install/laksa_mapping/share/laksa_mapping/config/indoor_live_zed.yaml": "4e46543e1cb43e5bc871304705b30f2b567dac9a501303d7c6652ff9e2f94174",
+    "/home/ubuntu/laksa_ws/install/laksa_mapping/share/laksa_mapping/launch/mapping_stack.launch.py": "a6bee4eed36e8c13b7ebc24c7e3eb66dfa9a19fceab79e3e1ca4e84722f40692",
+    "/home/ubuntu/laksa_ws/install/laksa_bringup/share/laksa_bringup/config/drive_supervisor.yaml": "8bead6d834cf6fe1f212be1c4203c7e574796bb960296ec54546a79d0a1376fc"
+  },
+  "ros_capture": {
+    "result": "INCONCLUSIVE",
+    "reason": "remote shell did not observe the running ROS discovery context; no runtime pass was inferred"
+  },
+  "preserved_snapshot": "/private/tmp/laksa-forensic-20260921/remote_snapshot.txt"
+}

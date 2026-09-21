@@ -1,0 +1,38 @@
+{
+  "recovery_target_type": "COMPOSITE_RECONSTRUCTION",
+  "baseline_commit": "b178a91f3a87f90ae289f62588744bd7936a43f4",
+  "branch": "recovery/pre-characterization-mapping-planner-good",
+  "characterization_boundary": {
+    "date": "2026-09-17",
+    "basis": "first Jetson source capability containing drive_supervisor characterization request/enable paths and characterization runners"
+  },
+  "mapping": {
+    "zed_config": "jetson/laksa_mapping/config/indoor_live_zed.yaml",
+    "rtab_config": "jetson/laksa_mapping/config/rtabmap_common.yaml",
+    "launch": "jetson/laksa_mapping/launch/mapping_stack.launch.py",
+    "odom_input": "/zed/zed_node/odom",
+    "tf_authorities": ["ZED: odom->zed_camera_link", "robot_state_publisher: fixed camera/base transforms", "RTAB-Map: map->odom"],
+    "characterization_deployer": false
+  },
+  "planner": {
+    "package": "jetson/laksa_planning_lab",
+    "plugin": "nav2_smac_planner/SmacPlannerHybrid",
+    "motion_model": "REEDS_SHEPP",
+    "minimum_turning_radius_m": 1.09,
+    "compute_path_to_pose": "pending stationary ROS test",
+    "is_path_valid": "pending stationary ROS test"
+  },
+  "safety": {
+    "physical_motion_performed": false,
+    "direct_actuator_publish": false,
+    "characterization_enabled": false,
+    "vesc": "EXPECTED_DISCONNECTED",
+    "supervisor_starts_disarmed": true
+  },
+  "deployment": {
+    "jetson_deployed_head": null,
+    "hash_match": false,
+    "isolated_workspace": false,
+    "forensic_snapshot": "/private/tmp/laksa-forensic-20260921"
+  }
+}
