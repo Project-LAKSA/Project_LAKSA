@@ -202,3 +202,50 @@ PHYSICAL_MAPPING_QUALITY_REVALIDATED=PENDING
 PRODUCTION_RUNTIME_RESTORED=NO
 BLOCKER=TF numerical verification is blocked; official IsPathValid is not run; only 1/5 planner paths passes independent collision/kinematic validation.
 ```
+
+## Final TF and planner-validity forensics (2026-09-21)
+
+The attempted persistent read-only TF observer did not alter TF or mapping. A
+new stationary mapping session (`20260921T120201Z`) could not open the ZED
+stream: ZED SDK 5.4.1 reported `CAMERA STREAM FAILED TO START` and the
+manager therefore received no camera odometry or RTAB input. This is a
+hardware/runtime availability blocker, not evidence of a TF error. The
+preserved manager metadata is `TF_OBSERVER_BLOCKER_20260921T120201Z.json`.
+
+The official installed Humble interface is `nav2_msgs/srv/IsPathValid`, owned
+by `nav2_planner/planner_server`. Five previously preserved action results
+were replayed in an isolated `ROS_DOMAIN_ID=71`, localhost-only planner lab.
+Each exact returned `nav_msgs/Path` was passed to that service and to the
+independent validator. The lab anchors its sole local `map -> base_footprint`
+transform at the requested start pose before calling the official service;
+this matters because Humble validates only from the point nearest the current
+robot pose.
+
+Results are preserved in `PLANNER_VALIDITY_FORENSICS.json`:
+
+| Case | ComputePathToPose | Official IsPathValid | Independent result | Primary finding |
+|---|---|---:|---:|---|
+| S000000 | success | pass | pass | valid |
+| S000001 | success | fail | fail | actual footprint collision |
+| S000002 | success | pass | fail | collision exists between discrete path poses; Humble service samples returned poses only |
+| S000003 | success | fail | fail | actual footprint collision |
+| S000004 | success | pass | fail | curvature below the 1.09 m independent kinematic limit; IsPathValid is collision-only |
+
+The installed Humble source semantics explain the intentional disagreement:
+the service checks returned poses from the closest one onward and uses either
+the costmap center/radius or the polygon footprint; it does not check
+continuous interpolation or Ackermann curvature. The initial test harness
+used a false `(0,0,0)` robot pose and could skip invalid prefixes. Anchoring it
+at each case's start corrected that harness defect and reduced official passes
+from 4/5 to 3/5. `invalid_pose_indices` remains empty because this Humble
+implementation does not populate that response field.
+
+An isolated, non-production `smooth_path=false` experiment did not repair
+S000001 or S000003; both remained official collision failures. It is preserved
+as `PLANNER_VALIDITY_FORENSICS_NO_SMOOTH_EXPERIMENT.json`. Consequently no
+planner, mapping, TF, or controller production configuration was changed.
+The verified root cause is `PLANNER_ACTUAL_INVALID_PATH` for S000001 and
+S000003, with additional validator-semantic differences for S000002 and
+S000004. A 5/5 official qualification requires a separately evidenced planner
+or costmap configuration correction; speculative tuning is intentionally out
+of scope for this forensic recovery.

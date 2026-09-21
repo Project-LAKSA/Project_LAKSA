@@ -1,0 +1,21 @@
+{
+  "architecture": "ZED2i VIO + RGB-D -> rgbd_sync -> RTAB-Map",
+  "autonomous_motion": false,
+  "database_check": "database missing or trivial",
+  "database_nodes": 0,
+  "database_valid": false,
+  "db_path": "/home/ubuntu/laksa_mapping_sessions/20260921T120201Z/database/map.db",
+  "elapsed_sec": 46.1,
+  "error": "Mapping topics did not become healthy before startup timeout; RTAB database invalid: database missing or trivial, nodes=0",
+  "occupancy_exported": false,
+  "ply_exported": false,
+  "profile": "indoor_live",
+  "profile_status": "validated",
+  "result": "ERROR",
+  "session_id": "20260921T120201Z",
+  "state": "ERROR",
+  "svo_enabled": false,
+  "svo_finalized": true,
+  "svo_path": "",
+  "updated_utc": "2026-09-21T12:02:48.104788+00:00"
+}

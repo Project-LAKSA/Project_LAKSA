@@ -34,7 +34,7 @@
       "rtab_runtime": "PASS",
       "field_lab_runtime": "PASS",
       "tf_topology": "BLOCKED",
-      "tf_blocker": "The running topology/process remaps are evidenced, but numerical tf2_echo samples and live parameter services timed out in the CLI discovery context.",
+      "tf_blocker": "Persistent observer could not obtain dynamic samples because stationary session 20260921T120201Z failed at ZED SDK camera open: CAMERA STREAM FAILED TO START. No TF configuration was changed.",
       "session_cycles": ["PASS", "PASS", "PASS", "PASS", "PASS"],
       "cycle_evidence": "/home/ubuntu/laksa_phase2_rollback_20260921T100000Z/reset_cycles_final_20260921T1127Z.log",
       "stationary_sessions": [
@@ -50,10 +50,11 @@
       "plugin": "nav2_smac_planner/SmacPlannerHybrid",
       "motion_model": "REEDS_SHEPP",
       "compute_path_to_pose": "PASS",
-      "is_path_valid": "NOT_RUN",
+      "is_path_valid": "FAIL",
       "planner_only_results_dir": "/home/ubuntu/laksa_phase2_planner_20260921T1131Z",
       "five_case_validation": {
         "action_successes": 5,
+        "official_is_path_valid_successes": 3,
         "independent_successes": 1,
         "collision_failures": 3,
         "kinematic_failures": 1
@@ -76,6 +77,6 @@
     "vesc": "EXPECTED_DISCONNECTED",
     "physical_mapping_quality_revalidated": "PENDING",
     "characterization_mapping_regression": "INCONCLUSIVE",
-    "blocker": "Do not declare total production recovery: TF numerical authority verification is blocked, official IsPathValid was not run, and only one of five planner action-success paths passed independent collision/kinematic validation."
+    "blocker": "TF numerical proof is blocked by current ZED camera stream availability; anchored official IsPathValid accepts 3/5 paths, with S000001 and S000003 confirmed footprint collisions."
   }
 }
