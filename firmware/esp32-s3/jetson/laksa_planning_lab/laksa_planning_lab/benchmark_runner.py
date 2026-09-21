@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -111,6 +112,7 @@ class PlannerClient(Node):
         self.footprint_received = False
         self.published_footprint = []
         self.costmap_snapshot = None
+        self.costmap_updates = 0
         self.last_path = None
         self.shutdown_requested = False
 
@@ -159,7 +161,9 @@ class PlannerClient(Node):
                 },
             },
             "cell_count": len(msg.data),
+            "data_sha256": hashlib.sha256(bytes((int(value) + 256) % 256 for value in msg.data)).hexdigest(),
         }
+        self.costmap_updates += 1
 
     def _footprint_cb(self, msg: PolygonStamped) -> None:
         points = msg.polygon.points
@@ -304,6 +308,17 @@ class PlannerClient(Node):
             "is_valid": bool(response.is_valid),
             "invalid_pose_indices": [int(index) for index in response.invalid_pose_indices],
         }
+
+    def settle_costmap(self, duration: float = 1.2) -> None:
+        """Let the active static layer publish after a LoadMap transition.
+
+        PlannerServer returns ``is_valid=false`` without invalid indices when
+        its costmap is not current.  This is an observation/test-harness guard,
+        not a planner or costmap configuration change.
+        """
+        deadline = time.monotonic() + duration
+        while time.monotonic() < deadline:
+            rclpy.spin_once(self, timeout_sec=min(0.1, max(0.0, deadline - time.monotonic())))
 
     def lifecycle_shutdown(self) -> None:
         for transition_id in (Transition.TRANSITION_DEACTIVATE, Transition.TRANSITION_CLEANUP):
