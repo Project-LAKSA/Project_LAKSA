@@ -298,3 +298,37 @@ classified `CAMERA_PHYSICALLY_UNAVAILABLE`; the persistent numerical TF
 observer and TF qualification remain **BLOCKED**, with evidence in
 `ZED_STREAM_TF_BLOCKER_20260921T205000Z.json`. Mapping configuration and
 extrinsics remain frozen.
+
+## Smac internal collision-checker closure (2026-09-21)
+
+`PLANNER_INTERNAL_COLLISION_FORENSICS.json` records an isolated source-level
+replay against Humble Navigation2 commit `3c3db59d`. It did not build, install,
+or load a Nav2 library in the production workspace.
+
+The recovered polygon footprint is 0.61 x 0.40 m after padding. Its inscribed
+and circumscribed radii are 0.1700 m and 0.4833 m. With a 0.55 m / 3.0
+inflation layer, Humble `findCircumscribedCost()` returns 98.
+
+Two distinct mechanisms explain why Smac accepted the two official-invalid
+raw poses:
+
+| Case | Exact raw pose | Smac branch | Internal result | Official result | Proven mechanism |
+|---|---|---|---|---|---|
+| S000001 | index 7; grid `(30.837685, 3.200006, bin 24)` | center-cost fast accept | free (`center=0 < 98`) | collision | The fast branch returns before the polygon check. The full footprint cost is 254 and the footprint leaves the map. |
+| S000003 | index 51; grid `(35.682771, 92.898621, bin 28)` | full polygon check | free (`cost=253`) | collision | `Costmap2D::mapToWorld` takes unsigned cells. Smac truncates the continuous state to `(-0.275, 2.585)` for checking, while it publishes `(-0.240861, 2.629931)`; the published footprint cost is 254. |
+
+The raw yaws equal their 72-bin orientations, so angle quantization is not
+causal. Smoothing is not causal. The evidence does not require a mapping,
+TF, ZED, or RTAB explanation. S000001 is a map-boundary collision; S000003 is
+an occupied-cell collision at `(31,102)` and `(32,102)`.
+
+An isolated candidate correction retained the continuous grid position during
+footprint placement and suppressed the center-cost fast return for polygon
+footprints. It converted S000001 and S000003 to official and continuous
+passes, proving both mechanisms. It did **not** qualify the corpus: S000002
+had no collision-free path, and the independent Ackermann gate still rejected
+S000003 and S000004. Therefore no production planner change, configuration
+tuning, mapping change, or 25-case promotion was made. The required planner
+safety gate remains: official `IsPathValid`, then LAKSA continuous collision,
+then LAKSA Ackermann validation; only all-pass paths may reach a future
+controller.

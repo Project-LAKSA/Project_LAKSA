@@ -173,12 +173,28 @@ def main(argv=None):
             # A fresh planner stack makes the lab's sole map->base transform
             # exactly the requested start, with no duplicate TF authority.
             context.base_tf = scenario["start"]
-            worker = PlannerWorker(context, "HYBRID_PRODUCTION", configuration, digest + scenario["scenario_id"], entries[map_id], maps[map_id])
             try:
+                worker = PlannerWorker(context, "HYBRID_PRODUCTION", configuration, digest + scenario["scenario_id"], entries[map_id], maps[map_id])
                 worker.client.settle_costmap()
                 poses, planning_ms, smoothing_ms, total_ms = worker.client.plan(scenario)
                 path = copy.deepcopy(worker.client.last_path)
                 official = worker.client.validate_path(path)
+                # Humble's aggregate IsPathValid response reports validity but
+                # not the failing index.  Replaying each exact returned pose as
+                # a one-pose Path makes the first discrete rejection explicit;
+                # it deliberately does not interpolate or regenerate a path.
+                official_pose_checks = []
+                first_official_invalid_pose = None
+                if not official["is_valid"]:
+                    for index, pose in enumerate(path.poses):
+                        single_pose_result = worker.client.validate_path(
+                            NavPath(header=path.header, poses=[pose]))
+                        official_pose_checks.append({
+                            "index": index,
+                            "is_valid": single_pose_result["is_valid"],
+                        })
+                        if not single_pose_result["is_valid"] and first_official_invalid_pose is None:
+                            first_official_invalid_pose = index
                 independent = evaluate_path(poses, scenario, maps[map_id])
                 last_runtime_costmap = copy.deepcopy(worker.client.costmap_snapshot)
                 last_runtime_footprint = list(worker.client.published_footprint)
@@ -192,6 +208,8 @@ def main(argv=None):
                     "runtime_footprint": list(worker.client.published_footprint),
                     "source_map_cells_sha256": stable_hash(maps[map_id].cells),
                     "nav2_is_path_valid": official, "independent_validator": independent,
+                    "official_discrete_pose_checks": official_pose_checks,
+                    "first_official_invalid_pose_index": first_official_invalid_pose,
                     "validation_layers": {
                         "nav2_discrete_footprint_validity": official["is_valid"],
                         "laksa_continuous_collision_validity": independent["collision_free"],
@@ -201,6 +219,18 @@ def main(argv=None):
                     "agreement": official["is_valid"] == bool(independent["collision_free"] and independent["kinematically_feasible"]),
                     "primary_classification": _classification(official, independent),
                     "motion": _direction_report(poses), "first_independent_failure": _first_failure(poses, independent),
+                })
+            except LabFailure as error:
+                # A forced-full-footprint experiment may correctly find no
+                # collision-free route. Preserve that result as evidence
+                # rather than aborting the remaining deterministic corpus.
+                cases.append({
+                    "case": scenario["scenario_id"], "map": entries[map_id],
+                    "start": scenario["start"], "goal": scenario["goal"],
+                    "compute_path_to_pose": {"success": False, "failure_type": error.failure_type,
+                                              "message": str(error), "diagnostics": error.diagnostics},
+                    "nav2_is_path_valid": None, "independent_validator": None,
+                    "primary_classification": "PLANNER_NO_SAFE_PATH",
                 })
             finally:
                 worker.close()
