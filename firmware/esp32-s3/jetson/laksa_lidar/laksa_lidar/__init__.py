@@ -1,0 +1,1 @@
+"""LAKSA LiDAR sensor boundary."""

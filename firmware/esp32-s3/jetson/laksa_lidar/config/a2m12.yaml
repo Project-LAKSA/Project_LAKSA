@@ -1,0 +1,22 @@
+lidar_guard:
+  ros__parameters:
+    raw_scan_topic: /scan_raw
+    validated_scan_topic: /laksa/lidar/scan_validated
+    health_topic: /laksa/lidar/health_state
+    target_frame: base_footprint
+
+    # Conservative provisional A2M12 sensor-foundation thresholds.
+    expected_min_rate_hz: 5.0
+    expected_max_rate_hz: 15.0
+    stale_timeout_sec: 1.0
+    minimum_angular_coverage_deg: 350.0
+    maximum_consecutive_invalid: 3
+    provisional_degraded_valid_ratio: 0.05
+    diagnostic_publish_rate_hz: 1.0
+
+    queue_depth: 5
+    rate_window_scans: 30
+    sample_count_tolerance_fraction: 0.02
+    sample_count_tolerance_absolute: 4
+    maximum_scan_time_sec: 0.5
+    tf_timeout_sec: 0.0

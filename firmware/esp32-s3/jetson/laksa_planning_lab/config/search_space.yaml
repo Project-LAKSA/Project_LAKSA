@@ -1,0 +1,20 @@
+seed: 2906
+worker_count: 1
+stages:
+  smoke: {configurations: 8, scenarios: 50, survivors: 6}
+  coarse: {configurations: 80, scenarios: 250, survivors: 16}
+  semifinal: {scenarios: 1000, survivors: 5}
+  final: {scenarios: 5000, survivors: 5}
+hybrid:
+  reverse_penalty: [1.5, 2.0, 2.5, 3.0]
+  change_penalty: [0.0, 0.05, 0.15, 0.3]
+  non_straight_penalty: [1.05, 1.1, 1.2, 1.35]
+  analytic_expansion_ratio: [2.5, 3.5, 4.5]
+  angle_quantization_bins: [48, 64, 72, 96]
+constrained_smoother:
+  w_curve: [15.0, 30.0, 60.0]
+  w_smooth: [1000000.0, 2000000.0, 4000000.0]
+  w_cost: [0.0075, 0.015, 0.03]
+  w_dist: [0.0, 0.05, 0.2]
+  path_downsampling_factor: [1, 2, 3]
+  optimizer.max_iterations: [50, 70, 100]

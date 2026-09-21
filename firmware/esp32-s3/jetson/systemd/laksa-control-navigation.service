@@ -1,0 +1,20 @@
+[Unit]
+Description=LAKSA Xbox manual control and drive supervisor
+After=laksa-micro-ros-agent.service laksa-lidar.service laksa-xbox-reconnect.service
+Wants=laksa-micro-ros-agent.service laksa-lidar.service laksa-xbox-reconnect.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+Environment=ROS_DOMAIN_ID=0
+Environment=ROS_LOCALHOST_ONLY=1
+EnvironmentFile=/etc/laksa/ros-runtime.env
+ExecStart=/usr/local/lib/laksa/laksa-control-navigation
+Restart=always
+RestartSec=3
+KillMode=control-group
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CycloneDDS xmlns="https://cdds.io/config">
+  <Domain id="any">
+    <Discovery>
+      <!-- ROS_LOCALHOST_ONLY creates one unicast participant port per process.
+           LAKSA has more than Cyclone's default nine auto indices. -->
+      <ParticipantIndex>auto</ParticipantIndex>
+      <MaxAutoParticipantIndex>63</MaxAutoParticipantIndex>
+    </Discovery>
+  </Domain>
+</CycloneDDS>

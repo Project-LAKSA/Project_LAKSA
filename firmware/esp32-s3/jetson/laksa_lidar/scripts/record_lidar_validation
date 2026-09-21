@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+output_root="${1:-${HOME}/laksa_lidar_validation}"
+mkdir -p "${output_root}"
+stamp="$(date -u +%Y%m%dT%H%M%SZ)"
+exec ros2 bag record --output "${output_root}/lidar_validation_${stamp}" \
+  /scan_raw \
+  /laksa/lidar/scan_validated \
+  /diagnostics \
+  /tf \
+  /tf_static \
+  /laksa/odometry/fused
