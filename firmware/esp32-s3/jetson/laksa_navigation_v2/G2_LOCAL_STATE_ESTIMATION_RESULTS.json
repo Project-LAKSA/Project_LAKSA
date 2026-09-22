@@ -1,0 +1,431 @@
+{
+  "cases": [
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S001_STATIONARY",
+      "dropout_characterized": false,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.0051290802412572,
+        "x_m": -0.005223957340576109,
+        "y_m": 0.03189403308303312,
+        "yaw_rad": 0.009527062968550657
+      },
+      "final_truth": {
+        "vx_mps": 0.0,
+        "x_m": 0.0,
+        "y_m": 0.0,
+        "yaw_rad": 0.0
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.032319020353311606,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.0051290802412572,
+      "yaw_final_error_rad": 0.00952706296855066
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S002_STRAIGHT_FORWARD",
+      "dropout_characterized": false,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.2642037330789327,
+        "x_m": 1.1056029026657843,
+        "y_m": 0.04020708345630578,
+        "yaw_rad": 0.015227843542665822
+      },
+      "final_truth": {
+        "vx_mps": 0.25,
+        "x_m": 0.9874999999999985,
+        "y_m": 0.0,
+        "yaw_rad": 0.0
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.12475938913823849,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.01420373307893269,
+      "yaw_final_error_rad": 0.01522784354266582
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S003_STRAIGHT_REVERSE",
+      "dropout_characterized": false,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": -0.23003282584797202,
+        "x_m": -0.925455856745945,
+        "y_m": -0.02504726336928196,
+        "yaw_rad": -0.018843023917262336
+      },
+      "final_truth": {
+        "vx_mps": -0.2,
+        "x_m": -0.7900000000000006,
+        "y_m": 0.0,
+        "yaw_rad": 0.0
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.13775214890907506,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.03003282584797201,
+      "yaw_final_error_rad": 0.018843023917262336
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S004_LEFT_RADIUS",
+      "dropout_characterized": false,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.24282076137648814,
+        "x_m": 0.5611740950318715,
+        "y_m": 0.5943491819294734,
+        "yaw_rad": 1.5207715228698415
+      },
+      "final_truth": {
+        "vx_mps": 0.2,
+        "x_m": 0.5584924957181129,
+        "y_m": 0.4647102879032435,
+        "yaw_rad": 1.4057908032433915
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.12966662569537166,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.04282076137648813,
+      "yaw_final_error_rad": 0.11498071962645007
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S005_RIGHT_RADIUS",
+      "dropout_characterized": false,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.18663727614319767,
+        "x_m": 0.8266779024814662,
+        "y_m": -0.3259721720091564,
+        "yaw_rad": -0.7740530728110295
+      },
+      "final_truth": {
+        "vx_mps": 0.2,
+        "x_m": 0.7243198922168642,
+        "y_m": -0.26981184814647163,
+        "yaw_rad": -0.7223037843859048
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.11675249137251852,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.013362723856802344,
+      "yaw_final_error_rad": 0.05174928842512472
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S006_S_TURN",
+      "dropout_characterized": false,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.17707239755551035,
+        "x_m": 0.7250633584113453,
+        "y_m": 0.2639904887981054,
+        "yaw_rad": 0.26945424831372655
+      },
+      "final_truth": {
+        "vx_mps": 0.18,
+        "x_m": 0.6499260960639136,
+        "y_m": 0.2638940134449611,
+        "yaw_rad": 0.2954471007082047
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.07513732428401039,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.002927602444489641,
+      "yaw_final_error_rad": 0.025992852394478128
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S007_STOP_START",
+      "dropout_characterized": false,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": -0.026442810151227254,
+        "x_m": 0.3986452005908414,
+        "y_m": 0.013595267422619808,
+        "yaw_rad": 0.0016758888290611118
+      },
+      "final_truth": {
+        "vx_mps": 0.0,
+        "x_m": 0.4290000000000002,
+        "y_m": 0.0,
+        "yaw_rad": 0.0
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.03326026373110735,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.026442810151227254,
+      "yaw_final_error_rad": 0.0016758888290611118
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S008_VIO_DROPOUT",
+      "dropout_characterized": true,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.16696432804377107,
+        "x_m": 0.8508834954857178,
+        "y_m": 0.058143342644592866,
+        "yaw_rad": 0.014933138068029095
+      },
+      "final_truth": {
+        "vx_mps": 0.18,
+        "x_m": 0.7110000000000004,
+        "y_m": 0.0,
+        "yaw_rad": 0.0
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.15148610696426673,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.013035671956228928,
+      "yaw_final_error_rad": 0.014933138068029095
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S009_SPEED_DROPOUT",
+      "dropout_characterized": true,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.16913196045848708,
+        "x_m": 0.8467664862576518,
+        "y_m": -0.03800170009363996,
+        "yaw_rad": 0.008790977332399754
+      },
+      "final_truth": {
+        "vx_mps": 0.18,
+        "x_m": 0.7110000000000004,
+        "y_m": 0.0,
+        "yaw_rad": 0.0
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.14098463746364712,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.010868039541512914,
+      "yaw_final_error_rad": 0.008790977332399752
+    },
+    {
+      "all_input_timeout_observed": true,
+      "case": "G2_S010_ALL_INPUT_DROPOUT",
+      "dropout_characterized": true,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.22536337312395904,
+        "x_m": 0.927724251318581,
+        "y_m": -0.02317623424967887,
+        "yaw_rad": -0.017067370479159294
+      },
+      "final_truth": {
+        "vx_mps": 0.18,
+        "x_m": 0.7110000000000004,
+        "y_m": 0.0,
+        "yaw_rad": 0.0
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 45,
+      "planar": true,
+      "position_final_error_m": 0.21795994802622634,
+      "status": "PASS",
+      "tf_count": 45,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.04536337312395905,
+      "yaw_final_error_rad": 0.017067370479159294
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S011_VIO_POSITION_OUTLIER",
+      "dropout_characterized": false,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.16245416484356012,
+        "x_m": 0.7908845248846932,
+        "y_m": -0.023749541355738445,
+        "yaw_rad": -0.0120302665458496
+      },
+      "final_truth": {
+        "vx_mps": 0.18,
+        "x_m": 0.7110000000000004,
+        "y_m": 0.0,
+        "yaw_rad": 0.0
+      },
+      "finite": true,
+      "outlier_characterized": true,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.08334013457309167,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.01754583515643987,
+      "yaw_final_error_rad": 0.0120302665458496
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S012_YAW_OUTLIER",
+      "dropout_characterized": false,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.18143472969374233,
+        "x_m": 0.8190910278210836,
+        "y_m": 0.01001790350752566,
+        "yaw_rad": -0.008315879811769289
+      },
+      "final_truth": {
+        "vx_mps": 0.18,
+        "x_m": 0.7110000000000004,
+        "y_m": 0.0,
+        "yaw_rad": 0.0
+      },
+      "finite": true,
+      "outlier_characterized": true,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.10855426608892102,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.001434729693742337,
+      "yaw_final_error_rad": 0.008315879811769289
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S013_DELAYED_SAMPLE",
+      "dropout_characterized": false,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.18316756160257322,
+        "x_m": 0.8172361311244438,
+        "y_m": 0.004430301106807237,
+        "yaw_rad": 0.01701295957576354
+      },
+      "final_truth": {
+        "vx_mps": 0.18,
+        "x_m": 0.7110000000000004,
+        "y_m": 0.0,
+        "yaw_rad": 0.0
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.10632846807975234,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.0031675616025732267,
+      "yaw_final_error_rad": 0.017012959575763542
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S014_OUT_OF_ORDER_SAMPLE",
+      "dropout_characterized": false,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.21418802651190585,
+        "x_m": 0.8099521949929361,
+        "y_m": 0.025394178033644885,
+        "yaw_rad": 0.027875854598910624
+      },
+      "final_truth": {
+        "vx_mps": 0.18,
+        "x_m": 0.7110000000000004,
+        "y_m": 0.0,
+        "yaw_rad": 0.0
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.10215870580584127,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.03418802651190586,
+      "yaw_final_error_rad": 0.02787585459891062
+    },
+    {
+      "all_input_timeout_observed": false,
+      "case": "G2_S015_SYNTHETIC_RAMP",
+      "dropout_characterized": false,
+      "ekf_exit_before_cleanup": null,
+      "final_output": {
+        "vx_mps": 0.1396429685895466,
+        "x_m": 0.6961967013648555,
+        "y_m": -0.007733200202842339,
+        "yaw_rad": -0.012072985008949821
+      },
+      "final_truth": {
+        "vx_mps": 0.16,
+        "x_m": 0.6320000000000005,
+        "y_m": 0.0,
+        "yaw_rad": 0.0
+      },
+      "finite": true,
+      "outlier_characterized": false,
+      "output_count": 81,
+      "planar": true,
+      "position_final_error_m": 0.06466079841376549,
+      "status": "PASS",
+      "tf_count": 81,
+      "timestamp_monotonic": true,
+      "vx_final_error_mps": 0.02035703141045339,
+      "yaw_final_error_rad": 0.012072985008949821
+    }
+  ],
+  "estimator": "robot_localization_EKF",
+  "no_actuator_publishers": true,
+  "no_hardware_access": true,
+  "pass_count": 15,
+  "ros_domain_id": 81,
+  "test_only": true,
+  "total_count": 15
+}

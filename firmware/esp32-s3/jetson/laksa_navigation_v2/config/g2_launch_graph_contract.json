@@ -1,0 +1,8 @@
+{
+  "test_only": true,
+  "nodes": ["g2_test_only_synthetic_inputs", "ekf_local_odom"],
+  "publishers": ["/laksa/vio/odom", "/laksa/vehicle/speed", "/laksa/odometry/local", "/tf", "/diagnostics"],
+  "forbidden_publishers": ["/laksa/command", "/cmd_vel", "/laksa/set_drive_command", "/vesc", "/pca9685"],
+  "forbidden_nodes": ["nav2", "slam_toolbox", "amcl", "rtabmap"],
+  "global_tf": "ABSENT_IN_PRODUCTION_INTENT_G2"
+}

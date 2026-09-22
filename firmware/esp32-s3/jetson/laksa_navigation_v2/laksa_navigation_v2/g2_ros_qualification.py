@@ -1,0 +1,235 @@
+"""Run robot_localization against deterministic, isolated G2 ROS fixtures.
+
+This tool is deliberately test-only. It starts an EKF in a caller-selected ROS
+domain, publishes only standard measurement messages, and emits JSON results.
+It has no code path for hardware, Nav2, or actuator topics.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import os
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import time
+from typing import Any
+
+import rclpy
+from geometry_msgs.msg import TransformStamped, TwistWithCovarianceStamped
+from nav_msgs.msg import Odometry
+from rclpy.node import Node
+from tf2_msgs.msg import TFMessage
+
+from .g2_synthetic_inputs import (
+    DT_SEC,
+    SCENARIOS,
+    generate_case,
+    speed_twist_covariance,
+    vio_pose_covariance,
+)
+
+
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+SYNTHETIC_EKF_CONFIG = PACKAGE_ROOT / "config" / "ekf_local_odom_synthetic.yaml"
+EKF_EXECUTABLE = "/opt/ros/humble/lib/robot_localization/ekf_node"
+
+
+def _yaw(quaternion) -> float:
+    return math.atan2(2.0 * (quaternion.w * quaternion.z + quaternion.x * quaternion.y), 1.0 - 2.0 * (quaternion.y * quaternion.y + quaternion.z * quaternion.z))
+
+
+def _wrap(value: float) -> float:
+    return (value + math.pi) % (2.0 * math.pi) - math.pi
+
+
+def _stamp(message: Any, now_ns: int, offset_sec: float) -> None:
+    stamp_ns = now_ns + int(offset_sec * 1_000_000_000)
+    message.header.stamp.sec = stamp_ns // 1_000_000_000
+    message.header.stamp.nanosec = stamp_ns % 1_000_000_000
+
+
+class QualificationNode(Node):
+    def __init__(self) -> None:
+        super().__init__("g2_test_only_ros_qualification")
+        self.vio = self.create_publisher(Odometry, "/laksa/vio/odom", 20)
+        self.speed = self.create_publisher(TwistWithCovarianceStamped, "/laksa/vehicle/speed", 20)
+        self.outputs: list[Odometry] = []
+        self.transforms: list[TransformStamped] = []
+        self.create_subscription(Odometry, "/laksa/odometry/local", self.outputs.append, 50)
+        self.create_subscription(TFMessage, "/tf", self._tf_callback, 50)
+
+    def _tf_callback(self, message: TFMessage) -> None:
+        self.transforms.extend(transform for transform in message.transforms if transform.header.frame_id == "odom" and transform.child_frame_id == "base_footprint")
+
+    def publish(self, sample) -> None:
+        now_ns = self.get_clock().now().nanoseconds
+        if sample.vio_available:
+            message = Odometry()
+            _stamp(message, now_ns, sample.vio_stamp_sec - sample.truth.stamp_sec)
+            message.header.frame_id = "odom"
+            message.child_frame_id = "base_footprint"
+            message.pose.pose.position.x = sample.vio_x_m
+            message.pose.pose.position.y = sample.vio_y_m
+            message.pose.pose.orientation.z = math.sin(sample.vio_yaw_rad / 2.0)
+            message.pose.pose.orientation.w = math.cos(sample.vio_yaw_rad / 2.0)
+            message.pose.covariance = vio_pose_covariance()
+            self.vio.publish(message)
+        if sample.speed_available:
+            message = TwistWithCovarianceStamped()
+            _stamp(message, now_ns, sample.speed_stamp_sec - sample.truth.stamp_sec)
+            message.header.frame_id = "base_footprint"
+            message.twist.twist.linear.x = sample.speed_mps
+            message.twist.covariance = speed_twist_covariance()
+            self.speed.publish(message)
+
+
+def _start_ekf(domain_id: int, config_path: Path, debug_out: Path | None = None) -> subprocess.Popen[str]:
+    if not Path(EKF_EXECUTABLE).is_file():
+        raise RuntimeError(f"robot_localization ekf_node not found at {EKF_EXECUTABLE}")
+    environment = dict(os.environ)
+    environment["ROS_DOMAIN_ID"] = str(domain_id)
+    command = [EKF_EXECUTABLE, "--ros-args", "-r", "__node:=ekf_local_odom", "--params-file", str(config_path), "-r", "odometry/filtered:=/laksa/odometry/local"]
+    if debug_out is not None:
+        command.extend(["-p", "debug:=true", "-p", f"debug_out_file:={debug_out}"])
+    return subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        env=environment,
+    )
+
+
+def _finite_odometry(message: Odometry) -> bool:
+    fields = (message.pose.pose.position.x, message.pose.pose.position.y, message.pose.pose.position.z, message.twist.twist.linear.x, message.twist.twist.linear.y, message.twist.twist.linear.z, *_yaw_fields(message))
+    return all(math.isfinite(value) for value in fields) and all(math.isfinite(value) for value in message.pose.covariance) and all(math.isfinite(value) for value in message.twist.covariance)
+
+
+def _yaw_fields(message: Odometry) -> tuple[float]:
+    return (_yaw(message.pose.pose.orientation),)
+
+
+def _metrics(case: str, samples, node: QualificationNode) -> dict[str, Any]:
+    if not node.outputs:
+        return {"case": case, "status": "FAIL", "reason": "NO_EKF_OUTPUT"}
+    final = node.outputs[-1]
+    truth = samples[-1].truth
+    position_error = math.hypot(final.pose.pose.position.x - truth.x_m, final.pose.pose.position.y - truth.y_m)
+    yaw_error = abs(_wrap(_yaw(final.pose.pose.orientation) - truth.yaw_rad))
+    velocity_error = abs(final.twist.twist.linear.x - truth.vx_mps)
+    planar = abs(final.pose.pose.position.z) < 1e-7 and abs(final.twist.twist.linear.z) < 1e-7
+    output_stamps = [message.header.stamp.sec * 1_000_000_000 + message.header.stamp.nanosec for message in node.outputs]
+    monotonic = all(current >= previous for previous, current in zip(output_stamps, output_stamps[1:]))
+    finite = all(_finite_odometry(message) for message in node.outputs)
+    tf_fresh = bool(node.transforms)
+    # The injected 3m/2.5rad one-shot fault must not cause a corresponding final jump.
+    fault_bound = 0.75 if case in {"G2_S011_VIO_POSITION_OUTLIER", "G2_S012_YAW_OUTLIER"} else 0.25
+    expected_position_bound = fault_bound if "OUTLIER" in case else 0.20
+    expected_yaw_bound = fault_bound if case == "G2_S012_YAW_OUTLIER" else 0.25
+    expected_velocity_bound = 0.25
+    all_input_dropout = case == "G2_S010_ALL_INPUT_DROPOUT"
+    # With every measurement gone, robot_localization ceases publication after
+    # sensor_timeout. Comparing its last valid output to a later truth pose
+    # would incorrectly reward a stale estimate; stoppage is the G2 fail-closed
+    # signal that the later health gate must consume.
+    timeout_observed = all_input_dropout and len(node.outputs) < len(samples) * 0.75
+    ordinary_checks = (position_error <= expected_position_bound, yaw_error <= expected_yaw_bound, velocity_error <= expected_velocity_bound)
+    status = "PASS" if all((planar, monotonic, finite, tf_fresh, timeout_observed if all_input_dropout else all(ordinary_checks))) else "FAIL"
+    return {
+        "case": case,
+        "status": status,
+        "position_final_error_m": position_error,
+        "yaw_final_error_rad": yaw_error,
+        "vx_final_error_mps": velocity_error,
+        "output_count": len(node.outputs),
+        "tf_count": len(node.transforms),
+        "timestamp_monotonic": monotonic,
+        "finite": finite,
+        "planar": planar,
+        "dropout_characterized": case in {"G2_S008_VIO_DROPOUT", "G2_S009_SPEED_DROPOUT", "G2_S010_ALL_INPUT_DROPOUT"},
+        "outlier_characterized": case in {"G2_S011_VIO_POSITION_OUTLIER", "G2_S012_YAW_OUTLIER"},
+        "all_input_timeout_observed": timeout_observed,
+        "final_output": {
+            "x_m": final.pose.pose.position.x,
+            "y_m": final.pose.pose.position.y,
+            "yaw_rad": _yaw(final.pose.pose.orientation),
+            "vx_mps": final.twist.twist.linear.x,
+        },
+        "final_truth": {
+            "x_m": truth.x_m,
+            "y_m": truth.y_m,
+            "yaw_rad": truth.yaw_rad,
+            "vx_mps": truth.vx_mps,
+        },
+    }
+
+
+def run_case(case: str, domain_id: int, period_sec: float, config_path: Path, debug_dir: Path | None = None) -> dict[str, Any]:
+    debug_out = debug_dir / f"{case}.log" if debug_dir is not None else None
+    process = _start_ekf(domain_id, config_path, debug_out)
+    rclpy.init(args=None)
+    node = QualificationNode()
+    samples = generate_case(case)
+    try:
+        deadline = time.monotonic() + 2.0
+        while time.monotonic() < deadline:
+            rclpy.spin_once(node, timeout_sec=0.05)
+        for sample in samples:
+            node.publish(sample)
+            deadline = time.monotonic() + period_sec
+            while time.monotonic() < deadline:
+                rclpy.spin_once(node, timeout_sec=0.01)
+        deadline = time.monotonic() + 0.6
+        while time.monotonic() < deadline:
+            rclpy.spin_once(node, timeout_sec=0.02)
+        result = _metrics(case, samples, node)
+        result["ekf_exit_before_cleanup"] = process.poll()
+        return result
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+        process.send_signal(signal.SIGINT)
+        try:
+            process.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=3)
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--domain-id", type=int, default=74)
+    parser.add_argument("--period-sec", type=float, default=DT_SEC)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--config", type=Path, default=SYNTHETIC_EKF_CONFIG)
+    parser.add_argument("--debug-dir", type=Path)
+    parser.add_argument("--cases", default=",".join(SCENARIOS), help="comma-separated G2 fixture names")
+    arguments = parser.parse_args()
+    requested_cases = tuple(case for case in arguments.cases.split(",") if case)
+    unknown_cases = sorted(set(requested_cases) - set(SCENARIOS))
+    if not requested_cases or unknown_cases:
+        raise SystemExit(f"unknown or empty G2 cases: {unknown_cases}")
+    if arguments.debug_dir is not None:
+        arguments.debug_dir.mkdir(parents=True, exist_ok=True)
+    results = [run_case(case, arguments.domain_id, arguments.period_sec, arguments.config, arguments.debug_dir) for case in requested_cases]
+    summary = {
+        "test_only": True,
+        "estimator": "robot_localization_EKF",
+        "ros_domain_id": arguments.domain_id,
+        "cases": results,
+        "pass_count": sum(result["status"] == "PASS" for result in results),
+        "total_count": len(results),
+        "no_hardware_access": True,
+        "no_actuator_publishers": True,
+    }
+    arguments.output.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    if summary["pass_count"] != summary["total_count"]:
+        raise SystemExit(1)
+
+
+if __name__ == "__main__":
+    main()

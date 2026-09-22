@@ -26,7 +26,11 @@ MANIFEST_PATH = CONFIG_DIR / "GENERATED_VEHICLE_CONTRACT_MANIFEST.json"
 AUDIT_PATH = PACKAGE_ROOT / "VEHICLE_GEOMETRY_SOURCE_AUDIT.json"
 GENERATED_DIR = CONFIG_DIR / "generated"
 URDF_DIR = PACKAGE_ROOT / "urdf"
-REPOSITORY_ROOT = PACKAGE_ROOT.parents[3]
+# The checked-in package lives four levels below the repository root. Test-only
+# ROS qualification may copy just this package to an isolated temporary tree;
+# keep contract loading functional there without weakening full-repository G1
+# geometry auditing in the normal checkout.
+REPOSITORY_ROOT = PACKAGE_ROOT.parents[3] if len(PACKAGE_ROOT.parents) > 3 else PACKAGE_ROOT
 
 PROVENANCE_CLASSES = {"MEASURED", "IDENTIFIED", "DERIVED", "ESTIMATED", "UNKNOWN"}
 LITERALS = ("0.324", "0.90", "1.09", "0.523", "0.288", "0.419", "0.149", "0.148", "0.17165", "0.0545")

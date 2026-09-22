@@ -103,7 +103,7 @@
   ],
   "generator_version": "1.0.0",
   "output_sha256": {
-    "VEHICLE_GEOMETRY_SOURCE_AUDIT.json": "82886c749ae90318aa02cefe2b57f01e47a50887a054f468c94bf35054f0c751",
+    "VEHICLE_GEOMETRY_SOURCE_AUDIT.json": "1a58c3698f4bffbf1c0b954a1b6850eb63447ecf4c0a12f09b8856a6d59ea861",
     "config/generated/gazebo_v004_geometry.json": "626904211c12f30b7e98395488dd7bfccd7786f18eab0599f1bcaeeac5e78090",
     "config/generated/kinematics.json": "b5b8a2a4a8e9efc5e5fee437a9626f7fb85b2c23f9619d95771ad6c83e170896",
     "config/generated/mppi_ackermann_geometry.json": "36a71e4990274db558dbf9fa65c1f64c36599b7aea89f0544ec39106bb7d1bd0",
