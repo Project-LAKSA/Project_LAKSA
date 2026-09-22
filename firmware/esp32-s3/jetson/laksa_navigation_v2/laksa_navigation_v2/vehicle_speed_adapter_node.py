@@ -7,23 +7,32 @@ from geometry_msgs.msg import TwistWithCovarianceStamped
 from laksa_interfaces.msg import VescState
 from rclpy.node import Node
 
-from .vehicle_speed_adapter_contract import measured_speed_is_usable
+from .vehicle_speed_adapter_contract import canonical_speed_per_erpm_mps, measured_erpm_to_vx, measured_speed_is_usable
 
 
 class VehicleSpeedAdapter(Node):
     def __init__(self) -> None:
         super().__init__("vehicle_speed_adapter")
         self.declare_parameter("variance_mps2", -1.0)
+        self.declare_parameter("max_telemetry_age_sec", 0.5)
+        self.declare_parameter("speed_per_erpm_mps", canonical_speed_per_erpm_mps())
         self._variance = float(self.get_parameter("variance_mps2").value)
+        self._max_age = float(self.get_parameter("max_telemetry_age_sec").value)
+        configured_scale = float(self.get_parameter("speed_per_erpm_mps").value)
+        if abs(configured_scale - canonical_speed_per_erpm_mps()) > 1e-15:
+            raise ValueError("VESC speed scale must equal the canonical G1/V004 identified scale")
         self._publisher = self.create_publisher(TwistWithCovarianceStamped, "/laksa/vehicle/speed", 10)
         self.create_subscription(VescState, "/laksa/vesc/state", self._callback, 10)
         if self._variance <= 0.0:
             self.get_logger().warn("physical VESC speed variance is uncalibrated; adapter will not publish")
 
     def _callback(self, state: VescState) -> None:
-        speed = float(state.vehicle_linear_velocity_mps)
-        if not measured_speed_is_usable(bool(state.telemetry_fresh), speed, self._variance):
+        stamp_ns = state.stamp.sec * 1_000_000_000 + state.stamp.nanosec
+        age_sec = (self.get_clock().now().nanoseconds - stamp_ns) / 1_000_000_000
+        measured_erpm = float(state.measured_erpm)
+        if not measured_speed_is_usable(bool(state.telemetry_fresh), measured_erpm, self._variance, age_sec, self._max_age):
             return
+        speed = measured_erpm_to_vx(measured_erpm)
         message = TwistWithCovarianceStamped()
         message.header.stamp = state.stamp
         message.header.frame_id = "base_footprint"

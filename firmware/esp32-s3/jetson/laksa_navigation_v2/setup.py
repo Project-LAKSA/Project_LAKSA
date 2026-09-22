@@ -22,5 +22,7 @@ setup(
         "g2_synthetic_sensor_node = laksa_navigation_v2.g2_synthetic_sensor_node:main",
         "g2_ros_qualification = laksa_navigation_v2.g2_ros_qualification:main",
         "vehicle_speed_adapter_node = laksa_navigation_v2.vehicle_speed_adapter_node:main",
+        "local_odometry_contract_monitor = laksa_navigation_v2.local_odometry_contract_monitor:main",
+        "vio_base_odometry_adapter_node = laksa_navigation_v2.vio_base_odometry_adapter_node:main",
     ]},
 )
