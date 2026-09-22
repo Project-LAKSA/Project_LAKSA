@@ -10,6 +10,20 @@ navigation is restored, qualified, or safe for autonomous operation.
 Audit in read-only mode. Do not edit, commit, deploy, start hardware, or alter
 the frozen references while reaching conclusions.
 
+## Sanitized private-runtime evidence
+
+The public branch now contains a complete semantic inventory of the divergent
+Jetson source/configuration evidence without publishing raw files:
+
+- `DIVERGENT_RUNTIME_INVENTORY.json` — nineteen hash-addressed private files;
+- `SANITIZED_RUNTIME_DELTA.md` and `.json` — safe behavioral differences;
+- `PRE_CHARACTERIZATION_EVIDENCE_MATRIX.md` — cross-period comparison.
+
+Raw workspace/install files and raw diffs deliberately remain private. Do not
+ask to reconstruct them from hashes or infer omitted source. Treat a semantic
+finding as exactly scoped: a source difference proves divergence, not that it
+was deployed during the historically best mapping session.
+
 ## Required comparisons
 
 Compare this branch with:
@@ -19,8 +33,7 @@ Compare this branch with:
   `autonomy_handoff/runtime/systemd` when available in preserved evidence;
 - `b178a91f3a87f90ae289f62588744bd7936a43f4`;
 - Jetson source/runtime evidence from September 9–16;
-- `/home/ubuntu/laksa_freezes/pre_final_stabilization_20260913T010911Z` when
-  accessible;
+- the locally retained September pre-final-stabilization freeze when accessible;
 - preserved installed-runtime hashes in `PRODUCTION_SOURCE_DIVERGENCE.json`;
 - the September-21 forensic snapshot if it is restored;
 - `recovery/pre-characterization-mapping-planner-good`.
@@ -32,6 +45,11 @@ evidence for RPLIDAR, ZED RGB/depth, RTAB-Map, RF2O,
 robot_localization/odometry, TF ownership, Field Lab pose path and latency.
 Resolve the questions in `OPEN_MAPPING_QUESTIONS.md` using hashes and runtime
 captures; do not select a configuration on aesthetics or branch naming.
+
+The audit should first determine whether the historically qualified runtime was
+the multimodal fused topology reflected in production-mainline, the compact
+ZED-RTAB topology found in the divergent workspace, or a third dated runtime.
+Do not implement any restoration while that conclusion remains unproven.
 
 ## Production separation facts
 

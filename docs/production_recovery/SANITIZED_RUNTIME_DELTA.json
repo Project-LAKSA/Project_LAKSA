@@ -1,0 +1,597 @@
+{
+  "files": [
+    {
+      "characterization_relevance": "NONE",
+      "component": "package/build/documentation metadata",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_07A",
+      "install_sha256": null,
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_bringup/CMakeLists.txt",
+      "repo_sha256": "1b10bcfa1f7787fe5b9c07936ba8ac7dba591872a9abf314a477f9fb9065edbe",
+      "semantic_categories": [
+        "OTHER_BEHAVIORAL_CHANGE"
+      ],
+      "semantic_differences": [
+        "Package, install, dependency, or documentation metadata differs; it has no independently established runtime semantic effect."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "72d0a6a5fc713baffc3957d9206c7264048e866bfe866ea5617a349b4c4e84e5"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "package/build/documentation metadata",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_07B",
+      "install_sha256": null,
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_bringup/README.md",
+      "repo_sha256": "fb624a8d60d8f7a2077584af0ec2c8f1bc070ed6d291c11ed763309024f21353",
+      "semantic_categories": [
+        "OTHER_BEHAVIORAL_CHANGE"
+      ],
+      "semantic_differences": [
+        "Package, install, dependency, or documentation metadata differs; it has no independently established runtime semantic effect."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "435ef0cf3619647540c5cf0075f7c429e150f100388669da45ab8de2ad12f6ce"
+    },
+    {
+      "characterization_relevance": "HIGH",
+      "component": "drive supervisor configuration",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_04A",
+      "install_sha256": null,
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [
+        "characterization_enabled",
+        "characterization_timeout_sec",
+        "characterization_arm_timeout_sec",
+        "characterization_max_erpm"
+      ],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_bringup/config/drive_supervisor.yaml",
+      "repo_sha256": "c75a48f487c64a145aa02f779a6f3c1e82fcf452aa6d12fc45ec8e8371d40b09",
+      "semantic_categories": [
+        "CHARACTERIZATION_HOOKS",
+        "SAFETY_BEHAVIOR"
+      ],
+      "semantic_differences": [
+        "Workspace retains disabled-by-default lower-priority characterization limits/timeouts; active production-mainline excludes that runtime interface."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "8bead6d834cf6fe1f212be1c4203c7e574796bb960296ec54546a79d0a1376fc"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "teleoperation configuration",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_06A",
+      "install_sha256": null,
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [
+        "axis_mappings",
+        "deadman_buttons"
+      ],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_bringup/config/xbox_drive.yaml",
+      "repo_sha256": "f2ff5cf931ad00f854c90088c3ef482a091f2535d0d6eb70de5ac540eed5b7f1",
+      "semantic_categories": [
+        "ROS_TOPICS_OUTPUT",
+        "SAFETY_BEHAVIOR"
+      ],
+      "semantic_differences": [
+        "Workspace uses a generic joystick-to-LAKSA-command configuration; production-mainline uses a LAKSA-specific teleoperation surface."
+      ],
+      "topics_in": [],
+      "topics_out": [
+        "/laksa/command"
+      ],
+      "workspace_sha256": "6a42ed8ce0d6e2e37d88e59c996fb1b6894dc855641f7e8771152146c56e4594"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "teleoperation launch",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_06B",
+      "install_sha256": null,
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_bringup/launch/xbox_drive.launch.py",
+      "repo_sha256": "b3302f2e3db91dbd0c5c60f4d544945ec587c4d31dd27f136ce30f84b0bec0ba",
+      "semantic_categories": [
+        "LAUNCH_INCLUDES",
+        "SAFETY_BEHAVIOR"
+      ],
+      "semantic_differences": [
+        "Launch surface differs; neither version was run or changed in this forensic task."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "5513a19e55b62f2658f2f2a4fcdf34966968802364eda66bf38ee18421ac0ee3"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "package/build/documentation metadata",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_07C",
+      "install_sha256": null,
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_bringup/package.xml",
+      "repo_sha256": "6ba56bae82bb18bc7740f5401e55d51f5da47f63325517e0d421b30d25d06bdc",
+      "semantic_categories": [
+        "OTHER_BEHAVIORAL_CHANGE"
+      ],
+      "semantic_differences": [
+        "Package, install, dependency, or documentation metadata differs; it has no independently established runtime semantic effect."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "1f20805da43631a42ab28c19d622a9a9d35cbf94dd5a22f96cd72cfdd04e039a"
+    },
+    {
+      "characterization_relevance": "HIGH",
+      "component": "drive supervisor implementation",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_04B",
+      "install_sha256": null,
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_bringup/scripts/drive_supervisor_node.py",
+      "repo_sha256": "3dba9b0500c1095a72b6cd56ab60812c5f3b1d8af1da9d8c1d3096afcdacebfc",
+      "semantic_categories": [
+        "CHARACTERIZATION_HOOKS",
+        "ROS_TOPICS_INPUT",
+        "ROS_TOPICS_OUTPUT",
+        "SAFETY_BEHAVIOR"
+      ],
+      "semantic_differences": [
+        "Workspace retains a bounded characterization request/enable interface with default rejection/disabled behavior; active production-mainline has it removed."
+      ],
+      "topics_in": [
+        "/laksa/characterization_request",
+        "/laksa/characterization_enable"
+      ],
+      "topics_out": [
+        "/laksa/characterization_enabled"
+      ],
+      "workspace_sha256": "2d4cce2a2b6295a48b07647e34102dd7ae773ad11ba3f08072544e0f8b2ac5ea"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "drivetrain conversion helper",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_06C",
+      "install_sha256": null,
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_bringup/scripts/drivetrain_conversion.py",
+      "repo_sha256": "98058e2687f65243e21f1ce9eb49ea04e27a2c3e839b83e09943715d984493b8",
+      "semantic_categories": [
+        "OTHER_BEHAVIORAL_CHANGE"
+      ],
+      "semantic_differences": [
+        "Small control-conversion source delta; runtime use and effect are not established."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "791f716e526c58715279ff8101bdb165b254ed8fa7deb6c2c24d7162b5e7c888"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "package/build/documentation metadata",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_07D",
+      "install_sha256": null,
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_dashboard/THIRD_PARTY.md",
+      "repo_sha256": "055c56dd4d5980891b64a77e899672d03b7fb6e2a302e4924fd884abb4d66dbb",
+      "semantic_categories": [
+        "OTHER_BEHAVIORAL_CHANGE"
+      ],
+      "semantic_differences": [
+        "Package, install, dependency, or documentation metadata differs; it has no independently established runtime semantic effect."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "21ccd948fcd88c69c69196ef792ab528edff51642dec1dbaa7c37811bbd100b0"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "Field Lab server",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "CRITICAL",
+      "frames": [
+        "map",
+        "base_footprint"
+      ],
+      "id": "RUNTIME_DIFF_05A",
+      "install_sha256": null,
+      "mapping_relevance": "CRITICAL",
+      "navigation_relevance": "MEDIUM",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_dashboard/laksa_dashboard/cockpit_server.py",
+      "repo_sha256": "2a2515bbe6ac6fa46c06ada4df610ce373b381d8d618a79c373eff9103cbc249",
+      "semantic_categories": [
+        "FIELD_LAB_CONFIGURATION",
+        "ROS_TOPICS_INPUT",
+        "TF_FRAMES",
+        "SESSION_MANAGER_BEHAVIOR",
+        "NAV2_CONFIGURATION"
+      ],
+      "semantic_differences": [
+        "Production-mainline is session-aware and checks fused odometry/map consistency; workspace is a smaller ZED-RTAB map/cloud observer using map-to-base lookup."
+      ],
+      "topics_in": [
+        "/zed_rtabmap/map",
+        "/zed_rtabmap/cloud_map",
+        "/laksa/odometry/fused"
+      ],
+      "topics_out": [],
+      "workspace_sha256": "71f1cb1671f13f78d2bc805213af2e932a41e4db9337e2e2ac33c4883e584f88"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "Field Lab launch",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "CRITICAL",
+      "frames": [],
+      "id": "RUNTIME_DIFF_05B",
+      "install_sha256": "7796531715b2ea69f5544f581b9e9ab981db528996c183d1a1be919fb758ff0d",
+      "mapping_relevance": "CRITICAL",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [
+        "max_cloud_points",
+        "cloud_period_sec"
+      ],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_dashboard/launch/cockpit.launch.py",
+      "repo_sha256": "cc554cb186d73f32f63308fce266b717a5c55c4646bb002d1e9f2cc54b795d23",
+      "semantic_categories": [
+        "LAUNCH_INCLUDES",
+        "FIELD_LAB_CONFIGURATION"
+      ],
+      "semantic_differences": [
+        "Installed launch equals the workspace launch; preview point-cap configuration differs from production-mainline."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "7796531715b2ea69f5544f581b9e9ab981db528996c183d1a1be919fb758ff0d"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "package/build/documentation metadata",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_07E",
+      "install_sha256": "ab71e1f5a26cf145202f29e7b3f56f9ec7b0276f03d04a09c7d5085816a23d7b",
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_dashboard/package.xml",
+      "repo_sha256": "2734d4d9369b6ced71f147eaaef6cf33b253c3c7b089ca6c1d8d14e066cfcf73",
+      "semantic_categories": [
+        "OTHER_BEHAVIORAL_CHANGE"
+      ],
+      "semantic_differences": [
+        "Package, install, dependency, or documentation metadata differs; it has no independently established runtime semantic effect."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "ab71e1f5a26cf145202f29e7b3f56f9ec7b0276f03d04a09c7d5085816a23d7b"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "package/build/documentation metadata",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_07F",
+      "install_sha256": null,
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_dashboard/setup.py",
+      "repo_sha256": "9f93759fedce00653b575ee2216f05c7e90be8147d721cddeb94eef1eb88eff0",
+      "semantic_categories": [
+        "OTHER_BEHAVIORAL_CHANGE"
+      ],
+      "semantic_differences": [
+        "Package, install, dependency, or documentation metadata differs; it has no independently established runtime semantic effect."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "7306fed93998a5684153b928eec18f4bb7acf3abde030a6f93eb16fdfc652f7a"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "package/build/documentation metadata",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_07G",
+      "install_sha256": null,
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "NONE",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/extra_ros_packages/laksa_interfaces/CMakeLists.txt",
+      "repo_sha256": "04cd5a198d33ae2ce8c4dbbbef8cfe131477228af40a9a4a600db1e6ea535eeb",
+      "semantic_categories": [
+        "OTHER_BEHAVIORAL_CHANGE"
+      ],
+      "semantic_differences": [
+        "Package, install, dependency, or documentation metadata differs; it has no independently established runtime semantic effect."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "be9c76ee1cd6f163560414b78c5197eb6a4c0ea1321a7190c71511294e4879ea"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "RTAB-Map configuration",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [
+        "zed_camera_link",
+        "base_footprint"
+      ],
+      "id": "RUNTIME_DIFF_01",
+      "install_sha256": "041e1fab86b32deb14f67318d11272a86a28101844996d3b46596a9dd50b96b2",
+      "mapping_relevance": "CRITICAL",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "HIGH",
+      "parameters": [
+        "frame_id",
+        "Reg/Force3DoF",
+        "Grid/DepthDecimation"
+      ],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_mapping/config/rtabmap_common.yaml",
+      "repo_sha256": "60a10a0bea93f9d8e6982997a998d60a9e5e6052c8ca7aea4220c7791a0946ae",
+      "semantic_categories": [
+        "ROS_PARAMETERS",
+        "TF_FRAMES",
+        "RTAB_CONFIGURATION"
+      ],
+      "semantic_differences": [
+        "RTAB body frame differs; workspace uses the camera frame. Workspace also has coarser depth decimation and no explicit 3-DoF registration constraint."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "041e1fab86b32deb14f67318d11272a86a28101844996d3b46596a9dd50b96b2"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "mapping session lifecycle",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "HIGH",
+      "frames": [],
+      "id": "RUNTIME_DIFF_03",
+      "install_sha256": null,
+      "mapping_relevance": "CRITICAL",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "HIGH",
+      "parameters": [
+        "compose_rgbd_rtab",
+        "rtab_processing_timeout_sec",
+        "cloud_output_voxelized_override"
+      ],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_mapping/laksa_mapping/session_manager.py",
+      "repo_sha256": "ddf689d984087b705d9af840d90c2b6077b3a5c83bd37a8314985e2d39d27c2a",
+      "semantic_categories": [
+        "SESSION_MANAGER_BEHAVIOR",
+        "ROS_TOPICS_INPUT",
+        "ROS_TOPICS_OUTPUT",
+        "ODOMETRY_INPUTS",
+        "FIELD_LAB_CONFIGURATION",
+        "RTAB_CONFIGURATION"
+      ],
+      "semantic_differences": [
+        "Production-mainline observes fused multi-sensor readiness and outputs; workspace tracks the ZED RGB-D/raw-odom/RTAB path only and saves from that map namespace."
+      ],
+      "topics_in": [
+        "/laksa/lidar/scan_validated",
+        "/laksa/odometry/fused",
+        "/zed/zed_node/odom"
+      ],
+      "topics_out": [],
+      "workspace_sha256": "b8ffc67a0598845659a0f6b58599589256ac70469126d637b81534eb602f687f"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "mapping launch topology",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [
+        "base_footprint",
+        "zed_camera_link"
+      ],
+      "id": "RUNTIME_DIFF_02",
+      "install_sha256": "e624b4d6548d74930dd50b109ea7b57807aaa587c3647c9e04ffb4859a93a1b2",
+      "mapping_relevance": "CRITICAL",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "CRITICAL",
+      "parameters": [
+        "compose_rgbd_rtab",
+        "odom_frame",
+        "base_frame"
+      ],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_mapping/launch/mapping_stack.launch.py",
+      "repo_sha256": "d6d60c79769e47c1ca5c109ce4d029bcfbf845556205afe0ae5c695926439b3b",
+      "semantic_categories": [
+        "NODES_ADDED_REMOVED",
+        "LAUNCH_INCLUDES",
+        "ROS_TOPICS_INPUT",
+        "TOPIC_REMAPS",
+        "ODOMETRY_INPUTS",
+        "RTAB_CONFIGURATION",
+        "ROBOT_LOCALIZATION_CONFIGURATION",
+        "TF_PUBLISHERS"
+      ],
+      "semantic_differences": [
+        "Production-mainline declares validated-LiDAR, fused-odometry, vehicle-pose-adapter and EKF participants before RTAB-Map; workspace is ZED RGB-D sync plus RTAB-Map with raw ZED odometry and no corresponding scan/fused/EKF/adapter participant."
+      ],
+      "topics_in": [
+        "/laksa/lidar/scan_validated",
+        "/laksa/odometry/fused",
+        "/zed/zed_node/odom"
+      ],
+      "topics_out": [],
+      "workspace_sha256": "e624b4d6548d74930dd50b109ea7b57807aaa587c3647c9e04ffb4859a93a1b2"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "package/build/documentation metadata",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_07H",
+      "install_sha256": "52dd3a105f39148dd37cc6e6ab10acade5d13c80e9dbe5b5d76f73c2878ee151",
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "HIGH",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_mapping/package.xml",
+      "repo_sha256": "5e8973ad4406f3a32f2d0f8939b54d1a23e150f65bd288e46f0ee42b72d14148",
+      "semantic_categories": [
+        "OTHER_BEHAVIORAL_CHANGE"
+      ],
+      "semantic_differences": [
+        "Package, install, dependency, or documentation metadata differs; it has no independently established runtime semantic effect."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "52dd3a105f39148dd37cc6e6ab10acade5d13c80e9dbe5b5d76f73c2878ee151"
+    },
+    {
+      "characterization_relevance": "NONE",
+      "component": "package/build/documentation metadata",
+      "confidence": "CONFIRMED",
+      "field_lab_relevance": "NONE",
+      "frames": [],
+      "id": "RUNTIME_DIFF_07I",
+      "install_sha256": null,
+      "mapping_relevance": "NONE",
+      "navigation_relevance": "NONE",
+      "notes": "Raw source, comments, and diffs remain private.",
+      "odometry_relevance": "HIGH",
+      "parameters": [],
+      "redacted": true,
+      "remaps": [],
+      "repo_path": "firmware/esp32-s3/jetson/laksa_mapping/setup.py",
+      "repo_sha256": "6e354da6c47d1ac39e13f41c301e3252384ea870257ef9335b7aa68cc55a0bc5",
+      "semantic_categories": [
+        "OTHER_BEHAVIORAL_CHANGE"
+      ],
+      "semantic_differences": [
+        "Package, install, dependency, or documentation metadata differs; it has no independently established runtime semantic effect."
+      ],
+      "topics_in": [],
+      "topics_out": [],
+      "workspace_sha256": "8fbcc29de1dfd25e677f3976a856479b4614c8be20312bff4db51c42d1f59880"
+    }
+  ],
+  "generated_at": "2026-09-22T12:00:00Z",
+  "private_runtime_source": "read-only Jetson workspace/install comparison; raw source intentionally excluded",
+  "production_branch": "production/laksa-mainline",
+  "production_head": "8425931fe91cfbb8f1f7d9833d363c9e3f077345"
+}
