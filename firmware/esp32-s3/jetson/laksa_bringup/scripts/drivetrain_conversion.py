@@ -1,4 +1,4 @@
-"""Canonical DriveCommand/eRPM conversion shared by supervisor and T10."""
+"""Canonical DriveCommand/eRPM conversion used by the production supervisor."""
 import math
 
 def erpm_to_speed_mps(erpm, pole_pairs, gear_reduction, wheel_diameter_m):

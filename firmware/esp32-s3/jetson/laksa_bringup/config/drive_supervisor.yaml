@@ -43,13 +43,6 @@ drive_supervisor:
     # Clear-costmap and Wait recovery steps intentionally publish no Twist.
     # Brake after 0.5 s, but allow the recovery sequence six seconds to resume.
     nav_abort_timeout_sec: 6.0
-    # Disabled in all ordinary launches.  The supervised characterization
-    # runner may use this lower-priority input only after a deliberate operator
-    # opt-in and ARM; it never bypasses DriveSupervisor.
-    characterization_enabled: false
-    characterization_timeout_sec: 0.20
-    characterization_arm_timeout_sec: 10.0
-    characterization_max_erpm: 900.0
     state_timeout_sec: 1.0
     scan_timeout_sec: 0.75
     odom_timeout_sec: 0.75

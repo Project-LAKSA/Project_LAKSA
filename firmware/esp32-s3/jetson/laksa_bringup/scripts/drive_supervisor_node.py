@@ -13,7 +13,6 @@ from laksa_control_math import (
     route_data_preflight_reason,
     tf_preflight_reason,
 )
-from characterization_safety import allow_characterization, bounded_request
 from drivetrain_conversion import erpm_to_speed_mps
 from laksa_interfaces.msg import DriveCommand, VehicleState
 from nav2_msgs.msg import Costmap, SpeedLimit
@@ -82,13 +81,6 @@ class DriveSupervisor(Node):
             "nav_timeout_sec": 0.50,
             "nav_startup_timeout_sec": 5.0,
             "nav_abort_timeout_sec": 6.0,
-            # Characterization is an explicitly opt-in, lower-priority test
-            # input.  It is false in every normal launch and has no effect
-            # without a fresh request heartbeat.
-            "characterization_enabled": False,
-            "characterization_timeout_sec": 0.20,
-            "characterization_arm_timeout_sec": 10.0,
-            "characterization_max_erpm": 900.0,
             "state_timeout_sec": 1.0,
             "scan_timeout_sec": 0.75,
             "odom_timeout_sec": 0.75,
@@ -160,18 +152,6 @@ class DriveSupervisor(Node):
         self._nav_abort_timeout_ns = int(
             float(self.get_parameter("nav_abort_timeout_sec").value) * 1e9
         )
-        self._characterization_enabled = bool(
-            self.get_parameter("characterization_enabled").value
-        )
-        self._characterization_timeout_ns = int(
-            float(self.get_parameter("characterization_timeout_sec").value) * 1e9
-        )
-        self._characterization_arm_timeout_ns = int(
-            float(self.get_parameter("characterization_arm_timeout_sec").value) * 1e9
-        )
-        self._characterization_max_erpm = float(
-            self.get_parameter("characterization_max_erpm").value
-        )
         self._state_timeout_ns = int(
             float(self.get_parameter("state_timeout_sec").value) * 1e9
         )
@@ -212,7 +192,6 @@ class DriveSupervisor(Node):
             self._left_wheel_limit,
             self._right_wheel_limit,
             publish_rate,
-            self._characterization_max_erpm,
         )
         if not all(math.isfinite(value) and value > 0.0 for value in positive):
             raise ValueError("Drive geometry, rates, and limits must be positive")
@@ -256,9 +235,6 @@ class DriveSupervisor(Node):
         self._speed_limit_pub = self.create_publisher(
             SpeedLimit, "/speed_limit", 10
         )
-        self._characterization_enabled_pub = self.create_publisher(
-            Bool, "/laksa/characterization_enabled", mode_qos
-        )
         self._cancel_navigation_pub = self.create_publisher(
             Empty, "/laksa/cancel_navigation", 10
         )
@@ -291,20 +267,6 @@ class DriveSupervisor(Node):
             "/laksa/lidar_cruise_cmd_vel",
             self._cruise_callback,
             10,
-        )
-        # This is deliberately an input to the only command arbiter, never a
-        # second publisher of /laksa/command.  It is inactive by default.
-        self.create_subscription(
-            DriveCommand,
-            "/laksa/characterization_request",
-            self._characterization_callback,
-            10,
-        )
-        self.create_subscription(
-            Bool,
-            "/laksa/characterization_enable",
-            self._characterization_enable_callback,
-            mode_qos,
         )
         self.create_subscription(
             VehicleState,
@@ -360,8 +322,6 @@ class DriveSupervisor(Node):
         self._last_joy_ns = 0
         self._last_nav_ns = 0
         self._last_cruise_ns = 0
-        self._last_characterization_ns = 0
-        self._characterization_enabled_ns = 0
         self._last_state_ns = 0
         self._last_scan_ns = 0
         self._last_odom_ns = 0
@@ -378,7 +338,6 @@ class DriveSupervisor(Node):
         self._vesc_fault_code = 0
         self._nav_twist = Twist()
         self._cruise_twist = Twist()
-        self._characterization_command = DriveCommand()
         self._autonomous = False
         self._exploring = False
         self._autonomy_started_ns = 0
@@ -399,7 +358,6 @@ class DriveSupervisor(Node):
         self._tf_buffer = Buffer()
         self._tf_listener = TransformListener(self._tf_buffer, self)
         self._publish_mode()
-        self._publish_characterization_enabled()
         self.get_logger().info(
             "MANUAL mode: left stick drives and right stick steers, "
             "hold A 3 s for forward-priority LiDAR cruise, "
@@ -635,16 +593,6 @@ class DriveSupervisor(Node):
             or abs(manual_steering) > self._deadzone
         ):
             self._abort_autonomy("Xbox manual override")
-        if (
-            self._last_characterization_ns
-            and (abs(manual_throttle) > self._deadzone or abs(manual_steering) > self._deadzone)
-        ):
-            # Do not allow a test heartbeat to compete with a live human
-            # command.  A neutral sample is required before manual propulsion
-            # can resume, so this transition is fail-safe rather than a blend.
-            self._clear_characterization("Xbox manual override")
-            self._manual_neutral_required = True
-
         b_pressed = self._button(self._b_button)
         y_pressed = self._button(self._y_button)
         if b_pressed and not self._previous_b:
@@ -715,74 +663,6 @@ class DriveSupervisor(Node):
             return
         self._last_cruise_ns = self._now_ns()
         self._cruise_twist = message
-
-    def _characterization_callback(self, message: DriveCommand) -> None:
-        """Accept only bounded, explicitly enabled test requests.
-
-        The request is in the ordinary SI ``DriveCommand`` domain.  It cannot
-        write eRPM, UART, PCA9685, or the canonical output topic directly.
-        Xbox and the e-stop remain above it in the command selection below.
-        """
-        if not self._characterization_enabled:
-            return
-        maximum_speed = self._erpm_to_mps(self._characterization_max_erpm)
-        if not bounded_request(float(message.speed_mps), float(message.steering_angle_rad), maximum_speed, self._left_wheel_limit, self._right_wheel_limit):
-            self.get_logger().error("Rejected out-of-bounds characterization request")
-            return
-        self._characterization_command = message
-        self._last_characterization_ns = self._now_ns()
-
-    def _characterization_enable_callback(self, message: Bool) -> None:
-        """Explicit test gate; false revokes immediately, default is false.
-
-        This is not an actuator command.  Motion still requires a separate,
-        bounded, fresh request and all normal Xbox/e-stop/telemetry interlocks.
-        """
-        enabled = bool(message.data)
-        if enabled and self._estop_latched:
-            self.get_logger().warning("Rejected characterization enable while e-stop is latched")
-            return
-        self._set_characterization_enabled(enabled, "campaign gate")
-
-    def _publish_characterization_enabled(self) -> None:
-        state = Bool()
-        state.data = self._characterization_enabled
-        self._characterization_enabled_pub.publish(state)
-
-    def _set_characterization_enabled(self, enabled: bool, reason: str) -> None:
-        self._characterization_enabled = bool(enabled)
-        self._characterization_enabled_ns = self._now_ns() if enabled else 0
-        if not enabled:
-            self._clear_characterization(reason)
-        self._publish_characterization_enabled()
-
-    def _manual_input_neutral(self) -> bool:
-        return (
-            abs(self._axis(self._forward_axis) * self._forward_sign) <= self._deadzone
-            and abs(self._axis(self._steering_axis) * self._steering_sign) <= self._deadzone
-        )
-
-    def _clear_characterization(self, reason: str) -> None:
-        if self._last_characterization_ns:
-            self.get_logger().warning(f"Characterization request revoked: {reason}")
-        self._last_characterization_ns = 0
-        self._characterization_command = DriveCommand()
-
-    def _characterization_ready(self, now_ns: int, joy_fresh: bool, state_fresh: bool):
-        return allow_characterization(
-            enabled=self._characterization_enabled,
-            heartbeat_fresh=self._last_characterization_ns != 0 and now_ns - self._last_characterization_ns <= self._characterization_timeout_ns,
-            joy_fresh=joy_fresh, state_fresh=state_fresh,
-            telemetry_fresh=self._vesc_telemetry_ok, fault_code=self._vesc_fault_code,
-            estop=self._estop_latched, manual_neutral=self._manual_input_neutral(),
-        )
-
-    def _characterization_output(self) -> DriveCommand:
-        command = DriveCommand()
-        command.speed_mps = self._characterization_command.speed_mps
-        command.steering_angle_rad = self._characterization_command.steering_angle_rad
-        command.brake = bool(self._characterization_command.brake)
-        return command
 
     def _valid_twist(self, message: Twist, source: str) -> bool:
         values = (
@@ -1071,20 +951,6 @@ class DriveSupervisor(Node):
 
     def _update(self) -> None:
         now_ns = self._now_ns()
-        if self._characterization_enabled:
-            no_initial_heartbeat = (
-                self._last_characterization_ns == 0
-                and now_ns - self._characterization_enabled_ns > self._characterization_arm_timeout_ns
-            )
-            heartbeat_lost = (
-                self._last_characterization_ns != 0
-                and now_ns - self._last_characterization_ns > self._characterization_timeout_ns
-            )
-            if no_initial_heartbeat or heartbeat_lost:
-                self._set_characterization_enabled(
-                    False,
-                    "characterization heartbeat expired",
-                )
         joy_fresh = (
             self._last_joy_ns != 0
             and now_ns - self._last_joy_ns <= self._joy_timeout_ns
@@ -1103,13 +969,6 @@ class DriveSupervisor(Node):
         state_fresh = (
             self._last_state_ns != 0
             and now_ns - self._last_state_ns <= self._state_timeout_ns
-        )
-        characterization_ready, characterization_health = self._characterization_ready(
-            now_ns, joy_fresh, state_fresh
-        )
-        characterization_fresh = (
-            self._last_characterization_ns != 0
-            and now_ns - self._last_characterization_ns <= self._characterization_timeout_ns
         )
         # In MANUAL, report readiness for the A-button LiDAR Cruise. Global
         # point navigation performs its stricter map/odom/TF check on entry.
@@ -1156,12 +1015,11 @@ class DriveSupervisor(Node):
             if autonomy_abort_reason:
                 self._abort_autonomy(autonomy_abort_reason, blocked=True)
 
-        if self._autonomous:
-            command = self._autonomous_command(nav_fresh)
-        elif characterization_fresh and characterization_ready:
-            command = self._characterization_output()
-        else:
-            command = self._manual_command(joy_fresh)
+        command = (
+            self._autonomous_command(nav_fresh)
+            if self._autonomous
+            else self._manual_command(joy_fresh)
+        )
 
         reason = ""
         if self._estop_latched:
@@ -1190,8 +1048,6 @@ class DriveSupervisor(Node):
                 if self._exploring
                 else "Waiting for a fresh Nav2 command"
             )
-        elif characterization_fresh and not characterization_ready:
-            reason = f"Characterization unavailable: {characterization_health}"
         elif not joy_fresh:
             # The Xbox controller is the operator's brake/mode escape device.
             # Never allow autonomous motion if that safety link disappears.
