@@ -39,7 +39,7 @@ class G2SyntheticSensorNode(Node):
             message = Odometry()
             _stamp(message, now, sample.vio_stamp_sec - sample.truth.stamp_sec)
             message.header.frame_id = "odom"
-            message.child_frame_id = "base_footprint"
+            message.child_frame_id = "zed_camera_link"
             message.pose.pose.position.x = sample.vio_x_m
             message.pose.pose.position.y = sample.vio_y_m
             message.pose.pose.orientation.z = math.sin(sample.vio_yaw_rad / 2.0)

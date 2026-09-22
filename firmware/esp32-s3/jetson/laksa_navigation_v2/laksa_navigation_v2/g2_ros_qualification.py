@@ -22,6 +22,7 @@ import rclpy
 from geometry_msgs.msg import TransformStamped, TwistWithCovarianceStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile
 from tf2_msgs.msg import TFMessage
 
 from .g2_synthetic_inputs import (
@@ -32,6 +33,7 @@ from .g2_synthetic_inputs import (
     vio_pose_covariance,
     vy_constraint_twist_covariance,
 )
+from .vio_base_odometry_adapter_node import VioBaseOdometryAdapter
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
@@ -63,6 +65,20 @@ class QualificationNode(Node):
         self.transforms: list[TransformStamped] = []
         self.create_subscription(Odometry, "/laksa/odometry/local", self.outputs.append, 50)
         self.create_subscription(TFMessage, "/tf", self._tf_callback, 50)
+        self.static_tf = self.create_publisher(TFMessage, "/tf_static", QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL))
+        self._publish_canonical_static_tf()
+
+    def _publish_canonical_static_tf(self) -> None:
+        contract = __import__("laksa_navigation_v2.generate_contract_artifacts", fromlist=["load_contract"]).load_contract()
+        zed = contract["sensors"]["zed"]
+        transforms = []
+        base_link = TransformStamped(); base_link.header.frame_id = "base_footprint"; base_link.child_frame_id = "base_link"; base_link.transform.rotation.w = 1.0
+        transforms.append(base_link)
+        camera = TransformStamped(); camera.header.frame_id = "base_link"; camera.child_frame_id = "zed_camera_link"
+        camera.transform.translation.x, camera.transform.translation.y, camera.transform.translation.z = zed["xyz_m"]
+        pitch = zed["rpy_rad"][1]; camera.transform.rotation.y = math.sin(pitch / 2.0); camera.transform.rotation.w = math.cos(pitch / 2.0)
+        transforms.append(camera)
+        self.static_tf.publish(TFMessage(transforms=transforms))
 
     def _tf_callback(self, message: TFMessage) -> None:
         self.transforms.extend(transform for transform in message.transforms if transform.header.frame_id == "odom" and transform.child_frame_id == "base_footprint")
@@ -73,7 +89,7 @@ class QualificationNode(Node):
             message = Odometry()
             _stamp(message, now_ns, sample.vio_stamp_sec - sample.truth.stamp_sec)
             message.header.frame_id = "odom"
-            message.child_frame_id = "base_footprint"
+            message.child_frame_id = "zed_camera_link"
             message.pose.pose.position.x = sample.vio_x_m
             message.pose.pose.position.y = sample.vio_y_m
             message.pose.pose.orientation.z = math.sin(sample.vio_yaw_rad / 2.0)
@@ -110,6 +126,7 @@ def _start_ekf(domain_id: int, config_path: Path, debug_out: Path | None = None)
         stderr=subprocess.STDOUT,
         text=True,
         env=environment,
+        start_new_session=True,
     )
 
 
@@ -176,6 +193,14 @@ def _metrics(case: str, samples, node: QualificationNode) -> dict[str, Any]:
     timeout_observed = all_input_dropout and len(node.outputs) < len(samples) * 0.75
     ordinary_checks = (position_error <= expected_position_bound, yaw_error <= expected_yaw_bound, velocity_error <= expected_velocity_bound)
     status = "PASS" if all((planar, monotonic, finite, tf_fresh, timeout_observed if all_input_dropout else all(ordinary_checks))) else "FAIL"
+    outlier = case in {"G2_S011_VIO_POSITION_OUTLIER", "G2_S012_YAW_OUTLIER"}
+    # Production has no synthetic threshold. The fixture configuration does;
+    # record behavior rather than claiming the same policy for hardware.
+    outlier_disposition = "NOT_APPLICABLE"
+    if outlier:
+        outlier_disposition = "ACCEPTED_BUT_BOUNDED" if max_discontinuity < 0.75 and all(ordinary_checks) else "UNDETERMINED"
+    last_input_stamp = max((sample.truth.stamp_sec for sample in samples if sample.vio_available or sample.speed_available), default=0.0)
+    last_output_elapsed = (output_stamps[-1] - first_stamp) / 1_000_000_000
     return {
         "case": case,
         "status": status,
@@ -198,6 +223,10 @@ def _metrics(case: str, samples, node: QualificationNode) -> dict[str, Any]:
         "dropout_characterized": case in {"G2_S008_VIO_DROPOUT", "G2_S009_SPEED_DROPOUT", "G2_S010_ALL_INPUT_DROPOUT"},
         "outlier_characterized": case in {"G2_S011_VIO_POSITION_OUTLIER", "G2_S012_YAW_OUTLIER"},
         "all_input_timeout_observed": timeout_observed,
+        "last_valid_input_fixture_sec": last_input_stamp,
+        "last_output_elapsed_sec": last_output_elapsed,
+        "outlier_disposition": outlier_disposition,
+        "outlier_rejection_threshold_active": outlier,
         "final_output": {
             "x_m": final.pose.pose.position.x,
             "y_m": final.pose.pose.position.y,
@@ -218,30 +247,34 @@ def run_case(case: str, domain_id: int, period_sec: float, config_path: Path, de
     process = _start_ekf(domain_id, config_path, debug_out)
     rclpy.init(args=None)
     node = QualificationNode(publish_vy_constraint)
+    adapter = VioBaseOdometryAdapter()
     samples = generate_case(case)
     try:
         deadline = time.monotonic() + 2.0
         while time.monotonic() < deadline:
-            rclpy.spin_once(node, timeout_sec=0.05)
+            rclpy.spin_once(node, timeout_sec=0.025); rclpy.spin_once(adapter, timeout_sec=0.025)
         for sample in samples:
             node.publish(sample)
             deadline = time.monotonic() + period_sec
             while time.monotonic() < deadline:
-                rclpy.spin_once(node, timeout_sec=0.01)
+                rclpy.spin_once(node, timeout_sec=0.005); rclpy.spin_once(adapter, timeout_sec=0.005)
         deadline = time.monotonic() + 0.6
         while time.monotonic() < deadline:
-            rclpy.spin_once(node, timeout_sec=0.02)
+            rclpy.spin_once(node, timeout_sec=0.01); rclpy.spin_once(adapter, timeout_sec=0.01)
         result = _metrics(case, samples, node)
         result["ekf_exit_before_cleanup"] = process.poll()
         return result
     finally:
-        node.destroy_node()
+        adapter.destroy_node(); node.destroy_node()
         rclpy.shutdown()
-        process.send_signal(signal.SIGINT)
+        # The qualification runner may itself be interrupted by an operator or
+        # CI timeout. Keep each real EKF in its own process group so no
+        # isolated-test child can survive that interruption.
+        os.killpg(process.pid, signal.SIGINT)
         try:
             process.wait(timeout=3)
         except subprocess.TimeoutExpired:
-            process.kill()
+            os.killpg(process.pid, signal.SIGKILL)
             process.wait(timeout=3)
 
 

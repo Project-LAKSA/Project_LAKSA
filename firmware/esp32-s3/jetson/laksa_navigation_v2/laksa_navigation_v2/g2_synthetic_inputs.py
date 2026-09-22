@@ -25,6 +25,12 @@ DT_SEC = 0.05
 SAMPLES = 80
 
 
+def _zed_mount(values: dict) -> tuple[float, float, float, float]:
+    contract = load_contract()
+    zed = contract["sensors"]["zed"]
+    return (*zed["xyz_m"], zed["rpy_rad"][1])
+
+
 @dataclass(frozen=True)
 class Truth:
     stamp_sec: float
@@ -95,6 +101,7 @@ def generate_case(case: str, seed: int = 20260921) -> list[Measurement]:
     if case not in SCENARIOS:
         raise ValueError(f"unknown G2 scenario {case}")
     values = derived_values(load_contract())
+    zed_x, zed_y, zed_z, _zed_pitch = _zed_mount(values)
     rng = random.Random(seed + SCENARIOS.index(case))
     x = y = yaw = 0.0
     samples: list[Measurement] = []
@@ -114,8 +121,11 @@ def generate_case(case: str, seed: int = 20260921) -> list[Measurement]:
         if case == "G2_S014_OUT_OF_ORDER_SAMPLE" and index == SAMPLES // 2: vio_stamp -= 0.10
         if case == "G2_S014_OUT_OF_ORDER_SAMPLE" and index == SAMPLES // 2 + 1:
             vio_stamp = samples[-1].vio_stamp_sec  # explicit duplicate timestamp after out-of-order input
-        vio_x = x + rng.gauss(0.0, VIO_POSITION_STD_M)
-        vio_y = y + rng.gauss(0.0, VIO_POSITION_STD_M)
+        # The raw ZED odometry measures zed_camera_link, deliberately not the
+        # robot origin. G2.1's runtime contract must prove this offset is not
+        # accidentally erased when the EKF transforms sensor data to the base.
+        vio_x = x + math.cos(yaw) * zed_x - math.sin(yaw) * zed_y + rng.gauss(0.0, VIO_POSITION_STD_M)
+        vio_y = y + math.sin(yaw) * zed_x + math.cos(yaw) * zed_y + rng.gauss(0.0, VIO_POSITION_STD_M)
         vio_yaw = _wrap(yaw + rng.gauss(0.0, VIO_YAW_STD_RAD))
         speed = vx + rng.gauss(0.0, SPEED_STD_MPS)
         if case == "G2_S011_VIO_POSITION_OUTLIER" and index == SAMPLES // 2: vio_x += 3.0

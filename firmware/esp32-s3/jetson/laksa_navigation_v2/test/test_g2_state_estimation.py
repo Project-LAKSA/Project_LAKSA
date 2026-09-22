@@ -24,8 +24,12 @@ from laksa_navigation_v2.state_estimation_contract import (
     validate_g2_launch_graph,
     validate_vy_experiment_config,
     validate_zed_vio_contract,
+    SPEED_ENABLED_EKF_CONFIG,
+    allowed_synthetic_differences,
 )
-from laksa_navigation_v2.vehicle_speed_adapter_contract import measured_speed_is_usable
+from laksa_navigation_v2.vehicle_speed_adapter_contract import canonical_speed_per_erpm_mps, measured_erpm_to_vx, measured_speed_is_usable
+from laksa_navigation_v2.g2_fault_policy import G2_1_SCENARIOS, qualify_fault_policy
+from laksa_navigation_v2.vio_base_transform_contract import compose
 
 
 PACKAGE_ROOT = Path(__file__).resolve().parents[1]
@@ -34,6 +38,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 class G2StateEstimationContractTest(unittest.TestCase):
     def test_production_intent_ekf_contract(self) -> None:
         self.assertEqual(validate_ekf_config(), [])
+        self.assertEqual(validate_ekf_config(SPEED_ENABLED_EKF_CONFIG, speed_enabled=True), [])
 
     def test_synthetic_ekf_contract(self) -> None:
         self.assertEqual(validate_ekf_config(SYNTHETIC_EKF_CONFIG, synthetic=True), [])
@@ -56,10 +61,14 @@ class G2StateEstimationContractTest(unittest.TestCase):
         self.assertFalse(params["use_control"])
         self.assertFalse(any("imu" in key.lower() for key in params))
         self.assertEqual([index for index, enabled in enumerate(params["odom0_config"]) if enabled], [0, 1, 5])
-        self.assertEqual([index for index, enabled in enumerate(params["twist0_config"]) if enabled], [6])
+        self.assertNotIn("twist0", params, "speed fusion is disabled without measured physical covariance")
+        self.assertFalse(params["odom0_relative"])
+        self.assertFalse(params["odom0_differential"])
+        self.assertTrue(params["reset_on_time_jump"])
 
     def test_synthetic_covariance_matches_noise(self) -> None:
-        self.assertTrue(covariance_is_valid([VIO_POSITION_STD_M ** 2] + [1.0] * 35, VIO_POSITION_STD_M ** 2))
+        from laksa_navigation_v2.g2_synthetic_inputs import vio_pose_covariance
+        self.assertTrue(covariance_is_valid(vio_pose_covariance(), VIO_POSITION_STD_M ** 2))
         self.assertTrue(math.isfinite(SPEED_STD_MPS ** 2))
 
     def test_covariance_matrix_has_no_invented_off_diagonal_correlation(self) -> None:
@@ -72,9 +81,11 @@ class G2StateEstimationContractTest(unittest.TestCase):
                         self.assertEqual(covariance[row * 6 + column], 0.0)
 
     def test_measured_speed_requires_fresh_telemetry_and_calibrated_variance(self) -> None:
-        self.assertTrue(measured_speed_is_usable(True, 0.2, 0.01))
-        self.assertFalse(measured_speed_is_usable(False, 0.2, 0.01))
-        self.assertFalse(measured_speed_is_usable(True, 0.2, -1.0))
+        self.assertTrue(measured_speed_is_usable(True, 1000.0, 0.01, 0.1, 0.5))
+        self.assertFalse(measured_speed_is_usable(False, 1000.0, 0.01, 0.1, 0.5))
+        self.assertFalse(measured_speed_is_usable(True, 1000.0, -1.0, 0.1, 0.5))
+        self.assertFalse(measured_speed_is_usable(True, 1000.0, 0.01, 0.6, 0.5))
+        self.assertAlmostEqual(measured_erpm_to_vx(1000.0), 1000.0 * canonical_speed_per_erpm_mps())
 
     def test_all_required_scenarios_are_deterministic_and_finite(self) -> None:
         self.assertEqual(len(SCENARIOS), 15)
@@ -84,6 +95,30 @@ class G2StateEstimationContractTest(unittest.TestCase):
             for sample in samples:
                 for value in (sample.truth.x_m, sample.truth.y_m, sample.truth.yaw_rad, sample.truth.vx_mps, sample.vio_x_m, sample.vio_y_m, sample.vio_yaw_rad, sample.speed_mps):
                     self.assertTrue(math.isfinite(value), name)
+
+    def test_g2_1_restart_and_fault_matrix_is_complete(self) -> None:
+        self.assertEqual(len(G2_1_SCENARIOS), 15)
+        self.assertTrue(all(qualify_fault_policy(case)["status"] == "PASS" for case in G2_1_SCENARIOS))
+
+    def test_camera_base_offset_is_composed_not_discarded(self) -> None:
+        position, quaternion = compose((1.0, 2.0, 0.0), (0.0, 0.0, 0.0, 1.0), (-0.108069263, 0.0, -0.140001506), (0.0, -math.sin(0.06981317008 / 2.0), 0.0, math.cos(0.06981317008 / 2.0)))
+        self.assertAlmostEqual(position[0], 0.891930737)
+        self.assertAlmostEqual(position[2], -0.140001506)
+        self.assertNotEqual(quaternion, (0.0, 0.0, 0.0, 1.0))
+
+    def test_production_and_synthetic_configs_are_separated(self) -> None:
+        production = load_json_yaml(EKF_CONFIG)["ekf_local_odom"]["ros__parameters"]
+        synthetic = load_json_yaml(SYNTHETIC_EKF_CONFIG)["ekf_local_odom"]["ros__parameters"]
+        different = {key for key in set(production) | set(synthetic) if production.get(key) != synthetic.get(key)}
+        self.assertTrue(different <= allowed_synthetic_differences(), different)
+
+    def test_production_graph_has_no_motion_authority(self) -> None:
+        launch = (PACKAGE_ROOT / "launch" / "g2_local_estimation.launch.py").read_text(encoding="utf-8")
+        for forbidden in ("/laksa/command", "/cmd_vel", "/laksa/set_drive_command", "nav2", "slam_toolbox", "amcl", "rtab"):
+            self.assertNotIn(forbidden, launch.lower())
+        self.assertIn("vehicle_speed_adapter_node", launch)
+        self.assertIn("vio_base_odometry_adapter_node", launch)
+        self.assertIn("local_odometry_contract_monitor", launch)
 
     def test_fault_fixtures_contain_the_intended_fault(self) -> None:
         self.assertFalse(generate_case("G2_S008_VIO_DROPOUT")[-1].vio_available)
