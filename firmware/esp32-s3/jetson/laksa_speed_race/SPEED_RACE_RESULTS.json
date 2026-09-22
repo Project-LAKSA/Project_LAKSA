@@ -1,0 +1,16 @@
+{
+  "sprint": "C0-C5",
+  "competition_base_sha": "c9fe6b9487b88753cbae575ac53bef23ec28b2d8",
+  "ros_distro": "humble",
+  "ubuntu_target": "22.04",
+  "C0": {"status": "PASS", "evidence": "UPSTREAM_PROVENANCE.md and speed_race_upstream.repos"},
+  "C1": {"status": "BLOCKED", "reasons": ["UPSTREAM_CAPABILITY_GAP=F1TENTH_GYM_ROS_CONFIGURABLE_LAKSA_VEHICLE_PARAMETERS", "APPROVED_SPEED_COURSE_RECONSTRUCTION_NOT_FOUND"]},
+  "C2": {"status": "BLOCKED", "reason": "C1 simulator and course qualification blocked"},
+  "C3": {"status": "BLOCKED", "reason": "UPSTREAM_CAPABILITY_GAP=AUTOMATIC_MAP_TO_CENTERLINE; inspected Waterloo flow documents manual map cleanup and no licensed automatic pipeline was verified"},
+  "C4": {"status": "BLOCKED", "reason": "C3 frozen map/raceline unavailable"},
+  "C5": {"status": "BLOCKED", "reason": "C3 raceline and C4 race pose unavailable"},
+  "safety": {"physical_hardware_touched": false, "esp32_modified": false, "jetson_production_modified": false, "physical_commands_published": false},
+  "repeat_runs": 0,
+  "repeat_3_lap_success_count": 0,
+  "simulation_claim": "No closed-loop simulation result is claimed."
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "target": {"ros_distro": "humble", "ubuntu": "22.04", "hardware": "Jetson Orin Nano"},
+  "measured_laksa": {
+    "wheelbase_m": 0.324,
+    "mass_kg": 3.75,
+    "steering_left_max_rad": 0.523,
+    "steering_right_max_magnitude_rad": 0.288,
+    "conservative_symmetric_min_turning_radius_m": 1.0937226373133722,
+    "track_m": 0.17165,
+    "wheel_radius_m": 0.0545,
+    "speed_per_erpm_mps": 0.000143738,
+    "footprint_m": {"front": 0.419, "rear": 0.149, "left": 0.148, "right": 0.148, "padding": 0.02},
+    "lidar_mount": {"model": "RPLIDAR A2M12", "xyz_m": [0.31542, 0.0, 0.13542], "yaw_rad": 3.141592653589793},
+    "zed_mount": {"model": "ZED2i", "xyz_m": [0.108069263, 0.0, 0.140001506], "pitch_rad": 0.06981317008}
+  },
+  "sim_assumed_not_physically_identified": ["cg_location", "yaw_inertia", "tire_friction", "cornering_stiffness", "high_speed_slip"],
+  "course": {
+    "status": "APPROVED_RECONSTRUCTION_NOT_FOUND_IN_REPOSITORY",
+    "user_reported_envelope_only": {"length_ft": 135, "width_ft": 47, "drivable_width_in": 36},
+    "use_for_qualification": false
+  },
+  "upstream_bridge_constraint": "f1tenth_gym_ros dev-humble accepts only f1tenth, f1fifth, or fullscale vehicle presets"
+}

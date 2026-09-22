@@ -1,0 +1,33 @@
+repositories:
+  f1tenth_system:
+    type: git
+    url: https://github.com/f1tenth/f1tenth_system.git
+    version: 94cb8d7fb5439315316bf80aadbc7256b80cb4e2
+  f1tenth_gym_ros:
+    type: git
+    url: https://github.com/f1tenth/f1tenth_gym_ros.git
+    version: 08395766c4d9dc5a763381f1dd6fa4a3d68df66e
+  f1tenth_gym:
+    type: git
+    url: https://github.com/f1tenth/f1tenth_gym.git
+    version: bdaec1420c3b0f103858d289866d0d4e2e597c30
+  f1tenth_particle_filter:
+    type: git
+    url: https://github.com/f1tenth/particle_filter.git
+    version: ec599a1c4f3d4edc5f7d356e2f2990839e56bb7d
+  f1tenth_range_libc:
+    type: git
+    url: https://github.com/f1tenth/range_libc.git
+    version: f55480a7044367c219745480b436b8b7117f8282
+  waterloo_f1tenth_ws:
+    type: git
+    url: https://github.com/CL2-UWaterloo/f1tenth_ws.git
+    version: c20cf63d04b9841ffdb6b2f963bd737d78074136
+  tum_raceline_optimization:
+    type: git
+    url: https://github.com/CL2-UWaterloo/Raceline-Optimization.git
+    version: 9290c5d503462e46f7e3e9033002e7ddf165ba7b
+  rhythm_follow_the_gap:
+    type: git
+    url: https://github.com/RhythmChandak/F1Tenth-follow-the-gap.git
+    version: 60800ac363480b7b07f13a2ff9aacd504f76d074
