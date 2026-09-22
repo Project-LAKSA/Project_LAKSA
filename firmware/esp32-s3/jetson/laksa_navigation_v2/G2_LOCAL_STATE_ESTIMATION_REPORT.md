@@ -43,6 +43,21 @@ physical robot accuracy. The total-input dropout stops filtered/TF publication
 after `sensor_timeout`; G7 must treat that loss of freshness as an autonomy
 fault.
 
+## Vy pseudo-measurement comparison
+
+The required A/B experiment is preserved as machine-readable artifacts:
+`G2_AB_NO_VY_CONSTRAINT.json` (A) and `G2_AB_VY_CONSTRAINT.json` (B). A passed
+15/15 cases. B passed 14/15 and did not materially improve its synthetic pose,
+yaw, or Vx RMSE. More importantly, its test-only `Vy=0` publisher continued
+during the total VIO/speed dropout, so the EKF remained live and failed the
+required all-input timeout observation. A is therefore the selected G2
+configuration: no lateral-velocity pseudo-measurement. The B config is retained
+only as reproducible negative evidence and cannot enter production intent.
+
+The timestamp fault fixture now includes both an out-of-order VIO stamp and an
+explicit duplicate stamp. A handled that fixture without loss of finite,
+monotonic planar output.
+
 `base_footprint -> base_link` dynamic body attitude remains a documented
 official-component gap, deferred beyond G2. It neither changes nor reuses the
 legacy mapping TF implementation.

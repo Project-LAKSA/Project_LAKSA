@@ -12,6 +12,7 @@ PACKAGE_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_DIR = PACKAGE_ROOT / "config"
 EKF_CONFIG = CONFIG_DIR / "ekf_local_odom.yaml"
 SYNTHETIC_EKF_CONFIG = CONFIG_DIR / "ekf_local_odom_synthetic.yaml"
+VY_EXPERIMENT_EKF_CONFIG = CONFIG_DIR / "ekf_local_odom_synthetic_vy_constraint.yaml"
 ZED_OVERLAY = CONFIG_DIR / "zed_local_vio_overlay.yaml"
 G2_GRAPH = CONFIG_DIR / "g2_launch_graph_contract.json"
 
@@ -56,6 +57,8 @@ def validate_ekf_config(path: Path = EKF_CONFIG, synthetic: bool = False) -> lis
             errors.append(f"wrong_{key}_selection")
     if any("imu" in key.lower() for key in params):
         errors.append("raw_imu_double_fusion")
+    if not synthetic and "twist1" in params:
+        errors.append("test_only_vy_constraint_leaked_to_production_intent")
     if synthetic:
         for key in ("odom0_pose_rejection_threshold", "twist0_rejection_threshold"):
             if not isinstance(params.get(key), (int, float)) or params[key] <= 0:
@@ -83,6 +86,20 @@ def validate_zed_vio_contract() -> list[str]:
         errors.append("wrong_zed_role")
     if overlay.get("output_topic") != "/laksa/vio/odom":
         errors.append("wrong_zed_topic")
+    return errors
+
+
+def validate_vy_experiment_config() -> list[str]:
+    """The A/B pseudo-constraint is confined to the explicit synthetic config."""
+    params = _parameters(VY_EXPERIMENT_EKF_CONFIG)
+    errors = validate_ekf_config(VY_EXPERIMENT_EKF_CONFIG, synthetic=True)
+    if params.get("twist1") != "/laksa/test_only/nonholonomic_vy":
+        errors.append("missing_test_only_vy_topic")
+    vector = params.get("twist1_config")
+    if not isinstance(vector, list) or {index for index, enabled in enumerate(vector) if enabled} != {7}:
+        errors.append("wrong_test_only_vy_selection")
+    if params.get("two_d_mode") is not True:
+        errors.append("vy_experiment_not_planar")
     return errors
 
 

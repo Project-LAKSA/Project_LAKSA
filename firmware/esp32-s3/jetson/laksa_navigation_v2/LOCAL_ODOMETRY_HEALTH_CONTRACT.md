@@ -18,3 +18,7 @@ dropout; it must never keep a stale last command or stale localization healthy.
 The G2 all-input synthetic fixture proves the estimator stops filtered/TF
 publication after `sensor_timeout`; G7 must map that absence to a fault or
 autonomy disarm rather than extrapolating it as a healthy pose.
+
+Test-only `Vy=0` is specifically excluded from production intent: an A/B test
+proved that a continuously published pseudo-measurement can mask the all-input
+dropout that this contract must expose.

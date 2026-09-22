@@ -8,8 +8,10 @@ Levels 0-5 run without hardware.
 2. **G2 local odometry**: actual Humble `robot_localization` EKF in an isolated
    ROS domain with deterministic standard VIO/speed fixtures. Fifteen cases
    cover motion, directional radii, dropouts, outliers, timestamp faults, and a
-   ramp. Assert a single planar `odom -> base_footprint` TF, monotonic finite
-   output, no map TF, and no actuator publishers.
+   ramp. A reproducible test-only `Vy=0` A/B experiment is retained as negative
+   evidence; it must not mask all-input timeout. Assert a single planar
+   `odom -> base_footprint` TF, monotonic finite output, no map TF, and no
+   actuator publishers.
 3. **Unit**: geometry, eRPM conversion, footprint construction, gate logic.
 4. **Planner fixtures**: original five cases plus 100 seeded adversarial cases:
    fractional cells, outside map, corners, unknown, inflation, narrow passages,

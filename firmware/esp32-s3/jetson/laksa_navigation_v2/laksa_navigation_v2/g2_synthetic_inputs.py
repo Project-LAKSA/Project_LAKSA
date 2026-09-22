@@ -20,6 +20,7 @@ SCENARIOS = (
 VIO_POSITION_STD_M = 0.015
 VIO_YAW_STD_RAD = 0.012
 SPEED_STD_MPS = 0.02
+VY_CONSTRAINT_STD_MPS = SPEED_STD_MPS
 DT_SEC = 0.05
 SAMPLES = 80
 
@@ -65,6 +66,11 @@ def speed_twist_covariance() -> list[float]:
     return diagonal_covariance({0: SPEED_STD_MPS ** 2})
 
 
+def vy_constraint_twist_covariance() -> list[float]:
+    """Synthetic-only low-slip pseudo-measurement, never production default."""
+    return diagonal_covariance({7: VY_CONSTRAINT_STD_MPS ** 2})
+
+
 def _wrap(angle: float) -> float:
     return (angle + math.pi) % (2.0 * math.pi) - math.pi
 
@@ -106,6 +112,8 @@ def generate_case(case: str, seed: int = 20260921) -> list[Measurement]:
         vio_stamp, speed_stamp = truth.stamp_sec, truth.stamp_sec
         if case == "G2_S013_DELAYED_SAMPLE" and index == SAMPLES // 2: vio_stamp -= 0.20
         if case == "G2_S014_OUT_OF_ORDER_SAMPLE" and index == SAMPLES // 2: vio_stamp -= 0.10
+        if case == "G2_S014_OUT_OF_ORDER_SAMPLE" and index == SAMPLES // 2 + 1:
+            vio_stamp = samples[-1].vio_stamp_sec  # explicit duplicate timestamp after out-of-order input
         vio_x = x + rng.gauss(0.0, VIO_POSITION_STD_M)
         vio_y = y + rng.gauss(0.0, VIO_POSITION_STD_M)
         vio_yaw = _wrap(yaw + rng.gauss(0.0, VIO_YAW_STD_RAD))

@@ -43,8 +43,11 @@ measurement, never a command. It will not publish physical measurements until
 repeated physical telemetry characterizes its variance.
 
 The BNO08X is excluded because its extrinsic is `UNKNOWN`. Vy pseudo-measurement
-is disabled pending slip/replay evidence. Z, roll, pitch, and their derivatives
-are intentionally not part of the planar filter.
+is disabled. A deterministic A/B test found no material benefit and showed that
+a continuously published `Vy=0` pseudo-measurement masked total VIO/speed
+dropout. It remains reproducible test-only negative evidence, not a production
+fallback. Z, roll, pitch, and their derivatives are intentionally not part of
+the planar filter.
 
 ## Body attitude gap
 

@@ -22,6 +22,7 @@ from laksa_navigation_v2.state_estimation_contract import (
     load_json_yaml,
     validate_ekf_config,
     validate_g2_launch_graph,
+    validate_vy_experiment_config,
     validate_zed_vio_contract,
 )
 from laksa_navigation_v2.vehicle_speed_adapter_contract import measured_speed_is_usable
@@ -36,6 +37,9 @@ class G2StateEstimationContractTest(unittest.TestCase):
 
     def test_synthetic_ekf_contract(self) -> None:
         self.assertEqual(validate_ekf_config(SYNTHETIC_EKF_CONFIG, synthetic=True), [])
+
+    def test_vy_constraint_is_explicitly_test_only(self) -> None:
+        self.assertEqual(validate_vy_experiment_config(), [])
 
     def test_zed_is_a_measurement_source_not_a_tf_authority(self) -> None:
         self.assertEqual(validate_zed_vio_contract(), [])
@@ -91,6 +95,9 @@ class G2StateEstimationContractTest(unittest.TestCase):
         self.assertGreater(abs(jump.vio_x_m - normal.vio_x_m), 2.0)
         delayed = generate_case("G2_S013_DELAYED_SAMPLE")
         self.assertLess(delayed[40].vio_stamp_sec, delayed[39].vio_stamp_sec)
+        out_of_order = generate_case("G2_S014_OUT_OF_ORDER_SAMPLE")
+        self.assertLess(out_of_order[40].vio_stamp_sec, out_of_order[39].vio_stamp_sec)
+        self.assertEqual(out_of_order[41].vio_stamp_sec, out_of_order[40].vio_stamp_sec)
 
     def test_directional_radius_cases_are_not_symmetric_magic_constants(self) -> None:
         left = generate_case("G2_S004_LEFT_RADIUS")
