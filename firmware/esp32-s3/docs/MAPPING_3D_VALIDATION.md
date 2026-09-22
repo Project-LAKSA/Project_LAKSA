@@ -1,6 +1,6 @@
 # LAKSA 3D mapping validation record
 
-Status: **physical replay dataset and user-present validation still required**  
+Status: **physical replay dataset and user-present validation still required**
 Last updated: 2026-09-13 (America/Chicago)
 
 ## Frozen product contracts

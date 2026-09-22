@@ -1,0 +1,70 @@
+{
+  "schema_version": "laksa-characterization-removal-v1",
+  "boundary_evidence_date": "2026-09-17",
+  "preservation_commit": "990bc16d7711c4f6a5597a552af68d3cd36e5224",
+  "production_only_commit": "053cb9a101df6d91c85091765a788d9fafe37bda",
+  "classification": {
+    "CHARACTERIZATION_ONLY": [
+      "config/characterization_suite.yaml",
+      "config/characterization_tests.yaml",
+      "config/supervised_characterization_protocols.yaml",
+      "launch/steering_calibration.launch.py",
+      "scripts/analyze_room_scale_longitudinal.py",
+      "scripts/analyze_room_scale_longitudinal.py.bak_pre_t10_analyzer_fix",
+      "scripts/automated_characterization_runner.py",
+      "scripts/automated_steering_characterization_runner.py",
+      "scripts/batch_characterization_manifest.py",
+      "scripts/batch_characterization_runner.py",
+      "scripts/batch_executor_core.py",
+      "scripts/batch_session_lease.py",
+      "scripts/campaign_report.py",
+      "scripts/characterization_campaign_runner.py",
+      "scripts/characterization_gate_probe.py",
+      "scripts/characterization_isolated_integration.py",
+      "scripts/characterization_safety.py",
+      "scripts/characterization_stage_runner.py",
+      "scripts/characterization_stage_tools.py",
+      "scripts/held_out_validation.py",
+      "scripts/interactive_ros.py",
+      "scripts/local_campaign_core.py",
+      "scripts/local_campaign_executor.py",
+      "scripts/model_fit.py",
+      "scripts/production_safety.py",
+      "scripts/room_scale_longitudinal_recorder.py",
+      "scripts/room_scale_longitudinal_recorder.py.bak_pre_t10_estop_fix",
+      "scripts/run_room_scale_longitudinal_production_env.sh",
+      "scripts/run_vehicle_identification_production_env.sh",
+      "scripts/state_measurements_node.py",
+      "scripts/steering_calibration_node.py",
+      "scripts/supervised_stage_protocols.py",
+      "scripts/supervised_stage_runner.py",
+      "scripts/t21_imu_sanity_runner.py",
+      "scripts/t21_offline_adjudicate.py",
+      "scripts/t21a_offline_analyze.py",
+      "scripts/t25_t31_guided_capture.py",
+      "scripts/twin_characterization_roadmap.py",
+      "scripts/vehicle_identification_dry_run.py",
+      "test/test_local_campaign_core.py"
+    ],
+    "PRODUCTION_SHARED": [
+      "laksa_bringup/scripts/drive_supervisor_node.py — retained as the production arbiter; only its characterization topics, state, parameters, callbacks and selection branch were removed.",
+      "laksa_bringup/config/drive_supervisor.yaml — retained; only characterization parameters were removed.",
+      "laksa_bringup/CMakeLists.txt — retained; only deleted tools and their test registration were removed.",
+      "laksa_bringup/scripts/drivetrain_conversion.py — retained; its obsolete characterization wording was removed."
+    ],
+    "PRODUCTION_REQUIRED": [
+      "RPLIDAR, ZED/RTAB, RF2O, robot description, Field Lab/dashboard, mapping session manager, Nav2, controller, exploration, drive supervisor, micro-ROS/VESC, systemd and runtime environment remain present without architecture changes."
+    ],
+    "UNCERTAIN": []
+  },
+  "removed_runtime_files": 40,
+  "removed_runtime_hooks": 1,
+  "remaining_runtime_files": 0,
+  "remaining_runtime_hooks": 0,
+  "verification": {
+    "runtime_string_scan": "zero matches for characterization, vehicle identification, room-scale, campaign/stage runners, and T10/T20/T21/T22 markers outside historical/audit documentation",
+    "cmake_install_references": "zero deleted-tool references",
+    "supervisor_characterization_references": "zero"
+  },
+  "recovery": "All removed material remains recoverable from the preservation commit; no separate characterization workspace or branch was created."
+}

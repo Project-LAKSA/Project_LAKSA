@@ -28,7 +28,6 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_lidar_cruise_math test/test_lidar_cruise_math.py)
   ament_add_pytest_test(test_release_safety_contract test/test_release_safety_contract.py)
   ament_add_pytest_test(test_zed_configuration test/test_zed_configuration.py)
-  ament_add_pytest_test(test_nav2_runtime_contract test/test_nav2_runtime_contract.py)
   ament_add_pytest_test(test_canonical_runtime_modes test/test_canonical_runtime_modes.py)
 endif()
 

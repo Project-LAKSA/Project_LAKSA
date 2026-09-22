@@ -42,6 +42,4 @@ runtime behavior.
 
 ## Preservation commit
 
-The exact preservation commit is recorded in the final audit metadata after
-this commit is created; a Git commit cannot reliably self-identify its own SHA
-within its tree.
+Preservation commit: `990bc16d7711c4f6a5597a552af68d3cd36e5224`.
