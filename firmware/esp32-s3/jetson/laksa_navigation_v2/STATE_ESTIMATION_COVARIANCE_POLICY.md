@@ -13,8 +13,9 @@ booleans; a measurement is omitted when it is not trustworthy.
 Synthetic fixture standard deviations are 0.015 m (VIO X/Y), 0.012 rad (VIO
 yaw), and 0.020 m/s (speed). The synthetic EKF-only rejection threshold is a
 documented test guard for injected single-sample faults; it is absent from the
-production-intent configuration. Physical thresholds require replay and
-hardware evidence.
+production-intent configuration. `PRODUCTION_OUTLIER_THRESHOLDS=PENDING_PHYSICAL_INNOVATION_DATA`.
+Synthetic outcomes are classified as rejected, accepted-but-bounded, recovered,
+or undetermined; they are never copied as physical Mahalanobis policy.
 
 All emitted covariance arrays are row-major matrices: only documented
 diagonal variances are non-zero; unmeasured cross-correlations are exactly

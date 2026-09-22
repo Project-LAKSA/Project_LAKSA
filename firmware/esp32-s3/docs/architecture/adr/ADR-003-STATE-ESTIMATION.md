@@ -33,14 +33,26 @@ two_d_mode=true, publish_tf=true, use_control=false
 
 The filter fuses only these G2-current variables:
 
-- `/laksa/vio/odom` (`nav_msgs/Odometry`): relative X, Y, yaw.
-- `/laksa/vehicle/speed` (`geometry_msgs/TwistWithCovarianceStamped`): body Vx.
+- `/laksa/vio/odom` (`nav_msgs/Odometry`): continuous local X, Y, yaw,
+  `odom -> zed_camera_link`, transformed through canonical mechanical TF.
+- `/laksa/vehicle/speed` (`geometry_msgs/TwistWithCovarianceStamped`): body
+  Vx from `measured_erpm * 0.000143738`, enabled only after physical variance
+  calibration.
 
 ZED is a raw VIO measurement source, configured for positional tracking,
 `GEN_3`, internal IMU fusion, no area memory, no ZED TF, no ZED map TF, and
 camera 3D mode. The VESC adapter is observational: actual telemetry is a
 measurement, never a command. It will not publish physical measurements until
 repeated physical telemetry characterizes its variance.
+
+Humble 3.5.4 defines `relative=true` as zeroing the first measurement. G2.1
+therefore explicitly uses `odom0_relative=false` and
+`odom0_differential=false`: the ZED VIO source is already a continuous local
+trajectory and must not silently reset its first-pose origin inside the EKF.
+The production EKF also explicitly sets `reset_on_time_jump=true`,
+`smooth_lagged_data=false`, and `permit_corrected_publication=false`. Synthetic
+Mahalanobis thresholds remain fixture-only;
+`PRODUCTION_OUTLIER_THRESHOLDS=PENDING_PHYSICAL_INNOVATION_DATA`.
 
 The BNO08X is excluded because its extrinsic is `UNKNOWN`. Vy pseudo-measurement
 is disabled. A deterministic A/B test found no material benefit and showed that

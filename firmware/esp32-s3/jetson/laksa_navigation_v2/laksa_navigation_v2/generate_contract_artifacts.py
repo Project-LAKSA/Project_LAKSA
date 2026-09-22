@@ -26,11 +26,18 @@ MANIFEST_PATH = CONFIG_DIR / "GENERATED_VEHICLE_CONTRACT_MANIFEST.json"
 AUDIT_PATH = PACKAGE_ROOT / "VEHICLE_GEOMETRY_SOURCE_AUDIT.json"
 GENERATED_DIR = CONFIG_DIR / "generated"
 URDF_DIR = PACKAGE_ROOT / "urdf"
-# The checked-in package lives four levels below the repository root. Test-only
-# ROS qualification may copy just this package to an isolated temporary tree;
-# keep contract loading functional there without weakening full-repository G1
-# geometry auditing in the normal checkout.
-REPOSITORY_ROOT = PACKAGE_ROOT.parents[3] if len(PACKAGE_ROOT.parents) > 3 else PACKAGE_ROOT
+def _repository_root() -> Path:
+    """Find the real checkout root without scanning `/` in an isolated copy."""
+    for candidate in (PACKAGE_ROOT, *PACKAGE_ROOT.parents):
+        expected = candidate / "firmware" / "esp32-s3" / "jetson" / "laksa_navigation_v2"
+        if expected.resolve() == PACKAGE_ROOT.resolve():
+            return candidate
+    return PACKAGE_ROOT
+
+
+# Test-only qualification copies this package alone; then PACKAGE_ROOT is also
+# the correct audit boundary. A full checkout retains repository-wide G1 audit.
+REPOSITORY_ROOT = _repository_root()
 
 PROVENANCE_CLASSES = {"MEASURED", "IDENTIFIED", "DERIVED", "ESTIMATED", "UNKNOWN"}
 LITERALS = ("0.324", "0.90", "1.09", "0.523", "0.288", "0.419", "0.149", "0.148", "0.17165", "0.0545")
@@ -235,16 +242,17 @@ def geometry_source_audit() -> dict[str, Any]:
         for line_number, line in enumerate(text.splitlines(), start=1):
             for match in pattern.finditer(line):
                 literal = match.group(1)
-                is_v2 = relative.startswith("firmware/esp32-s3/jetson/laksa_navigation_v2/")
+                is_v2 = relative.startswith("firmware/esp32-s3/jetson/laksa_navigation_v2/") or REPOSITORY_ROOT == PACKAGE_ROOT
                 generated = "/config/generated/" in relative or relative.endswith("tf_authority_contract.json") or relative.endswith("laksa_v2_geometry.generated.xacro")
                 test_only = "/test/" in relative
                 tooling = relative.endswith("laksa_navigation_v2/generate_contract_artifacts.py")
+                audit_evidence = relative.endswith("G2_FIRMWARE_VEHICLE_CONTRACT_AUDIT.json")
                 legacy_nonactive = "LEGACY_ASSUMPTION_NOT_ACTIVE_V2" in line
                 records.append({
                     "parameter": _literal_semantics(literal), "value": float(literal), "units": "m" if literal in {"0.324", "0.90", "1.09", "0.419", "0.149", "0.148", "0.17165", "0.0545"} else "rad",
                     "file": relative, "line": line_number, "context": line.strip()[:240], "semantic_meaning": _literal_semantics(literal),
                     "provenance": "CONTRACT_GENERATED" if generated else ("V2_CONTRACT" if relative.endswith("vehicle_contract.yaml") else "HISTORICAL_OR_LEGACY_SOURCE"),
-                    "v2_active": is_v2 and not test_only and not tooling and not legacy_nonactive, "disposition": "GENERATED" if generated else ("CANONICAL_SOURCE" if relative.endswith("vehicle_contract.yaml") else ("ASSERTED_TEST_ONLY" if test_only else ("CONFIGURATION_TOOLING" if tooling else "RETAIN_HISTORICAL_EVIDENCE_OR_REWIRE_LATER")))
+                    "v2_active": is_v2 and not test_only and not tooling and not audit_evidence and not legacy_nonactive, "disposition": "GENERATED" if generated else ("CANONICAL_SOURCE" if relative.endswith("vehicle_contract.yaml") else ("ASSERTED_TEST_ONLY" if test_only else ("CONFIGURATION_TOOLING" if tooling else ("AUDIT_EVIDENCE" if audit_evidence else "RETAIN_HISTORICAL_EVIDENCE_OR_REWIRE_LATER"))))
                 })
     return {"audit_version": 1, "scope": "all tracked-readable repository sources; vendor/build/install excluded", "records": records}
 

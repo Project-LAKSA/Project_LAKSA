@@ -13,11 +13,18 @@ signals fail-closed:
 | planar TF | `/tf` | unique fresh `odom -> base_footprint`, z/roll/pitch near zero | frame contract fault |
 | global TF | graph | absent in G2 local-only runtime | a publisher is an isolation fault |
 
-Health assessment must distinguish VIO dropout, speed dropout, and all-input
-dropout; it must never keep a stale last command or stale localization healthy.
-The G2 all-input synthetic fixture proves the estimator stops filtered/TF
-publication after `sensor_timeout`; G7 must map that absence to a fault or
-autonomy disarm rather than extrapolating it as a healthy pose.
+`local_odometry_contract_monitor` provides a read-only
+`/laksa/odometry/local/diagnostics` status with
+`LOCAL_ODOMETRY_HEALTHY=true|false`. It fails closed for stale VIO/output,
+wrong ZED or EKF frames, timestamp regression, non-finite data, missing
+`odom -> base_footprint`, or missing `base_link -> zed_camera_link` mechanical
+TF. Loss of speed alone is reported as reduced redundancy when VIO/output
+remain fresh; it is not substituted with a command-derived velocity.
+
+The configured deadlines are 0.5 s, matching the EKF `sensor_timeout`; future
+hardware evidence may tighten them. G2.1 records output/input ages and reasons
+but has no motion authority. G7 alone may consume its diagnostic state for
+autonomy disarm.
 
 Test-only `Vy=0` is specifically excluded from production intent: an A/B test
 proved that a continuously published pseudo-measurement can mask the all-input

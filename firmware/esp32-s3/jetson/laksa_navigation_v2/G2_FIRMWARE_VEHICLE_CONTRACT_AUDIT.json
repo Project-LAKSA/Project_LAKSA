@@ -1,0 +1,14 @@
+{
+  "audit_version": 1,
+  "scope": "G2.1 measured-speed path; no command-path redesign",
+  "canonical": {"wheelbase_m": 0.324, "wheel_diameter_m": 0.109, "speed_per_erpm_mps": 0.000143738, "speed_scale_provenance": "IDENTIFIED: V004/T22"},
+  "firmware": [
+    {"parameter": "CONFIG_LAKSA_WHEEL_DIAMETER_MM", "firmware_value": 100, "units": "mm", "used_for_measurement": true, "used_for_command": true, "divergence": "0.009 m below canonical diameter", "g2_disposition": "DO_NOT_USE_FOR_G2_SPEED_MEASUREMENT", "future_control_disposition": "CONTROL_PATH_SAFETY_DEBT"},
+    {"parameter": "CONFIG_LAKSA_WHEELBASE_MM", "firmware_value": 250, "units": "mm", "used_for_measurement": false, "used_for_command": true, "divergence": "0.074 m below canonical wheelbase", "g2_disposition": "NOT_USED_BY_G2", "future_control_disposition": "CONTROL_PATH_SAFETY_DEBT"},
+    {"parameter": "CONFIG_LAKSA_GEAR_REDUCTION_X1000", "firmware_value": 1000, "units": "ratio x1000", "used_for_measurement": true, "used_for_command": true, "divergence": "legacy geometric conversion disagrees with identified V004 scale", "g2_disposition": "DO_NOT_USE_FOR_G2_SPEED_MEASUREMENT", "future_control_disposition": "CONTROL_PATH_SAFETY_DEBT"},
+    {"parameter": "CONFIG_LAKSA_MOTOR_POLE_PAIRS", "firmware_value": "Kconfig-defined; audit before hardware control", "units": "pairs", "used_for_measurement": true, "used_for_command": true, "divergence": "not canonicalized for command model", "g2_disposition": "bypassed by V004 measured-eRPM scale", "future_control_disposition": "CONTROL_PATH_SAFETY_DEBT"},
+    {"parameter": "steering_rad_to_servo / servo_to_steering_rad", "firmware_value": "symmetric CONFIG_LAKSA_MAX_STEERING_ANGLE_MRAD", "units": "rad", "used_for_measurement": false, "used_for_command": true, "divergence": "G1 has asymmetric equivalent bicycle limits", "g2_disposition": "NOT_USED_BY_G2", "future_control_disposition": "CONTROL_PATH_SAFETY_DEBT"}
+  ],
+  "g2_measurement_path": {"input": "/laksa/vesc/state.measured_erpm", "formula": "measured_vx = measured_erpm * 0.000143738", "output": "/laksa/vehicle/speed", "command_fields_forbidden": ["requested_erpm", "active_erpm", "cmd_vel"]},
+  "direct_command_bypass": {"id": "DIRECT_ESP32_CMD_VEL_BYPASS", "severity": "CRITICAL_BEFORE_AUTONOMOUS_CONTROLLER", "evidence": "micro_ros_bridge.c subscriptions /laksa/command and /cmd_vel plus /laksa/set_drive_command call apply_drive_command", "required_before_g6_g7": "No autonomous command path may bypass drive_supervisor."}
+}

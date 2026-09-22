@@ -4,7 +4,7 @@
 |---|---|---|---|
 | 0 | frozen forensic baseline | tag + hashes + clean worktree | complete |
 | G1 | canonical vehicle / generated geometry / REP-105 TF | schema, deterministic artifacts, URDF, negative TF and ramp tests | complete offline |
-| G2 | local state estimation | bag/fixture covariance test | planned |
+| G2.1 | production-hardening local state estimation | raw-frame, restart, time-jump, measurement-scale, and health contracts | complete offline pending hardware Level C |
 | G3 | 2D mapping + localization comparison; RTAB isolated as 3D | replay metrics, one map->odom authority | planned |
 | G4 | layered perception + costmaps | fixture maps and boundary tests | planned |
 | G5 | State Lattice planner qualification | 105+ deterministic cases, zero collision escapes | planned |

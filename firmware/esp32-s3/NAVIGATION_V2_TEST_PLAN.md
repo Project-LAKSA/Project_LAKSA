@@ -5,13 +5,16 @@ Levels 0-5 run without hardware.
 1. **G1 static**: canonical YAML/JSON schema, deterministic contract compiler,
    generated footprint equivalence, URDF property inclusion, REP-105 authority,
    negative TF cases, and synthetic ±10-degree ramp projection.
-2. **G2 local odometry**: actual Humble `robot_localization` EKF in an isolated
+2. **G2.1 local odometry**: actual Humble `robot_localization` EKF in an isolated
    ROS domain with deterministic standard VIO/speed fixtures. Fifteen cases
    cover motion, directional radii, dropouts, outliers, timestamp faults, and a
    ramp. A reproducible test-only `Vy=0` A/B experiment is retained as negative
    evidence; it must not mask all-input timeout. Assert a single planar
    `odom -> base_footprint` TF, monotonic finite output, no map TF, and no
-   actuator publishers.
+   actuator publishers. Production intent is separately launched without the
+   synthetic publisher and uses a raw-frame/output-frame diagnostic contract.
+   G2.1 adds deterministic restart/time/frame/NaN/stale-speed policy fixtures;
+   physical VIO reset and covariance evidence remain Level C.
 3. **Unit**: geometry, eRPM conversion, footprint construction, gate logic.
 4. **Planner fixtures**: original five cases plus 100 seeded adversarial cases:
    fractional cells, outside map, corners, unknown, inflation, narrow passages,

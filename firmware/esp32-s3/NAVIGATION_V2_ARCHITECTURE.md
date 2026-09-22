@@ -102,7 +102,10 @@ for interfaces, and `NAVIGATION_V2_TEST_PLAN.md` for evidence gates.
 
 ## Gate order
 
-G1 canonical robot / TF is complete. G2 supplies only local planar odometry:
+G1 canonical robot / TF is complete. G2.1 supplies only local planar odometry:
 one `robot_localization` EKF, raw ZED VIO pose, measured VESC Vx when
-calibrated, and no global TF. G3 compares 2D mapping/localization approaches;
+calibrated, and no global TF. `DIRECT_ESP32_CMD_VEL_BYPASS` is registered as
+critical safety debt: legacy micro-ROS `/laksa/command`, `/cmd_vel`, and service
+callbacks reach `apply_drive_command`; no autonomous controller may bypass
+`drive_supervisor` before G6/G7. G3 compares 2D mapping/localization approaches;
 only then do costmaps, planner, and controller gates begin.
