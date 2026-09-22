@@ -1,0 +1,125 @@
+{
+  "schema_version": "laksa-production-source-divergence-v1",
+  "capture": {
+    "timestamp_local_date": "2026-09-22",
+    "jetson_repository": "/home/ubuntu/src/Project_LAKSA",
+    "jetson_repository_head": "b178a91f3a87f90ae289f62588744bd7936a43f4",
+    "jetson_repository_branch": "a028-manual-mapping-cockpit",
+    "jetson_repository_dirty": true,
+    "workspace_source": "/home/ubuntu/laksa_ws/src",
+    "workspace_install": "/home/ubuntu/laksa_ws/install",
+    "preserved_freeze": "/home/ubuntu/laksa_freezes/pre_final_stabilization_20260913T010911Z",
+    "missing_forensic_path": "/private/tmp/laksa-forensic-20260921"
+  },
+  "allowed_status_values": [
+    "IDENTICAL", "SOURCE_NEWER", "WORKSPACE_SRC_NEWER", "INSTALL_DIVERGED",
+    "ONLY_IN_SOURCE", "ONLY_IN_WORKSPACE_SRC", "ONLY_IN_INSTALL", "UNKNOWN"
+  ],
+  "components": [
+    {
+      "logical_component": "RTAB-Map common configuration",
+      "repository_path": "firmware/esp32-s3/jetson/laksa_mapping/config/rtabmap_common.yaml",
+      "repository_sha256": "60a10a0bea93f9d8e6982997a998d60a9e5e6052c8ca7aea4220c7791a0946ae",
+      "laksa_ws_src_path": "/home/ubuntu/laksa_ws/src/laksa_mapping/config/rtabmap_common.yaml",
+      "laksa_ws_src_sha256": "041e1fab86b32deb14f67318d11272a86a28101844996d3b46596a9dd50b96b2",
+      "laksa_ws_install_path": "/home/ubuntu/laksa_ws/install/laksa_mapping/share/laksa_mapping/config/rtabmap_common.yaml",
+      "laksa_ws_install_sha256": "041e1fab86b32deb14f67318d11272a86a28101844996d3b46596a9dd50b96b2",
+      "preserved_freeze_version": "workspace hash snapshot present",
+      "source_timestamp": "captured 2026-09-22",
+      "installed_timestamp": "2026-09-21T11:41:17+08:00",
+      "status": "INSTALL_DIVERGED"
+    },
+    {
+      "logical_component": "RTAB-Map mapping launch",
+      "repository_path": "firmware/esp32-s3/jetson/laksa_mapping/launch/mapping_stack.launch.py",
+      "repository_sha256": "d6d60c79769e47c1ca5c109ce4d029bcfbf845556205afe0ae5c695926439b3b",
+      "laksa_ws_src_path": "/home/ubuntu/laksa_ws/src/laksa_mapping/launch/mapping_stack.launch.py",
+      "laksa_ws_src_sha256": "e624b4d6548d74930dd50b109ea7b57807aaa587c3647c9e04ffb4859a93a1b2",
+      "laksa_ws_install_path": "/home/ubuntu/laksa_ws/install/laksa_mapping/share/laksa_mapping/launch/mapping_stack.launch.py",
+      "laksa_ws_install_sha256": "e624b4d6548d74930dd50b109ea7b57807aaa587c3647c9e04ffb4859a93a1b2",
+      "preserved_freeze_version": "workspace hash snapshot present",
+      "source_timestamp": "captured 2026-09-22",
+      "installed_timestamp": "2026-09-21T11:41:17+08:00",
+      "status": "INSTALL_DIVERGED"
+    },
+    {
+      "logical_component": "LiDAR/RTAB mapping mode configuration",
+      "repository_path": "firmware/esp32-s3/jetson/laksa_bringup/config/lidar_mapping.yaml",
+      "repository_sha256": "85866ee46a583d0725cb74133255c559e090fa4ccdd0a9b888ec792efed2eea4",
+      "laksa_ws_src_path": "/home/ubuntu/laksa_ws/src/laksa_bringup/config/lidar_mapping.yaml",
+      "laksa_ws_src_sha256": null,
+      "laksa_ws_install_path": null,
+      "laksa_ws_install_sha256": null,
+      "preserved_freeze_version": "workspace config archive present",
+      "source_timestamp": "captured 2026-09-22",
+      "installed_timestamp": null,
+      "status": "ONLY_IN_SOURCE"
+    },
+    {
+      "logical_component": "Drive supervisor",
+      "repository_path": "firmware/esp32-s3/jetson/laksa_bringup/scripts/drive_supervisor_node.py",
+      "repository_sha256": "f2b98584bb1220d2cc28720c139c426de82c55ddaff5a2b207c32bceb0edcc9c",
+      "laksa_ws_src_path": "/home/ubuntu/laksa_ws/src/laksa_bringup/scripts/drive_supervisor_node.py",
+      "laksa_ws_src_sha256": "2d4cce2a2b6295a48b07647e34102dd7ae773ad11ba3f08072544e0f8b2ac5ea",
+      "laksa_ws_install_path": "not individually hashed; installed package snapshot exists in freeze",
+      "laksa_ws_install_sha256": null,
+      "preserved_freeze_version": "source and installed tar snapshots present",
+      "source_timestamp": "captured 2026-09-22",
+      "installed_timestamp": null,
+      "status": "WORKSPACE_SRC_NEWER"
+    },
+    {
+      "logical_component": "Field Lab/dashboard server",
+      "repository_path": "firmware/esp32-s3/jetson/laksa_dashboard/laksa_dashboard/cockpit_server.py",
+      "repository_sha256": "2a2515bbe6ac6fa46c06ada4df610ce373b381d8d618a79c373eff9103cbc249",
+      "laksa_ws_src_path": "/home/ubuntu/laksa_ws/src/laksa_dashboard/laksa_dashboard/cockpit_server.py",
+      "laksa_ws_src_sha256": "71f1cb1671f13f78d2bc805213af2e932a41e4db9337e2e2ac33c4883e584f88",
+      "laksa_ws_install_path": "installed package snapshot present in freeze",
+      "laksa_ws_install_sha256": null,
+      "preserved_freeze_version": "source and installed tar snapshots present",
+      "source_timestamp": "captured 2026-09-22",
+      "installed_timestamp": null,
+      "status": "WORKSPACE_SRC_NEWER"
+    },
+    {
+      "logical_component": "LiDAR mapping service entrypoint",
+      "repository_path": "firmware/esp32-s3/jetson/scripts/laksa-lidar-mapping",
+      "repository_sha256": "e23ec690fa5d7cf31848b9a5f60505087ce758768b162bc8a94a2aa5fcdfec51",
+      "laksa_ws_src_path": null,
+      "laksa_ws_src_sha256": null,
+      "laksa_ws_install_path": "/usr/local/lib/laksa/laksa-lidar-mapping",
+      "laksa_ws_install_sha256": "e23ec690fa5d7cf31848b9a5f60505087ce758768b162bc8a94a2aa5fcdfec51",
+      "preserved_freeze_version": "systemd/runtime snapshot present",
+      "source_timestamp": "captured 2026-09-22",
+      "installed_timestamp": "2026-09-21T18:54:45+08:00",
+      "status": "IDENTICAL"
+    },
+    {
+      "logical_component": "Control-navigation service entrypoint",
+      "repository_path": "firmware/esp32-s3/jetson/scripts/laksa-control-navigation",
+      "repository_sha256": "d45dc562fc9f649f896e540b879600317351d0327664d0f271070987534b621c",
+      "laksa_ws_src_path": null,
+      "laksa_ws_src_sha256": null,
+      "laksa_ws_install_path": "/usr/local/lib/laksa/laksa-control-navigation",
+      "laksa_ws_install_sha256": "d45dc562fc9f649f896e540b879600317351d0327664d0f271070987534b621c",
+      "preserved_freeze_version": "systemd/runtime snapshot present",
+      "source_timestamp": "captured 2026-09-22",
+      "installed_timestamp": "2026-09-21T18:54:45+08:00",
+      "status": "IDENTICAL"
+    },
+    {
+      "logical_component": "RGB-D sync, RPLIDAR launch/filter, RF2O, EKF, URDF/TF, Nav2/planner/controller/exploration, micro-ROS/VESC, systemd, ROS environment, DDS",
+      "repository_path": "captured source/configuration under firmware/esp32-s3/jetson and firmware/esp32-s3/src",
+      "repository_sha256": null,
+      "laksa_ws_src_path": "multiple packages; inventory captured during P0",
+      "laksa_ws_src_sha256": null,
+      "laksa_ws_install_path": "multiple packages; installed tar snapshot exists in the 2026-09-13 freeze",
+      "laksa_ws_install_sha256": null,
+      "preserved_freeze_version": "pre_final_stabilization_20260913T010911Z",
+      "source_timestamp": "captured 2026-09-22",
+      "installed_timestamp": null,
+      "status": "UNKNOWN"
+    }
+  ],
+  "conclusion": "The divergence is material and prevents treating either the dirty repository, laksa_ws/src, or install as automatic historical truth. No install tree was committed. Source-equivalent entrypoints were preserved; mapping/odometry selection remains for independent audit."
+}

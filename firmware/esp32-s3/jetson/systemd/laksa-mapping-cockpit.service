@@ -1,5 +1,5 @@
 [Unit]
-Description=LAKSA manual mapping cockpit (no motion authority)
+Description=PROJECT LAKSA Field Lab (no motion authority)
 After=network-online.target laksa-micro-ros-agent.service laksa-control-navigation.service
 Wants=network-online.target
 

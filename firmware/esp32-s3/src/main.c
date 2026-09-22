@@ -92,6 +92,7 @@ void app_main(void)
 
     ros_config = (micro_ros_bridge_config_t){
         .steering = &steering,
+        .pca9685 = &pca9685,
         .vesc = &vesc,
         .imu = imu_err == ESP_OK ? &imu : NULL,
         .hardware_mutex = hardware_mutex,

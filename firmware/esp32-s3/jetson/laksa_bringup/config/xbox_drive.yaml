@@ -5,22 +5,15 @@ joy_node:
     autorepeat_rate: 20.0
     sticky_buttons: false
 
-joy_teleop:
+xbox_drive_node:
   ros__parameters:
-    drive:
-      type: topic
-      interface_type: laksa_interfaces/msg/DriveCommand
-      topic_name: /laksa/command
-      # Xbox SDL mapping: hold right bumper to enable motion.
-      deadman_buttons: [10]
-      axis_mappings:
-        # Left stick vertical: vehicle longitudinal speed in m/s.
-        speed_mps:
-          axis: 1
-          scale: 0.20
-          offset: 0.0
-        # Right stick horizontal: front-wheel steering angle in radians.
-        steering_angle_rad:
-          axis: 2
-          scale: -0.35
-          offset: 0.0
+    steering_axis: 2
+    steering_scale_rad: -0.35
+    trigger_axis: 5
+    trigger_pressed_threshold: -0.50
+    trigger_released_threshold: -0.10
+    # 0.6731984 m/s converts back to 900 eRPM with the current ESP32
+    # calibration: 7 pole pairs, 1:1 reduction and 100 mm wheel diameter.
+    pressed_speed_mps: 0.6731984
+    publish_rate_hz: 20.0
+    joy_timeout_sec: 0.25

@@ -1,0 +1,41 @@
+# Versioned, resolved-at-run-time limits for supervised physical evidence.
+# Values here are test constraints, not VESC configuration.
+schema_version: laksa-characterization-tests-v1
+authority: SUPERVISED_LOW_PRIORITY_REQUEST
+require_explicit_arm: true
+manual_override_required: true
+test_id: T10_AUTOMATED_V1
+t10:
+  target_erpm_equivalent: 900
+  pre_settle_sec: 2.0
+  excitation_sec: 2.5
+  post_settle_sec: 3.0
+  request_heartbeat_hz: 20.0
+  stationary_erpm_threshold: 75.0
+  # Continuous VESC/zero-intent evidence; IMU absolute acceleration is
+  # diagnostic only because its stationary bias/gravity projection is unknown.
+  stationary_dwell_sec: 0.50
+  steering_center_tolerance_rad: 0.08
+  required_freshness_sec: 0.50
+  max_faults_allowed: 0
+  no_automatic_direction_change: true
+  required_topics:
+    - /joy
+    - /laksa/state
+    - /laksa/vesc/state
+    - /laksa/imu/data
+  abort_conditions:
+    - emergency_stop
+    - xbox_override_or_stale
+    - vesc_fault
+    - telemetry_stale
+    - characterization_heartbeat_expired
+    - unexpected_output_or_bound_violation
+t20:
+  settle_sec: 2.0
+  request_heartbeat_hz: 20.0
+  # Software steering targets only; they are not road-wheel angles.
+  targets_rad: [0.0, 0.12, 0.24, 0.48, -0.08, -0.16, -0.27]
+  repeated_center_samples: 2
+  required_topics: [/joy, /laksa/state, /laksa/vesc/state]
+  traction_speed_mps: 0.0

@@ -1,71 +1,86 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#07111f">
-  <title>Project LAKSA Field Lab</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07111f"><title>PROJECT LAKSA · Field Lab</title>
+  <link rel="stylesheet" href="/static/style.css?v=__LAKSA_ASSET_VERSION__">
+  <link rel="stylesheet" href="/static/planning.css?v=__LAKSA_ASSET_VERSION__">
+  <link rel="stylesheet" href="/static/lidar.css?v=__LAKSA_ASSET_VERSION__">
 </head>
 <body>
   <header>
-    <div class="brand"><span class="eyebrow">PROJECT LAKSA</span><h1>FIELD LAB</h1><p>Mapping &amp; Systems Control</p></div>
-    <div id="connection" class="pill standby">CONNECTING</div>
+    <div><span class="eyebrow">PROJECT LAKSA</span><h1>FIELD LAB</h1><p>Mapping &amp; Systems Control</p></div>
+    <div id="connection" class="pill warn">CONNECTING</div>
   </header>
   <main>
     <section class="hero card">
-      <div class="mode-block"><span class="label">SYSTEM MODE</span><strong id="mappingState">IDLE</strong><p id="sessionLine">Ready for a new manual session.</p></div>
+      <div><span class="label">SYSTEM MODE</span><strong id="mappingState">IDLE</strong><p id="sessionLine">Ready for a new manual session.</p></div>
       <div class="controls">
-        <div class="profile-control">
-          <label for="profile">Mapping profile</label>
-          <select id="profile" aria-label="Mapping profile">
-            <option value="indoor_live">Indoor • Performance</option>
-            <option value="indoor_high_quality">Indoor • Quality</option>
-            <option value="outdoor_structured">Outdoor • Structured</option>
-            <option value="outdoor_open_field">Outdoor • Open Field</option>
-          </select>
-          <small id="profileHelp">Recommended · GEN_3 + NEURAL_LIGHT · Lower compute load</small>
-        </div>
-        <div class="svo-control">
-          <label class="toggle"><input id="recordSvo" type="checkbox"><span>Record Lossless SVO</span></label>
-          <small>Save the raw ZED stereo + IMU session for later reprocessing. Uses significant storage. <span id="diskHint"></span></small>
-        </div>
+        <select id="mappingSource" aria-label="Mapping source"><option value="FUSED_MAPPING">FUSED MAPPING · CANONICAL</option></select>
+        <select id="profile" aria-label="Mapping profile"><option value="indoor_live">Indoor · Performance</option><option value="indoor_high_quality">Indoor · High Quality</option><option value="outdoor_structured">Outdoor Structured · Provisional</option><option value="outdoor_open_field">Outdoor Open Field · Provisional</option></select>
+        <label class="toggle"><input id="recordSvo" type="checkbox"><span>Record lossless SVO</span></label>
+        <button id="heroJourney" aria-pressed="false" disabled>HERO'S JOURNEY</button>
         <button id="mappingButton" class="primary">START MAPPING</button>
+        <button id="takeSnapshot" class="primary" disabled>TAKE SNAPSHOT</button>
       </div>
-      <p class="safety">Manual Xbox control only. Field Lab cannot command throttle, steering, Nav2, or autonomous motion.</p>
+      <p class="safety">Autonomous movement starts only after confirmation. Xbox input always overrides through the LAKSA supervisor.</p>
     </section>
 
     <section class="visual-grid">
       <article class="card map3d">
-        <div class="panel-title"><h2>Live 3D Map</h2><span id="pointCount">0 points</span></div>
-        <div id="threeView" aria-label="Interactive 3D map">
-          <div class="map-tools" role="toolbar" aria-label="3D map controls">
-            <button id="zoomIn" title="Zoom in" aria-label="Zoom in"><b>+</b><span>Zoom</span></button>
-            <button id="zoomOut" title="Zoom out" aria-label="Zoom out"><b>−</b><span>Zoom</span></button>
-            <button id="panMode" class="mode" aria-pressed="false"><b>↔</b><span>Pan</span></button>
-            <button id="rotateMode" class="mode active" aria-pressed="true"><b>↻</b><span>Rotate</span></button>
-            <button id="followRobot" class="mode" aria-pressed="false"><b>◎</b><span>Follow</span></button>
-            <button id="fitView" title="Reset or fit map"><b>⌂</b><span>Fit</span></button>
-          </div>
-        </div>
+        <div class="panel-title"><h2>3D Map · <span id="cloudSource">Occupancy Cloud</span></h2><span id="pointCount">0 points</span></div>
+        <div class="map-tools" aria-label="3D map controls"><button id="pan3d" class="selected">Pan</button><button id="rotate3d">Rotate</button><button id="zoomOut3d">−</button><button id="zoomIn3d">+</button><button id="follow3d">Follow Robot</button><button id="fit3d">Fit Map</button><button id="toggleLidar" class="selected" aria-pressed="true">LiDAR Scan</button><span class="lidar-legend">Live scan</span></div>
+        <div id="threeView"></div><p class="map-help">Drag to pan or rotate · Use +/− or the mouse wheel to zoom</p>
       </article>
-      <article class="card occupancy-card"><div class="panel-title"><h2>2D Occupancy</h2><span id="gridSize">Waiting</span></div><canvas id="occupancy"></canvas></article>
+      <article class="card map2d">
+        <div class="panel-title"><h2>2D Occupancy</h2><span id="gridSize">Waiting</span></div>
+        <div class="preview-banner"><strong>ROUTE PREVIEW</strong><span>Planning alone cannot move the vehicle. Starting a route requires confirmation.</span></div>
+        <div class="map-legend" aria-label="Occupancy map legend"><span class="free">Free</span><span class="occupied">Occupied</span><span class="unknown">Unknown</span><span class="safe-area">Safe goal area</span></div>
+        <div class="planner-status"><div><span class="label">PLANNER</span><b id="plannerState">UNCALIBRATED</b></div><div><span>AUTO HEADING</span><b id="goalHeading">—</b></div><div><span>PLAN TIME</span><b id="planningTime">—</b></div><div><span>PATH LENGTH</span><b id="pathLength">—</b></div></div>
+        <div class="map-tools"><button id="zoomOut2d">−</button><button id="zoomIn2d">+</button><button id="follow2d">Follow Robot</button><button id="fit2d">Fit Map</button></div>
+        <div id="map2dViewport"><canvas id="occupancyStatic" aria-hidden="true"></canvas><canvas id="occupancy" aria-label="Interactive occupancy map"></canvas></div>
+        <div class="route-footer"><span id="plannerMessage">Enter calibrated vehicle geometry to enable route previews.</span><button id="clearRoute">CLEAR ROUTE</button><button id="followRoute" class="primary" disabled>FOLLOW ROUTE</button></div>
+      </article>
     </section>
 
-    <section class="card"><div class="panel-title"><h2>Subsystem Health</h2><span id="healthStamp">No telemetry</span></div><div id="healthGrid" class="health-grid"></div></section>
+    <section class="card ab-lab" id="fusedMappingLab">
+      <div class="panel-title"><div><span class="label">ONE WORLD MODEL · MAPPING + NAVIGATION AVAILABLE</span><h2>FUSED MAPPING</h2></div><span id="fusionState" class="pill">IDLE</span></div>
+      <p class="map-help">One ZED RGB-D source + validated A2M12 LaserScan + canonical fused odometry → one RTAB pose graph and one map.</p>
+      <div class="ab-card-grid">
+        <article><h2>ZED RGB-D</h2><div id="fusedZed" class="metrics"></div></article>
+        <article><h2>VALIDATED LiDAR</h2><div id="fusedLidar" class="metrics"></div></article>
+        <article><h2>ODOMETRY</h2><div id="fusedOdom" class="metrics"></div></article>
+        <article><h2>TF</h2><div id="fusedTf" class="metrics"></div></article>
+        <article><h2>RTAB</h2><div id="fusedRtab" class="metrics"></div></article>
+        <article><h2>2D MAP</h2><div id="fusedMap" class="metrics"></div></article>
+        <article><h2>3D</h2><div id="fused3d" class="metrics"></div></article>
+        <article><h2>RESOURCES</h2><div id="fusedResources" class="metrics"></div></article>
+      </div>
+      <p class="map-help">Validated LiDAR and ZED obstacle overlays share the same map; they do not create additional maps.</p>
+    </section>
+
+    <section class="card"><div class="panel-title"><h2>Subsystem Health</h2><span id="healthStamp">No telemetry</span></div><div id="subsystemHealth" class="subsystem-health"></div></section>
     <section class="telemetry-grid">
       <article class="card"><h2>Battery / VESC</h2><div id="battery" class="metrics"></div></article>
       <article class="card"><h2>Jetson</h2><div id="jetson" class="metrics"></div></article>
-      <article class="card"><h2>Robot</h2><div id="robot" class="metrics"></div></article>
-      <article class="card"><h2>Network</h2><div id="network" class="metrics"></div><details><summary>Interface details</summary><div id="networkDetails" class="details"></div></details></article>
+      <article class="card"><h2>Robot</h2><div id="robotMetrics" class="metrics"></div></article>
+      <article class="card"><h2>Network</h2><div id="network" class="metrics"></div></article>
     </section>
-
-    <section class="card diagnostics">
-      <div class="panel-title"><div><span class="label">ADVANCED</span><h2>Diagnostics</h2></div><button id="cameraToggle" class="secondary" aria-expanded="false">SHOW ZED CAMERA</button></div>
-      <div id="cameraPanel" class="camera-panel" hidden><p>Diagnostic ZED RGB preview only. Not required for normal operation.</p><img id="cameraFeed" alt="Diagnostic ZED2i camera stream"></div>
-    </section>
+    <details class="card system-details"><summary>System Details</summary><div class="system-details-grid"><div><h2>PCA9685 raw telemetry</h2><pre id="pcaDiagnostics">Unavailable</pre></div><div><h2>ZED2i preview</h2><img id="cameraFeed" alt="ZED2i camera stream"></div><div><h2>Dashboard build</h2><pre id="dashboardBuild">Loading</pre></div></div></details>
   </main>
+  <dialog id="routeStartDialog" aria-labelledby="routeStartTitle">
+    <form method="dialog" class="route-start-modal">
+      <span class="label">AUTONOMOUS ROUTE</span>
+      <h2 id="routeStartTitle">START AUTONOMOUS ROUTE?</h2>
+      <p>Maximum speed: 0.15 m/s</p>
+      <p>Xbox input immediately takes manual control.</p>
+      <div class="route-start-actions">
+        <button value="cancel">CANCEL</button>
+        <button id="startRoute" value="default" class="primary">START ROUTE</button>
+      </div>
+    </form>
+  </dialog>
   <div id="toast" role="status"></div>
-  <script type="module" src="/static/app.js"></script>
+  <script type="module" src="/static/app.js?v=__LAKSA_ASSET_VERSION__"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
-# A028 Manual Mapping Cockpit
+# A028 PROJECT LAKSA Field Lab
 
-The cockpit is a mapping-only application. It has no publishers or clients for
+Field Lab is a mapping and systems-control application. It has no publishers or clients for
 `/laksa/command`, `/laksa/brake`, `cmd_vel`, Nav2 actions, throttle, or steering.
 The existing Xbox → drive supervisor → ESP32 path remains the only manual motion
 path.
@@ -8,7 +8,7 @@ path.
 ## Runtime
 
 - Dashboard: `http://<jetson-ip>:8090`
-- Camera preview: `web_video_server` on port `8080`
+- Diagnostic camera preview: `web_video_server` on port `8080`
 - Mapping state: `/laksa/mapping/state`
 - Start: `/laksa/mapping/start`
 - Stop: `/laksa/mapping/stop`

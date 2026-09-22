@@ -8,6 +8,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/DriveCommand.msg"
+  "msg/Pca9685State.msg"
   "msg/VescState.msg"
   "msg/VehicleState.msg"
   "srv/GetVehicleState.srv"

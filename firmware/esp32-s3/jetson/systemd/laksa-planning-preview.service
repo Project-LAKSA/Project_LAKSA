@@ -1,0 +1,18 @@
+[Unit]
+Description=LAKSA planner-only virtual route preview (no motion authority)
+After=laksa-mapping-cockpit.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+Environment=ROS_DOMAIN_ID=0
+Environment=ROS_LOCALHOST_ONLY=1
+EnvironmentFile=/etc/laksa/ros-runtime.env
+ExecStart=/usr/local/lib/laksa/laksa-planning-preview
+Restart=no
+KillMode=control-group
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

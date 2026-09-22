@@ -1,0 +1,9 @@
+planning_geometry:
+  calibrated: true
+  wheelbase_m: 0.324
+  minimum_turning_radius_m: 1.09
+  effective_max_road_wheel_steering_deg: null
+  front_m: 0.419
+  rear_m: 0.149
+  left_m: 0.148
+  right_m: 0.148

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import math
 import os
@@ -19,7 +18,7 @@ from geometry_msgs.msg import PolygonStamped, PoseStamped
 from lifecycle_msgs.msg import State, Transition
 from lifecycle_msgs.srv import ChangeState, GetState
 from nav2_msgs.action import ComputePathToPose, SmoothPath
-from nav2_msgs.srv import IsPathValid, LoadMap
+from nav2_msgs.srv import LoadMap
 from nav_msgs.msg import OccupancyGrid
 import rclpy
 from rclpy.action import ActionClient
@@ -79,10 +78,6 @@ class PlannerClient(Node):
         super().__init__(f"benchmark_runner_{worker_id}", namespace="laksa_planning_lab")
         self.smoothing = smoothing
         self.planner = ActionClient(self, ComputePathToPose, "/laksa_planning_lab/compute_path_to_pose")
-        # PlannerServer owns the official Nav2 IsPathValid service.  Keep this
-        # client in the persistent worker so a returned Path can be checked by
-        # Nav2 itself without regenerating or serializing it through a CLI.
-        self.is_path_valid = self.create_client(IsPathValid, "/laksa_planning_lab/is_path_valid")
         self.smoother = ActionClient(self, SmoothPath, "/laksa_planning_lab/smooth_path") if smoothing else None
         self.load_map_client = self.create_client(LoadMap, "/laksa_planning_lab/map_server/load_map")
         self.lifecycle = {
@@ -110,10 +105,6 @@ class PlannerClient(Node):
         self.costmap_received = False
         self.map_semantics_match = False
         self.footprint_received = False
-        self.published_footprint = []
-        self.costmap_snapshot = None
-        self.costmap_updates = 0
-        self.last_path = None
         self.shutdown_requested = False
 
     def expect_map(self, map_data) -> None:
@@ -145,25 +136,6 @@ class PlannerClient(Node):
             msg.info.width == expected.width and msg.info.height == expected.height
             and math.isclose(msg.info.resolution, expected.resolution, rel_tol=0.0, abs_tol=1.0e-9)
         )
-        self.costmap_snapshot = {
-            "frame_id": msg.header.frame_id,
-            "resolution": msg.info.resolution,
-            "width": msg.info.width,
-            "height": msg.info.height,
-            "origin": {
-                "x": msg.info.origin.position.x,
-                "y": msg.info.origin.position.y,
-                "yaw_quaternion": {
-                    "x": msg.info.origin.orientation.x,
-                    "y": msg.info.origin.orientation.y,
-                    "z": msg.info.origin.orientation.z,
-                    "w": msg.info.origin.orientation.w,
-                },
-            },
-            "cell_count": len(msg.data),
-            "data_sha256": hashlib.sha256(bytes((int(value) + 256) % 256 for value in msg.data)).hexdigest(),
-        }
-        self.costmap_updates += 1
 
     def _footprint_cb(self, msg: PolygonStamped) -> None:
         points = msg.polygon.points
@@ -171,7 +143,6 @@ class PlannerClient(Node):
             math.isfinite(value)
             for point in points for value in (point.x, point.y, point.z)
         )
-        self.published_footprint = [[point.x, point.y, point.z] for point in points]
 
     def _state_is_active(self, name: str) -> bool:
         client = self.lifecycle[name]
@@ -189,7 +160,6 @@ class PlannerClient(Node):
             "map_server_active": self._state_is_active("map_server"),
             "planner_server_active": self._state_is_active("planner_server"),
             "planner_action": self.planner.server_is_ready(),
-            "is_path_valid_service": self.is_path_valid.service_is_ready(),
             "map_received": self.map_received and self.map_semantics_match,
             "costmap_received": self.costmap_received,
             "tf_ready": self.tf_buffer.can_transform(
@@ -215,7 +185,7 @@ class PlannerClient(Node):
                 raise LabFailure("STACK_START_FAILURE", f"planner launch exited with code {process.returncode}")
             rclpy.spin_once(self, timeout_sec=0.1)
             last_snapshot = self.readiness_snapshot()
-            if not missing_readiness(last_snapshot, self.smoothing) and last_snapshot["is_path_valid_service"]:
+            if not missing_readiness(last_snapshot, self.smoothing):
                 return (time.monotonic() - started) * 1000.0, last_snapshot
         if self.map_received and not self.map_semantics_match:
             raise LabFailure("MAP_LOAD_FAILURE", "published map disagrees with offline PGM/YAML semantics")
@@ -285,40 +255,7 @@ class PlannerClient(Node):
                 error.diagnostics.update({"planner_success": True, "smoother_success": False})
                 raise
             path, smoothing_ms = smoothed.path, _duration_ms(smoothed.smoothing_duration)
-        self.last_path = path
         return _path_tuples(path), planning_ms, smoothing_ms, (time.perf_counter() - wall_start) * 1000.0
-
-    def validate_path(self, path, timeout: float = 15.0) -> dict:
-        """Call PlannerServer's official Nav2 IsPathValid on this exact Path."""
-        deadline = time.monotonic() + timeout
-        while not self.is_path_valid.service_is_ready() and time.monotonic() < deadline:
-            rclpy.spin_once(self, timeout_sec=0.1)
-        if not self.is_path_valid.service_is_ready():
-            raise LabFailure("OFFICIAL_VALIDATOR_UNAVAILABLE", "planner_server is_path_valid service unavailable")
-        request = IsPathValid.Request()
-        request.path = path
-        future = self.is_path_valid.call_async(request)
-        rclpy.spin_until_future_complete(self, future, timeout_sec=max(0.0, deadline - time.monotonic()))
-        if not future.done() or future.result() is None:
-            raise LabFailure("OFFICIAL_VALIDATOR_TIMEOUT", "planner_server is_path_valid service timed out")
-        response = future.result()
-        return {
-            "service": "/laksa_planning_lab/is_path_valid",
-            "interface": "nav2_msgs/srv/IsPathValid",
-            "is_valid": bool(response.is_valid),
-            "invalid_pose_indices": [int(index) for index in response.invalid_pose_indices],
-        }
-
-    def settle_costmap(self, duration: float = 1.2) -> None:
-        """Let the active static layer publish after a LoadMap transition.
-
-        PlannerServer returns ``is_valid=false`` without invalid indices when
-        its costmap is not current.  This is an observation/test-harness guard,
-        not a planner or costmap configuration change.
-        """
-        deadline = time.monotonic() + duration
-        while time.monotonic() < deadline:
-            rclpy.spin_once(self, timeout_sec=min(0.1, max(0.0, deadline - time.monotonic())))
 
     def lifecycle_shutdown(self) -> None:
         for transition_id in (Transition.TRANSITION_DEACTIVATE, Transition.TRANSITION_CLEANUP):
@@ -367,12 +304,6 @@ class PlannerWorker:
                 f"map:={entry['yaml']}", f"params_file:={runtime_path}",
                 f"use_smoother:={'true' if self.method == 'HYBRID_CONSTRAINED' else 'false'}",
             ]
-            base_tf = getattr(self.runner, "base_tf", None)
-            if base_tf is not None:
-                command.extend((
-                    f"base_x:={base_tf['x']}", f"base_y:={base_tf['y']}",
-                    f"base_yaw:={base_tf['yaw']}",
-                ))
             environment = os.environ.copy()
             environment["ROS_DOMAIN_ID"], environment["ROS_LOCALHOST_ONLY"] = "71", "1"
             self.process = subprocess.Popen(

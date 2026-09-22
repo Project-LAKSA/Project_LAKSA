@@ -1,0 +1,77 @@
+/**:
+  ros__parameters:
+    map_topic: /map
+    costmap_topic: /global_costmap/costmap
+    local_costmap_topic: /local_costmap/costmap
+    # Absolute name prevents the explorer namespace from redirecting the
+    # client to /frontier_explorer/navigate_to_pose.
+    navigate_to_pose_action_name: /navigate_to_pose
+    global_frame: map
+    robot_base_frame: laksa_base_footprint
+    frontier_marker_topic: /explore/frontiers
+    selected_frontier_topic: /explore/selected_frontier
+    optimized_map_topic: /explore/optimized_map
+
+    # The supervisor starts and stops exploration explicitly. Never move at boot.
+    autostart: false
+    control_service_enabled: true
+    map_processing_rate_hz: 0.5
+
+    # The pinned upstream package is patched to require stable evidence before
+    # latching completion, so its transient-local event is safe to consume.
+    completion_event_enabled: true
+    completion_event_topic: /laksa/exploration_complete_event
+    completion_stability_sec: 20.0
+    completion_min_empty_map_generations: 10
+    completion_known_area_growth_ratio: 0.01
+    return_to_start_on_complete: false
+    escape_enabled: true
+
+    # Bounded look-ahead produces a coherent short tour instead of repeatedly
+    # choosing only the closest map edge.
+    mrtsp_solver: dp
+    dp_solver_candidate_limit: 8
+    dp_planning_horizon: 5
+    frontier_map_optimization_enabled: true
+
+    # An Ackermann vehicle needs time to execute a maneuver. Do not replace a
+    # valid active goal merely because a newer scan changed its apparent gain.
+    goal_preemption_enabled: false
+    goal_skip_on_blocked_goal: true
+    post_goal_settle_enabled: true
+    post_goal_min_settle: 2.5
+
+    frontier_suppression_enabled: true
+    all_frontiers_suppressed_behavior: stay
+    frontier_suppression_attempt_threshold: 3
+    frontier_suppression_base_size_m: 0.60
+    frontier_suppression_expansion_size_m: 0.25
+    frontier_suppression_timeout_s: 120.0
+    frontier_suppression_no_progress_timeout_s: 60.0
+    frontier_suppression_progress_epsilon_m: 0.10
+    frontier_suppression_startup_grace_period_s: 20.0
+
+    # 1000 eRPM is about 0.24 m/s with the measured LAKSA drivetrain. These
+    # values affect frontier scoring only; the supervisor enforces motor limits.
+    weight_distance_wd: 1.5
+    weight_gain_ws: 1.0
+    max_linear_speed_vmax: 0.24
+    max_angular_speed_wmax: 0.22
+    sensor_effective_range_m: 2.0
+
+    # Keep targets far enough away to avoid tiny forward/reverse oscillations.
+    frontier_selection_min_distance: 0.75
+    frontier_visit_tolerance: 0.45
+    frontier_candidate_min_goal_distance_m: 0.75
+    occ_threshold: 65
+    min_frontier_size_cells: 8
+    sigma_s: 2.0
+    sigma_r: 30.0
+    dilation_kernel_radius_cells: 1
+
+    goal_preemption_complete_if_within_m: 0.30
+    goal_preemption_lidar_range_m: 8.0
+    goal_preemption_lidar_fov_deg: 360.0
+    goal_preemption_lidar_ray_step_deg: 2.0
+    goal_preemption_lidar_min_reveal_length_m: 0.5
+    goal_preemption_lidar_yaw_offset_deg: 180.0

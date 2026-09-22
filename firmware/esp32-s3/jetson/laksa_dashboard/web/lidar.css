@@ -1,0 +1,17 @@
+.lidar-legend {
+  align-items: center;
+  color: #ff79d1;
+  display: flex;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.lidar-legend::before {
+  background: #ff3bbd;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #ff3bbd;
+  content: "";
+  height: 8px;
+  margin: 0 6px;
+  width: 8px;
+}

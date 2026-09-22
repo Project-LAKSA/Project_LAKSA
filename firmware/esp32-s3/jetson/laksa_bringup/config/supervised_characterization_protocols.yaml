@@ -1,0 +1,34 @@
+schema_version: laksa-supervised-characterization-v1
+# Conservative initial SI request limits.  They are characterization bounds,
+# not VESC configuration.  Each invocation executes exactly one ARMed trial.
+request_heartbeat_hz: 20.0
+stationary_erpm_threshold: 75.0
+stationary_dwell_sec: 0.5
+freshness_sec: 0.5
+manual_axis_deadband: 0.15
+protocols:
+  T21A:
+    left:  {speed_mps: 0.18, steering_rad: 0.12, steer_hold_sec: 2.0}
+    right: {speed_mps: 0.18, steering_rad: -0.08, steer_hold_sec: 2.0}
+  T22:
+    forward: {speed_mps: 0.18, max_drive_sec: 8.0}
+  T23:
+    level_1: {speed_mps: 0.14, hold_sec: 2.0, coast_sec: 5.0}
+  T24:
+    level_1: {speed_mps: 0.14, hold_sec: 2.0, brake_sec: 1.0, coast_sec: 5.0}
+  T25:
+    positive: {steering_rad: 0.12, hold_sec: 1.5}
+    negative: {steering_rad: -0.08, hold_sec: 1.5}
+  T26:
+    left_low: {speed_mps: 0.14, steering_rad: 0.12, hold_sec: 2.0}
+    right_low: {speed_mps: 0.14, steering_rad: -0.08, hold_sec: 2.0}
+  T27:
+    forward_low: {speed_mps: 0.12, hold_sec: 2.0}
+    reverse_low: {speed_mps: -0.12, hold_sec: 2.0}
+  T21B:
+    left_low: {speed_mps: 0.14, steering_rad: 0.12, hold_sec: 2.0}
+    right_low: {speed_mps: 0.14, steering_rad: -0.08, hold_sec: 2.0}
+strategic_repeats:
+  T31:
+    - {test: T25, variant: positive}
+    - {test: T25, variant: negative}

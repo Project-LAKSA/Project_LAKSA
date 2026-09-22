@@ -14,6 +14,7 @@
 
 #include <geometry_msgs/msg/twist.h>
 #include <laksa_interfaces/msg/drive_command.h>
+#include <laksa_interfaces/msg/pca9685_state.h>
 #include <laksa_interfaces/msg/vehicle_state.h>
 #include <laksa_interfaces/msg/vesc_state.h>
 #include <laksa_interfaces/srv/get_vehicle_state.h>
@@ -32,6 +33,7 @@
 #define MICRO_ROS_IMU_PERIOD_MS 20
 #define MICRO_ROS_MAG_PERIOD_MS 50
 #define MICRO_ROS_STATE_PERIOD_MS 100
+#define MICRO_ROS_PCA_PERIOD_MS 1000
 #define MICRO_ROS_AGENT_PING_PERIOD_MS 500
 #define MICRO_ROS_AGENT_PING_TIMEOUT_MS 100
 #define MICRO_ROS_AGENT_PING_ATTEMPTS 1
@@ -56,6 +58,7 @@ typedef struct {
     rcl_publisher_t mag_publisher;
     rcl_publisher_t vesc_publisher;
     rcl_publisher_t state_publisher;
+    rcl_publisher_t pca_publisher;
     rcl_subscription_t command_subscription;
     rcl_subscription_t cmd_vel_subscription;
     rcl_service_t set_command_service;
@@ -64,6 +67,7 @@ typedef struct {
     sensor_msgs__msg__MagneticField mag_message;
     laksa_interfaces__msg__VescState vesc_message;
     laksa_interfaces__msg__VehicleState state_message;
+    laksa_interfaces__msg__Pca9685State pca_message;
     laksa_interfaces__msg__DriveCommand command_message;
     geometry_msgs__msg__Twist cmd_vel_message;
     laksa_interfaces__srv__SetDriveCommand_Request set_request;
@@ -288,6 +292,51 @@ static void fill_vehicle_state(laksa_interfaces__msg__VehicleState *state)
     state->steering_endpoint_relief_active = steering.endpoint_relief_active;
 }
 
+static float diagnostic_age_sec(int64_t now_us, int64_t event_us)
+{
+    return event_us > 0 && now_us >= event_us
+               ? (float)(now_us - event_us) / 1000000.0f
+               : -1.0f;
+}
+
+static void fill_pca_state(laksa_interfaces__msg__Pca9685State *message)
+{
+    pca9685_diagnostics_t diagnostics = {0};
+    steering_snapshot_t steering = {0};
+    int64_t now_us = esp_timer_get_time();
+
+    if (bridge.hardware.hardware_mutex != NULL) {
+        xSemaphoreTake(bridge.hardware.hardware_mutex, portMAX_DELAY);
+    }
+    (void)pca9685_poll_diagnostics(bridge.hardware.pca9685, &diagnostics);
+    if (bridge.hardware.hardware_mutex != NULL) {
+        xSemaphoreGive(bridge.hardware.hardware_mutex);
+    }
+    (void)steering_control_get_snapshot(bridge.hardware.steering, &steering);
+
+    message->stamp = ros_time_now();
+    message->initialized = diagnostics.initialized;
+    message->responsive = diagnostics.responsive;
+    message->configuration_matches = diagnostics.configuration_matches;
+    message->i2c_address = PCA9685_I2C_ADDR;
+    message->configured_pwm_frequency_hz = diagnostics.configured_pwm_freq_hz;
+    message->mode1 = diagnostics.mode1;
+    message->prescale = diagnostics.prescale;
+    message->last_successful_write_age_sec =
+        diagnostic_age_sec(now_us, diagnostics.last_successful_write_us);
+    message->last_successful_read_age_sec =
+        diagnostic_age_sec(now_us, diagnostics.last_successful_read_us);
+    message->consecutive_i2c_errors = diagnostics.consecutive_i2c_errors;
+    message->total_i2c_errors = diagnostics.total_i2c_errors;
+    message->last_i2c_error_code = diagnostics.last_i2c_error;
+    message->reinitialization_count = diagnostics.reinitialization_count;
+    message->automatic_recovery_enabled = false;
+    message->steering_pwm_channel = STEERING_PCA_CHANNEL;
+    message->steering_command_deg = steering.current_angle_deg;
+    message->steering_pulse_us = diagnostics.last_servo_pulse_us;
+    message->steering_off_tick = diagnostics.last_pwm_off_tick;
+}
+
 static void fill_imu_messages(void)
 {
     bno08x_adapter_vec3_t accel = {0};
@@ -391,6 +440,7 @@ static bool create_entities(void)
     bridge.mag_publisher = rcl_get_zero_initialized_publisher();
     bridge.vesc_publisher = rcl_get_zero_initialized_publisher();
     bridge.state_publisher = rcl_get_zero_initialized_publisher();
+    bridge.pca_publisher = rcl_get_zero_initialized_publisher();
     if (rclc_publisher_init_best_effort(&bridge.imu_publisher, &bridge.node,
             ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), "/laksa/imu/data") != RCL_RET_OK ||
         rclc_publisher_init_best_effort(&bridge.mag_publisher, &bridge.node,
@@ -398,7 +448,9 @@ static bool create_entities(void)
         rclc_publisher_init_best_effort(&bridge.vesc_publisher, &bridge.node,
             ROSIDL_GET_MSG_TYPE_SUPPORT(laksa_interfaces, msg, VescState), "/laksa/vesc/state") != RCL_RET_OK ||
         rclc_publisher_init_best_effort(&bridge.state_publisher, &bridge.node,
-            ROSIDL_GET_MSG_TYPE_SUPPORT(laksa_interfaces, msg, VehicleState), "/laksa/state") != RCL_RET_OK) {
+            ROSIDL_GET_MSG_TYPE_SUPPORT(laksa_interfaces, msg, VehicleState), "/laksa/state") != RCL_RET_OK ||
+        rclc_publisher_init_best_effort(&bridge.pca_publisher, &bridge.node,
+            ROSIDL_GET_MSG_TYPE_SUPPORT(laksa_interfaces, msg, Pca9685State), "/laksa/pca9685/state") != RCL_RET_OK) {
         return false;
     }
 
@@ -426,6 +478,7 @@ static bool create_entities(void)
         !sensor_msgs__msg__MagneticField__init(&bridge.mag_message) ||
         !laksa_interfaces__msg__VescState__init(&bridge.vesc_message) ||
         !laksa_interfaces__msg__VehicleState__init(&bridge.state_message) ||
+        !laksa_interfaces__msg__Pca9685State__init(&bridge.pca_message) ||
         !laksa_interfaces__msg__DriveCommand__init(&bridge.command_message) ||
         !geometry_msgs__msg__Twist__init(&bridge.cmd_vel_message) ||
         !laksa_interfaces__srv__SetDriveCommand_Request__init(&bridge.set_request) ||
@@ -479,6 +532,7 @@ static void destroy_entities(void)
     consume_rcl_result(rcl_subscription_fini(&bridge.cmd_vel_subscription, &bridge.node));
     consume_rcl_result(rcl_subscription_fini(&bridge.command_subscription, &bridge.node));
     consume_rcl_result(rcl_publisher_fini(&bridge.state_publisher, &bridge.node));
+    consume_rcl_result(rcl_publisher_fini(&bridge.pca_publisher, &bridge.node));
     consume_rcl_result(rcl_publisher_fini(&bridge.vesc_publisher, &bridge.node));
     consume_rcl_result(rcl_publisher_fini(&bridge.mag_publisher, &bridge.node));
     consume_rcl_result(rcl_publisher_fini(&bridge.imu_publisher, &bridge.node));
@@ -489,6 +543,7 @@ static void destroy_entities(void)
     sensor_msgs__msg__MagneticField__fini(&bridge.mag_message);
     laksa_interfaces__msg__VescState__fini(&bridge.vesc_message);
     laksa_interfaces__msg__VehicleState__fini(&bridge.state_message);
+    laksa_interfaces__msg__Pca9685State__fini(&bridge.pca_message);
     laksa_interfaces__msg__DriveCommand__fini(&bridge.command_message);
     geometry_msgs__msg__Twist__fini(&bridge.cmd_vel_message);
     laksa_interfaces__srv__SetDriveCommand_Request__fini(&bridge.set_request);
@@ -501,7 +556,8 @@ static void destroy_entities(void)
 static void publish_periodic(TickType_t now,
                              TickType_t *last_imu,
                              TickType_t *last_mag,
-                             TickType_t *last_state)
+                             TickType_t *last_state,
+                             TickType_t *last_pca)
 {
     if (now - *last_imu >= pdMS_TO_TICKS(MICRO_ROS_IMU_PERIOD_MS)) {
         *last_imu = now;
@@ -519,6 +575,11 @@ static void publish_periodic(TickType_t now,
         consume_rcl_result(rcl_publish(&bridge.vesc_publisher, &bridge.vesc_message, NULL));
         consume_rcl_result(rcl_publish(&bridge.state_publisher, &bridge.state_message, NULL));
     }
+    if (now - *last_pca >= pdMS_TO_TICKS(MICRO_ROS_PCA_PERIOD_MS)) {
+        *last_pca = now;
+        fill_pca_state(&bridge.pca_message);
+        consume_rcl_result(rcl_publish(&bridge.pca_publisher, &bridge.pca_message, NULL));
+    }
 }
 
 static void micro_ros_task(void *argument)
@@ -529,6 +590,7 @@ static void micro_ros_task(void *argument)
     TickType_t last_imu = 0;
     TickType_t last_mag = 0;
     TickType_t last_state = 0;
+    TickType_t last_pca = 0;
 
     while (true) {
         TickType_t now = xTaskGetTickCount();
@@ -547,6 +609,7 @@ static void micro_ros_task(void *argument)
                 last_imu = now;
                 last_mag = now;
                 last_state = now;
+                last_pca = now;
                 state = BRIDGE_AGENT_CONNECTED;
             } else {
                 ESP_LOGE(TAG, "Failed to create ROS 2 entities; retrying");
@@ -564,7 +627,7 @@ static void micro_ros_task(void *argument)
                 }
             }
             (void)rclc_executor_spin_some(&bridge.executor, RCL_MS_TO_NS(5));
-            publish_periodic(now, &last_imu, &last_mag, &last_state);
+            publish_periodic(now, &last_imu, &last_mag, &last_state, &last_pca);
             vTaskDelay(pdMS_TO_TICKS(2));
             break;
         case BRIDGE_AGENT_DISCONNECTED:
@@ -578,7 +641,8 @@ static void micro_ros_task(void *argument)
 
 esp_err_t micro_ros_bridge_start(const micro_ros_bridge_config_t *config)
 {
-    if (config == NULL || config->steering == NULL || config->vesc == NULL) {
+    if (config == NULL || config->steering == NULL || config->pca9685 == NULL ||
+        config->vesc == NULL) {
         return ESP_ERR_INVALID_ARG;
     }
 

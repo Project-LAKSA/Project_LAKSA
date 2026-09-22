@@ -1,6 +1,6 @@
 /zed_rtabmap/rtabmap:
   ros__parameters:
-    frame_id: zed_camera_link
+    frame_id: base_footprint
     odom_frame_id: odom
     map_frame_id: map
     publish_tf: true
@@ -23,6 +23,7 @@
     Rtabmap/DetectionRate: '1.0'
     Rtabmap/TimeThr: '700'
     Reg/Strategy: '0'
+    Reg/Force3DoF: 'true'
     Kp/DetectorStrategy: '6'
     Kp/MaxFeatures: '400'
     Vis/FeatureType: '6'
@@ -40,7 +41,7 @@
     Grid/CellSize: '0.05'
     Grid/RangeMin: '0.30'
     Grid/RangeMax: '6.0'
-    Grid/DepthDecimation: '4'
+    Grid/DepthDecimation: '2'
     Grid/NoiseFilteringRadius: '0.05'
     Grid/NoiseFilteringMinNeighbors: '5'
     cloud_decimation: 4

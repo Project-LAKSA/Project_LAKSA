@@ -19,5 +19,11 @@ setup(
     maintainer_email="project-laksa@invalid.local",
     description="Deterministic manual mapping lifecycle and profiles for LAKSA.",
     license="Apache-2.0",
-    entry_points={"console_scripts": ["mapping_session_manager = laksa_mapping.session_manager:main"]},
+    entry_points={
+        "console_scripts": [
+            "mapping_session_manager = laksa_mapping.session_manager:main",
+            "zed_base_pose_adapter = laksa_mapping.zed_base_pose_adapter:main",
+            "mapping_shadow_compare = laksa_mapping.comparison_report:main",
+        ]
+    },
 )

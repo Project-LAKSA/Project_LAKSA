@@ -25,9 +25,9 @@ def generate_launch_description():
                 parameters=[str(config), {"device_id": LaunchConfiguration("device_id")}],
             ),
             Node(
-                package="joy_teleop",
-                executable="joy_teleop",
-                name="joy_teleop",
+                package="laksa_bringup",
+                executable="xbox_drive_node.py",
+                name="xbox_drive_node",
                 output="screen",
                 parameters=[str(config)],
             ),
