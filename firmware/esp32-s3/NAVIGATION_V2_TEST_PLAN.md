@@ -5,14 +5,19 @@ Levels 0-5 run without hardware.
 1. **G1 static**: canonical YAML/JSON schema, deterministic contract compiler,
    generated footprint equivalence, URDF property inclusion, REP-105 authority,
    negative TF cases, and synthetic ±10-degree ramp projection.
-2. **Unit**: geometry, eRPM conversion, footprint construction, gate logic.
-3. **Planner fixtures**: original five cases plus 100 seeded adversarial cases:
+2. **G2 local odometry**: actual Humble `robot_localization` EKF in an isolated
+   ROS domain with deterministic standard VIO/speed fixtures. Fifteen cases
+   cover motion, directional radii, dropouts, outliers, timestamp faults, and a
+   ramp. Assert a single planar `odom -> base_footprint` TF, monotonic finite
+   output, no map TF, and no actuator publishers.
+3. **Unit**: geometry, eRPM conversion, footprint construction, gate logic.
+4. **Planner fixtures**: original five cases plus 100 seeded adversarial cases:
    fractional cells, outside map, corners, unknown, inflation, narrow passages,
    reverse/cusps, and impossible starts/goals.
-4. **Rosbag replay**: recorded map/odom/scan inputs and deterministic actions.
-5. **Loopback**: planner/BT/controller lifecycle and timeout/preemption.
-6. **Gazebo**: V004 Ackermann dynamics, sensor latency/noise, Speed Course.
-7. **Hardware**: stationary, manual mapping, low-speed autonomy, then speed.
+5. **Rosbag replay**: recorded map/odom/scan inputs and deterministic actions.
+6. **Loopback**: planner/BT/controller lifecycle and timeout/preemption.
+7. **Gazebo**: V004 Ackermann dynamics, sensor latency/noise, Speed Course.
+8. **Hardware**: stationary, manual mapping, low-speed autonomy, then speed.
 
 Primary planner metric: `INVALID_PATH_ESCAPE_COUNT=0`. `NO_SAFE_PATH` on an
 impossible fixture is PASS. A path must independently pass official discrete,

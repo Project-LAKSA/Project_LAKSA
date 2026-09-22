@@ -8,7 +8,7 @@ offline replay supply the same ROS interfaces; they do not fork navigation
 logic.
 
 ```text
-ZED VIO / IMU / speed  -> robot_localization -> odom -> base_footprint
+ZED VIO / measured speed -> robot_localization EKF -> odom -> base_footprint
 body attitude adapter  -> base_footprint -> base_link
 SLAM/localization      -> one authority       -> map  -> odom
 LiDAR / depth          -> Nav2 layered costmaps
@@ -36,9 +36,9 @@ flowchart TB
 ```mermaid
 flowchart LR
   ZED[ZED VIO] --> EKF[robot_localization EKF]
-  IMU --> EKF
+  IMU -. pending calibrated extrinsic .-> EKF
   Speed[vehicle speed] --> EKF
-  EKF --> Odom[odom to base_link]
+  EKF --> Odom[odom to base_footprint]
   SLAM[one SLAM/localizer] --> Map[map to odom]
 ```
 
@@ -99,3 +99,10 @@ flowchart LR
 
 See `docs/architecture/adr/` for decisions, `NAVIGATION_V2_INTERFACE_CONTRACTS.md`
 for interfaces, and `NAVIGATION_V2_TEST_PLAN.md` for evidence gates.
+
+## Gate order
+
+G1 canonical robot / TF is complete. G2 supplies only local planar odometry:
+one `robot_localization` EKF, raw ZED VIO pose, measured VESC Vx when
+calibrated, and no global TF. G3 compares 2D mapping/localization approaches;
+only then do costmaps, planner, and controller gates begin.
