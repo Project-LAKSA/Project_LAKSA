@@ -1,0 +1,10 @@
+.git
+build
+install
+log
+results
+__pycache__
+.pytest_cache
+*.pyc
+*.bag
+*.db3

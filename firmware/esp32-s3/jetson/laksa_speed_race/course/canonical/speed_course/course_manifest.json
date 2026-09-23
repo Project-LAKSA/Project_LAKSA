@@ -37,7 +37,10 @@
   },
   "track_width_m": 0.9144,
   "start_finish": {
-    "position_m": [20.62863090812533, 2.2986877548722693],
+    "position_m": [
+      20.62863090812533,
+      2.2986877548722693
+    ],
     "crossing_direction": "+X",
     "line_width_m": 0.9144,
     "requires_ordered_gates": true
@@ -67,8 +70,12 @@
     "input": "centerline.csv with left/right clearance",
     "upstream_input": "raceline_input.csv: x_m,y_m,width_right_m,width_left_m; no header",
     "generator": "external pinned CL2-UWaterloo/Raceline-Optimization",
-    "output": "raceline.csv: s_m,x_m,y_m,psi_rad,curvature_1pm,target_speed_mps,target_acceleration_mps2",
-    "status": "UPSTREAM_GENERATION_PENDING"
+    "output": "speed_course_raceline.csv: s_m,x_m,y_m,psi_rad,curvature_1pm,target_speed_mps,target_acceleration_mps2",
+    "status": "GENERATED_AND_VALIDATED",
+    "pure_pursuit_output": "pure_pursuit_raceline.csv: x_m,y_m,target_speed_mps",
+    "upstream_raceline_sha": "9290c5d503462e46f7e3e9033002e7ddf165ba7b",
+    "trajectory_helpers_sha": "fde6cee2b7bf6dd7d0f8f3d32f6a1be3cfe35b56",
+    "maximum_abs_curvature_1pm": 0.7149366116420127
   },
   "generation": {
     "tool": "course/scripts/rebuild_speed_course.py",
@@ -98,6 +105,10 @@
     "speed_course_nav2.png": "58e21de2b840b6eb5cf86a9e3a86ef48f7e7756b7ebd934a08d136208d995db3",
     "speed_course_nav2.yaml": "7bf75c7c91e4847357942f11bdc7fadc5a42bb017fc7b2a434584df71e6580e6",
     "validation_overlay.html": "50077289ae6bd5f6c8cdb722cc3ea147e92770ca40e05014f587d45c993db2bf",
-    "validation_report.json": "68bc3e33d2987b84990c09b17b60214e72f887e6ca910e682ae194f35bdd94ea"
+    "validation_report.json": "68bc3e33d2987b84990c09b17b60214e72f887e6ca910e682ae194f35bdd94ea",
+    "speed_course_map.yaml": "fc68a34911c5902c08336bb2d9103a33d58e332a01e01b1c4b3c2c265db42bbf",
+    "speed_course_centerline.csv": "2d39567359a353e478b8350ef928de08963d59b535fe080c4a203bb964f575dd",
+    "speed_course_raceline.csv": "84ce6c22991ef23b6c05048513c6e5f3661d00e06bc38036eb3e4b18bf3f3142",
+    "pure_pursuit_raceline.csv": "74c9fa7a1a97541566af30c75ae468758180eacb588a17da9039d97c1a4dd618"
   }
 }

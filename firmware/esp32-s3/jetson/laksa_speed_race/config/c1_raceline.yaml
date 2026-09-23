@@ -1,0 +1,12 @@
+schema_version: laksa-speed-race-c1-raceline-v1
+optimizer: WATERLOO_MINIMUM_CURVATURE
+kappa_bound_1pm: 0.91431
+effective_vehicle_width_m: 0.336
+stepsize_prep_m: 0.1
+stepsize_reg_m: 0.3
+stepsize_interp_after_opt_m: 0.2
+k_reg: 3
+s_reg: 10
+target_speed_mps: 1.0
+target_acceleration_mps2: 0.0
+course_geometry_frozen: true

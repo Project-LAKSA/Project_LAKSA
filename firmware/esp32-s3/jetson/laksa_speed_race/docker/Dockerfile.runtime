@@ -1,0 +1,33 @@
+FROM ros:humble-ros-base-jammy
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential git libeigen3-dev patch python3-pip \
+      python3-colcon-common-extensions \
+      ros-humble-ackermann-msgs ros-humble-eigen3-cmake-module \
+      ros-humble-nav-msgs ros-humble-tf2-ros ros-humble-visualization-msgs && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY docker/requirements-runtime.lock /tmp/requirements.lock
+RUN python3 -m pip install --no-cache-dir -r /tmp/requirements.lock
+
+RUN git clone https://github.com/f1tenth/f1tenth_gym.git /opt/upstream/f1tenth_gym && \
+    git -C /opt/upstream/f1tenth_gym checkout --detach bdaec1420c3b0f103858d289866d0d4e2e597c30 && \
+    python3 -m pip install --no-cache-dir --no-deps /opt/upstream/f1tenth_gym && \
+    git clone https://github.com/CL2-UWaterloo/f1tenth_ws.git /opt/upstream/waterloo_f1tenth_ws && \
+    git -C /opt/upstream/waterloo_f1tenth_ws checkout --detach c20cf63d04b9841ffdb6b2f963bd737d78074136
+
+COPY docker/patch_waterloo_manifest.py /tmp/patch_waterloo_manifest.py
+RUN python3 /tmp/patch_waterloo_manifest.py /opt/upstream/waterloo_f1tenth_ws/src/pure_pursuit/package.xml
+
+RUN mkdir -p /opt/laksa_ws/src && \
+    cp -a /opt/upstream/waterloo_f1tenth_ws/src/pure_pursuit /opt/laksa_ws/src/pure_pursuit
+COPY . /opt/laksa_ws/src/laksa_speed_race
+RUN . /opt/ros/humble/setup.sh && cd /opt/laksa_ws && \
+    colcon build --merge-install --packages-select pure_pursuit laksa_speed_race
+
+COPY docker/c1_entrypoint.sh /usr/local/bin/c1_entrypoint.sh
+RUN chmod 0555 /usr/local/bin/c1_entrypoint.sh && mkdir -p /results && chmod 0777 /results
+ENV LAKSA_GIT_SHA=BUILD_CONTEXT
+ENTRYPOINT ["/usr/local/bin/c1_entrypoint.sh"]
+CMD ["ros2", "launch", "laksa_speed_race", "c1_three_lap.launch.py", "headless:=true", "max_laps:=3", "output_dir:=/results/official"]

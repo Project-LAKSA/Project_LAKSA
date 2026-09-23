@@ -27,6 +27,8 @@ class ThreeLapGate:
     lap_times: list[float] = field(default_factory=list)
     done: bool = False
     fault: str | None = None
+    terminal_zero_published: bool = False
+    steps_after_terminal: int = 0
 
     def ready(self) -> None:
         if self.state is MissionState.BOOT:
@@ -42,6 +44,12 @@ class ThreeLapGate:
             self.state = MissionState.FAULT
             self.done = True
             self.fault = reason
+
+    def authorize_step(self) -> None:
+        """Fail if a caller attempts to step outside the running state."""
+        if self.state is not MissionState.RUNNING:
+            self.steps_after_terminal += 1
+            raise RuntimeError("simulator step requested outside RUNNING")
 
     def record_lap(self, lap_time_s: float) -> None:
         if self.state is not MissionState.RUNNING:
@@ -64,6 +72,13 @@ class ThreeLapGate:
             self.done = True
         elif self.state is MissionState.RUNNING:
             self.fail("simulator_done_before_three_laps")
+
+    def record_terminal_zero(self, speed_mps: float, steering_rad: float) -> None:
+        if speed_mps != 0.0 or steering_rad != 0.0:
+            self.fail("terminal_command_not_zero")
+            return
+        self.terminal_zero_published = True
+        self.stop_confirmed()
 
     @property
     def propulsion_permitted(self) -> bool:

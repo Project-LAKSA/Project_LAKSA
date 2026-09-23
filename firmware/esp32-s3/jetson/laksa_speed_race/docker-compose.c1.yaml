@@ -1,0 +1,42 @@
+services:
+  raceline:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.raceline
+    network_mode: none
+    privileged: false
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=256m
+    volumes:
+      - ./course/canonical/speed_course:/output
+    command: ["--course-dir", "/output", "--output-dir", "/output", "--update-manifest"]
+
+  runtime:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.runtime
+    network_mode: none
+    privileged: false
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m
+    volumes:
+      - ./results:/results
+    environment:
+      LAKSA_GIT_SHA: ${LAKSA_GIT_SHA:-UNKNOWN}
+      ROS_LOCALHOST_ONLY: "1"
+      ROS_LOG_DIR: /tmp/ros-logs
+      NUMBA_CACHE_DIR: /tmp/numba
+      XDG_CACHE_HOME: /tmp/cache
+      HOME: /tmp/home
+    command:
+      - ros2
+      - launch
+      - laksa_speed_race
+      - c1_three_lap.launch.py
+      - headless:=true
+      - max_laps:=3
+      - output_dir:=/results/official

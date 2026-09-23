@@ -13,7 +13,7 @@ class CompetitionC0Tests(unittest.TestCase):
     def test_manifest_uses_immutable_commit_refs(self):
         text = (ROOT / "speed_race_upstream.repos").read_text()
         versions = re.findall(r"^    version: ([0-9a-f]{40})$", text, re.MULTILINE)
-        self.assertEqual(len(versions), 8)
+        self.assertEqual(len(versions), 9)
         self.assertNotIn("main", versions)
         self.assertNotIn("master", versions)
 

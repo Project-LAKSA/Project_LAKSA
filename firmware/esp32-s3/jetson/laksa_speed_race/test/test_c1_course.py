@@ -4,7 +4,12 @@ import unittest
 from pathlib import Path
 import csv
 
-from laksa_speed_race.c1_contract import FORBIDDEN_PHYSICAL_COMMAND_TOPICS, SIMULATOR_COMMAND_TOPIC
+from laksa_speed_race.c1_contract import (
+    CONTROLLER_REQUEST_TOPIC,
+    FORBIDDEN_PHYSICAL_COMMAND_TOPICS,
+    SIMULATOR_APPLIED_TOPIC,
+    SIMULATOR_ODOM_TOPIC,
+)
 from laksa_speed_race.course_validation import validate
 from laksa_speed_race.metrics import C1Metrics
 from laksa_speed_race.three_lap_gate import MissionState, ThreeLapGate
@@ -17,7 +22,8 @@ class C1CourseTests(unittest.TestCase):
     def test_recovered_course_contract(self):
         result = validate(ROOT / "course")
         self.assertEqual(result["status"], "PASS")
-        self.assertEqual(result["checks"]["raceline"], "UPSTREAM_GENERATION_PENDING")
+        self.assertEqual(result["checks"]["raceline"], "PASS")
+        self.assertEqual(result["checks"]["raceline_body_envelope"], "PASS")
 
     def test_external_raceline_input_is_lossless_and_headerless(self):
         from course.scripts.export_raceline_input import export
@@ -71,8 +77,13 @@ class C1CourseTests(unittest.TestCase):
         self.assertEqual(summary["steering_saturation_events"], 1)
 
     def test_c1_contract_cannot_route_to_physical_topics(self):
-        self.assertEqual(SIMULATOR_COMMAND_TOPIC, "/drive")
-        self.assertEqual(FORBIDDEN_PHYSICAL_COMMAND_TOPICS, {"/laksa/command", "/cmd_vel", "/laksa/set_drive_command"})
+        self.assertEqual(CONTROLLER_REQUEST_TOPIC, "/c1/drive_request")
+        self.assertEqual(SIMULATOR_APPLIED_TOPIC, "/c1/drive_applied")
+        self.assertEqual(SIMULATOR_ODOM_TOPIC, "/c1/odom")
+        self.assertEqual(
+            FORBIDDEN_PHYSICAL_COMMAND_TOPICS,
+            {"/drive", "/laksa/command", "/cmd_vel", "/laksa/set_drive_command"},
+        )
         runtime_sources = list((ROOT / "laksa_speed_race").glob("*.py"))
         for source in runtime_sources:
             text = source.read_text()

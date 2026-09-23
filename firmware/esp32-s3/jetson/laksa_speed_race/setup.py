@@ -15,6 +15,14 @@ def course_data_files():
     return files
 
 
+def directory_data_files(directory):
+    return [
+        (str(Path("share") / PACKAGE_NAME / directory), [str(path)])
+        for path in sorted((ROOT / directory).glob("*"))
+        if path.is_file()
+    ]
+
+
 setup(
     name=PACKAGE_NAME,
     version="0.1.0",
@@ -22,6 +30,8 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/laksa_speed_race"]),
         (str(Path("share") / PACKAGE_NAME), ["package.xml", "README.md", "ARCHITECTURE.md", "SIM_ASSUMPTIONS.json", "SPEED_RACE_RESULTS.json", "UPSTREAM_PROVENANCE.md", "speed_race_upstream.repos"]),
+        *directory_data_files("config"),
+        *directory_data_files("launch"),
         *course_data_files(),
     ],
     install_requires=["setuptools"],
@@ -34,6 +44,7 @@ setup(
     entry_points={
         "console_scripts": [
             "validate_speed_course = laksa_speed_race.course_validation:main",
+            "c1_gym_adapter = laksa_speed_race.gym_adapter_node:main",
         ],
     },
 )

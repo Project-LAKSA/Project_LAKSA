@@ -2,12 +2,42 @@
 # Unknown dynamics remain explicitly in SIM_ASSUMPTIONS.json and use upstream
 # simulator defaults until physical identification is available.
 laksa_proxy_v0:
+  model: KS
   wheelbase_m: 0.324
   mass_kg: 3.75
   body_length_m: 0.568
   body_width_m: 0.296
+  lf_m: 0.162
+  lr_m: 0.162
+  collision_body_center_m: [0.135, 0.0]
   steering_limit_rad: 0.288
   min_turning_radius_m: 1.0937226373133722
   max_curvature_1pm: 0.91431
-  command_topic: /drive
+  max_speed_mps: 1.0
+  command_topic: /c1/drive_applied
   physical_motion_topics_allowed: false
+simulation:
+  integrator: RK4
+  dt_s: 0.01
+  seed: 12345
+  num_agents: 1
+  max_laps: 3
+  frenet_enabled: true
+  rendering: false
+  lidar:
+    pose_m_rad: [0.31542, 0.0, 3.141592653589793]
+    beams: 1080
+    fov_rad: 4.71238898038469
+    range_m: [0.0, 30.0]
+    noise_std_m: 0.0
+simulation_assumptions:
+  classification: SIMULATION_ASSUMPTION
+  mu: 1.0489
+  C_Sf: 4.718
+  C_Sr: 5.4562
+  h_m: 0.074
+  yaw_inertia_kg_m2: 0.04712
+  steering_velocity_radps: [-3.2, 3.2]
+  v_switch_mps: 7.319
+  a_max_mps2: 9.51
+  upstream_velocity_bounds_mps: [-5.0, 20.0]

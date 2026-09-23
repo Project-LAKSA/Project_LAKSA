@@ -1,0 +1,15 @@
+gymnasium==0.29.1
+numpy==1.26.4
+pillow==10.4.0
+scipy==1.13.1
+numba==0.60.0
+coverage==7.6.1
+PyYAML==6.0.2
+PyOpenGL==3.1.9
+PyOpenGL-accelerate==3.1.9
+opencv-python==4.10.0.84
+yamldataclassconfig==1.5.0
+requests==2.32.3
+pyqtgraph==0.13.7
+PyQt6==6.7.1
+pandas==2.2.3

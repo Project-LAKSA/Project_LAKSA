@@ -24,5 +24,17 @@
     "use_for_course_qualification": true,
     "use_for_closed_loop_vehicle_qualification": false
   },
-  "upstream_bridge_constraint": "f1tenth_gym_ros dev-humble accepts only f1tenth, f1fifth, or fullscale vehicle presets"
+  "c1": {
+    "model": "KS",
+    "integrator": "RK4",
+    "dt_s": 0.01,
+    "seed": 12345,
+    "max_laps": 3,
+    "max_speed_mps": 1.0,
+    "steering_limit_rad": 0.288,
+    "controller_pose_source": "SIMULATOR_GROUND_TRUTH",
+    "physical_fidelity_claim": false
+  },
+  "gym_ros_bridge_constraint": "preset-only bridge replaced for C1 by approved orchestration around unchanged Gym core",
+  "custom_simulator_math_required": false
 }

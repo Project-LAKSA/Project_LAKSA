@@ -1,0 +1,15 @@
+pure_pursuit:
+  ros__parameters:
+    waypoints_path: /opt/laksa/share/laksa_speed_race/course/canonical/speed_course/pure_pursuit_raceline.csv
+    odom_topic: /c1/odom
+    car_refFrame: c1/base_link
+    global_refFrame: map
+    drive_topic: /c1/drive_request
+    rviz_current_waypoint_topic: /c1/current_waypoint
+    rviz_lookahead_waypoint_topic: /c1/lookahead_waypoint
+    min_lookahead: 0.5
+    max_lookahead: 1.0
+    lookahead_ratio: 8.0
+    K_p: 0.5
+    steering_limit: 16.501184
+    velocity_percentage: 1.0

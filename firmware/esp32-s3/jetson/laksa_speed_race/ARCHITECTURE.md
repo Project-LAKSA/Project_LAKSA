@@ -5,34 +5,25 @@ This is a narrow simulation-first racing stack for **Jetson Orin Nano / Ubuntu
 and Navigation V2 branches.
 
 ```text
-F1TENTH Gym ROS (sim only)
-  /scan + /ego_racecar/odom + collision
-        |              |
-        v              v
-Follow-the-Gap     slam_toolbox (mapping mode)
-        |              |
-        +-- /drive     +-- /map (never simulator truth)
-                              |
-                    save/freeze map
-                              |
-                 upstream centerline + TUM raceline tool
-                              |
-   frozen map + scan + odometry -> upstream particle filter
-                              |
-                 upstream Pure Pursuit -> /drive
-                              |
-                   three-lap mission orchestration -> stop
+canonical course -> pinned Waterloo minimum-curvature helpers -> raceline
+
+F1TENTH Gym core (KS/RK4, LAKSA_PROXY_V0, Frenet, max_laps=3)
+  -> /c1/odom + map->c1/base_link
+  -> pinned Waterloo Pure Pursuit
+  -> /c1/drive_request
+  -> local validation/stepping authority
+  -> one env.step per accepted command
+  -> /c1/drive_applied + metrics
+  -> lap 3 -> terminal zero -> evidence flush -> clean shutdown
 ```
 
 `/sim_ground_truth_map` is simulator-only scoring data. It is not remapped to
 `/map` and cannot be consumed by mapping, localization, raceline generation,
 or race control.
 
-The only permitted LAKSA-authored runtime code in later milestones is a thin
-mission state machine: `START`, `EXPLORE_MAP`, `MAP_COMPLETE`, `SAVE_MAP`,
-`GENERATE_RACELINE`, `INITIALIZE_LOCALIZATION`, `RACE`, `FINISH`, and
-`FAILURE`. It must not implement SLAM, localization, map-to-centerline,
-raceline optimization, path tracking, or exploration.
+The C1 adapter contains only ROS/configuration translation, command limits,
+three-lap state, metrics and shutdown. It does not implement dynamics,
+raceline optimization or path tracking.
 
 No joystick, teleop, physical actuator, ESP32, VESC, or ZED process is part of
 this competition simulation architecture.
@@ -46,16 +37,13 @@ explicit `speed_course_map` frame, a frozen analytic geometry hash, 135 ft by
 gates. The simulator ground-truth occupancy asset is still never an input to
 mapping, localization, raceline generation, or race control.
 
-## Remaining C1 upstream boundary
+## C1 isolation boundary
 
-The selected upstream `f1tenth_gym_ros` bridge accepts only
-`vehicle_params: f1tenth|f1fifth|fullscale`. Although its underlying Gym API
-can model arbitrary `VehicleParameters`, the ROS bridge has no configuration
-surface for LAKSA's wheelbase, mass, asymmetric steering constraints, or
-conservative steering bound. Creating another bridge or patching upstream
-would violate the sprint constraints.
+Only `/c1/odom`, `/c1/drive_request`, and `/c1/drive_applied` carry C1 motion
+state. `/drive`, `/cmd_vel`, `/laksa/command`, `/laksa/set_drive_command`,
+micro-ROS, VESC and GPIO are forbidden. Runtime containers have no network,
+host devices, production mounts, elevated capabilities or Docker socket.
 
-The course-geometry blocker is closed. No C1 vehicle qualification or
-closed-loop autonomy claim is made until the simulator interface can represent
-LAKSA_PROXY_V0 through an upstream-supported mechanism or a separately scoped
-simulation-only adapter. C2--C5 remain blocked.
+C1 uses simulator ground truth by design. SLAM, particle-filter localization,
+unknown-course exploration, physical sensor fusion, physical actuation and the
+master GPIO permit remain later milestones.

@@ -27,6 +27,10 @@ repositories:
     type: git
     url: https://github.com/CL2-UWaterloo/Raceline-Optimization.git
     version: 9290c5d503462e46f7e3e9033002e7ddf165ba7b
+  trajectory_planning_helpers:
+    type: git
+    url: https://github.com/CL2-UWaterloo/trajectory_planning_helpers.git
+    version: fde6cee2b7bf6dd7d0f8f3d32f6a1be3cfe35b56
   rhythm_follow_the_gap:
     type: git
     url: https://github.com/RhythmChandak/F1Tenth-follow-the-gap.git

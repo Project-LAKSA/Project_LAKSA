@@ -1,0 +1,20 @@
+FROM ubuntu:22.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates git python3 python3-pip python3-dev build-essential && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY docker/requirements-raceline.lock /tmp/requirements.lock
+RUN PIP_NO_BUILD_ISOLATION=1 python3 -m pip install --no-cache-dir -r /tmp/requirements.lock
+
+RUN git clone https://github.com/CL2-UWaterloo/trajectory_planning_helpers.git /opt/upstream/trajectory_planning_helpers && \
+    git -C /opt/upstream/trajectory_planning_helpers checkout --detach fde6cee2b7bf6dd7d0f8f3d32f6a1be3cfe35b56 && \
+    python3 -m pip install --no-cache-dir --no-deps /opt/upstream/trajectory_planning_helpers && \
+    git clone https://github.com/CL2-UWaterloo/Raceline-Optimization.git /opt/upstream/Raceline-Optimization && \
+    git -C /opt/upstream/Raceline-Optimization checkout --detach 9290c5d503462e46f7e3e9033002e7ddf165ba7b
+
+COPY . /opt/laksa/laksa_speed_race
+WORKDIR /opt/laksa/laksa_speed_race
+ENV MPLCONFIGDIR=/tmp/matplotlib
+ENTRYPOINT ["python3", "course/scripts/generate_c1_raceline.py", "--waterloo-root", "/opt/upstream/Raceline-Optimization"]

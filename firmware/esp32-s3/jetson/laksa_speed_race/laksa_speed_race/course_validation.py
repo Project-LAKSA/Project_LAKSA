@@ -137,6 +137,27 @@ def _load_centerline(path: Path) -> list[dict[str, float]]:
     return rows
 
 
+def _load_gym_raceline(path: Path) -> list[dict[str, float]]:
+    with path.open(newline="") as stream:
+        lines = [line for line in stream if not line.startswith("#")]
+    fieldnames = ("s_m", "x_m", "y_m", "psi_rad", "curvature_1pm", "target_speed_mps", "target_acceleration_mps2")
+    rows = []
+    for values in csv.reader(lines, delimiter=";"):
+        if not values:
+            continue
+        row = {key: float(value.strip()) for key, value in zip(fieldnames, values)}
+        for key, value in row.items():
+            _finite(value, f"raceline.{key}")
+        rows.append(row)
+    if len(rows) < 4:
+        raise ValueError("raceline has too few samples")
+    return rows
+
+
+def _nearest_sample_distance(point: tuple[float, float], samples: list[tuple[float, float]]) -> float:
+    return math.sqrt(min((point[0] - x) ** 2 + (point[1] - y) ** 2 for x, y in samples))
+
+
 def validate(course_root: Path | None = None) -> dict[str, Any]:
     course_root = course_root or DEFAULT_COURSE_ROOT
     canonical = course_root / "canonical" / "speed_course"
@@ -224,8 +245,47 @@ def validate(course_root: Path | None = None) -> dict[str, Any]:
                 raise ValueError("occupancy raster does not preserve an authoritative barrier")
     checks["occupancy_vector_agreement"] = "PASS"
 
-    raceline = canonical / "raceline.csv"
-    checks["raceline"] = "PASS" if raceline.exists() else "UPSTREAM_GENERATION_PENDING"
+    raceline_path = canonical / "speed_course_raceline.csv"
+    if not raceline_path.exists():
+        raise ValueError("generated Gym raceline is missing")
+    raceline = _load_gym_raceline(raceline_path)
+    race_points = [(row["x_m"], row["y_m"]) for row in raceline]
+    if _distance(race_points[-1], race_points[0]) > 0.25:
+        raise ValueError("raceline does not form one closed cyclic path")
+    if _distance(race_points[-1], race_points[0]) > 1e-9:
+        raise ValueError("Gym raceline must contain exactly one terminal closure sample")
+    if _distance(race_points[-2], race_points[0]) <= 1e-9:
+        raise ValueError("Gym raceline contains more than one terminal closure sample")
+    _assert_no_self_intersection(race_points)
+    curvature_limit = manifest["laksa_proxy_v0"]["max_curvature_1pm"]
+    if max(abs(row["curvature_1pm"]) for row in raceline) > curvature_limit + 1e-9:
+        raise ValueError("raceline exceeds conservative steering curvature")
+    if any(row["target_speed_mps"] < 0.0 or row["target_speed_mps"] > 1.0 for row in raceline):
+        raise ValueError("raceline speed profile violates C1 forward-only 1 m/s policy")
+
+    # Full rectangular LAKSA body, evaluated against the frozen centerline
+    # corridor. The authoritative centerline is sampled at <=0.025 m, so the
+    # sample-distance test is conservative to one sample interval.
+    half_length = manifest["laksa_proxy_v0"]["body_length_m"] / 2.0
+    half_body_width = manifest["laksa_proxy_v0"]["body_width_m"] / 2.0
+    body_center_x = 0.135
+    corridor_half_width = manifest["track_width_m"] / 2.0
+    for row in raceline:
+        cosine, sine = math.cos(row["psi_rad"]), math.sin(row["psi_rad"])
+        body_center = (
+            row["x_m"] + body_center_x * cosine,
+            row["y_m"] + body_center_x * sine,
+        )
+        for longitudinal in (-half_length, half_length):
+            for lateral in (-half_body_width, half_body_width):
+                corner = (
+                    body_center[0] + longitudinal * cosine - lateral * sine,
+                    body_center[1] + longitudinal * sine + lateral * cosine,
+                )
+                if _nearest_sample_distance(corner, points) > corridor_half_width:
+                    raise ValueError("raceline body rectangle leaves the authoritative track corridor")
+    checks["raceline"] = "PASS"
+    checks["raceline_body_envelope"] = "PASS"
     return {"status": "PASS", "course": manifest["course_id"], "checks": checks}
 
 
