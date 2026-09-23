@@ -26,15 +26,18 @@ class CompetitionC0Tests(unittest.TestCase):
     def test_results_do_not_claim_unexecuted_simulation(self):
         results = json.loads((ROOT / "SPEED_RACE_RESULTS.json").read_text())
         self.assertEqual(results["C0"]["status"], "PASS")
-        for phase in ("C1", "C2", "C3", "C4", "C5"):
+        self.assertEqual(results["C1"]["status"], "PARTIAL")
+        self.assertEqual(results["C1"]["simulation_run"], "NOT_EXECUTED")
+        for phase in ("C2", "C3", "C4", "C5"):
             self.assertEqual(results[phase]["status"], "BLOCKED")
         self.assertEqual(results["repeat_runs"], 0)
         self.assertFalse(results["safety"]["physical_hardware_touched"])
 
     def test_sim_assumptions_keep_unknown_dynamics_unknown(self):
         assumptions = json.loads((ROOT / "SIM_ASSUMPTIONS.json").read_text())
-        self.assertEqual(assumptions["course"]["status"], "APPROVED_RECONSTRUCTION_NOT_FOUND_IN_REPOSITORY")
-        self.assertFalse(assumptions["course"]["use_for_qualification"])
+        self.assertEqual(assumptions["course"]["status"], "CANONICAL_APPROVED_RECOVERED")
+        self.assertTrue(assumptions["course"]["use_for_course_qualification"])
+        self.assertFalse(assumptions["course"]["use_for_closed_loop_vehicle_qualification"])
         self.assertIn("tire_friction", assumptions["sim_assumed_not_physically_identified"])
 
 

@@ -1,0 +1,85 @@
+"""Offline C1 course, mission, metrics, and simulator-only boundary tests."""
+
+import unittest
+from pathlib import Path
+import csv
+
+from laksa_speed_race.c1_contract import FORBIDDEN_PHYSICAL_COMMAND_TOPICS, SIMULATOR_COMMAND_TOPIC
+from laksa_speed_race.course_validation import validate
+from laksa_speed_race.metrics import C1Metrics
+from laksa_speed_race.three_lap_gate import MissionState, ThreeLapGate
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class C1CourseTests(unittest.TestCase):
+    def test_recovered_course_contract(self):
+        result = validate(ROOT / "course")
+        self.assertEqual(result["status"], "PASS")
+        self.assertEqual(result["checks"]["raceline"], "UPSTREAM_GENERATION_PENDING")
+
+    def test_external_raceline_input_is_lossless_and_headerless(self):
+        from course.scripts.export_raceline_input import export
+
+        exported = export()
+        with exported.open(newline="") as stream:
+            rows = list(csv.reader(stream))
+        self.assertEqual(len(rows), 4446)
+        self.assertEqual(len(rows[0]), 4)
+        self.assertEqual(rows[0], ["20.628630908", "2.298687755", "0.457200000", "0.457200000"])
+
+    def test_three_laps_then_only_zero_propulsion(self):
+        gate = ThreeLapGate()
+        gate.ready()
+        gate.start()
+        for duration in (10.0, 9.5, 9.0):
+            gate.record_lap(duration)
+        self.assertEqual(gate.state, MissionState.STOPPING)
+        self.assertFalse(gate.propulsion_permitted)
+        gate.record_lap(8.0)
+        self.assertEqual(gate.state, MissionState.FAULT)
+        self.assertEqual(gate.fault, "lap_event_outside_running")
+
+        gate = ThreeLapGate()
+        gate.ready()
+        gate.start()
+        for duration in (10.0, 9.5, 9.0):
+            gate.record_lap(duration)
+        gate.stop_confirmed()
+        self.assertEqual(gate.state, MissionState.COMPLETE)
+        self.assertTrue(gate.done)
+        self.assertEqual(gate.lap_count, 3)
+
+    def test_early_done_faults_closed(self):
+        gate = ThreeLapGate()
+        gate.ready()
+        gate.start()
+        gate.stop_confirmed()
+        self.assertEqual(gate.state, MissionState.FAULT)
+        self.assertEqual(gate.fault, "simulator_done_before_three_laps")
+        self.assertFalse(gate.propulsion_permitted)
+
+    def test_metrics_never_invents_cte_threshold(self):
+        metrics = C1Metrics(seed=7)
+        metrics.cross_track_errors_m.extend((0.1, -0.2, 0.3))
+        metrics.record_command(1.0, 0.288)
+        metrics.record_command(-0.1, 0.0)
+        summary = metrics.summary(lap_times_s=[1.0, 1.0, 1.0], sim_time_s=3.0, done=True)
+        self.assertEqual(summary["cte_pass_threshold"], "UNSET")
+        self.assertEqual(summary["reverse_command_events"], 1)
+        self.assertEqual(summary["steering_saturation_events"], 1)
+
+    def test_c1_contract_cannot_route_to_physical_topics(self):
+        self.assertEqual(SIMULATOR_COMMAND_TOPIC, "/drive")
+        self.assertEqual(FORBIDDEN_PHYSICAL_COMMAND_TOPICS, {"/laksa/command", "/cmd_vel", "/laksa/set_drive_command"})
+        runtime_sources = list((ROOT / "laksa_speed_race").glob("*.py"))
+        for source in runtime_sources:
+            text = source.read_text()
+            self.assertNotIn("micro_ros_bridge", text)
+            self.assertNotIn("VESC", text)
+            self.assertNotIn("GPIO", text)
+
+
+if __name__ == "__main__":
+    unittest.main()

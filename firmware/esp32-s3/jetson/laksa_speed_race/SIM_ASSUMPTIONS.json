@@ -16,9 +16,13 @@
   },
   "sim_assumed_not_physically_identified": ["cg_location", "yaw_inertia", "tire_friction", "cornering_stiffness", "high_speed_slip"],
   "course": {
-    "status": "APPROVED_RECONSTRUCTION_NOT_FOUND_IN_REPOSITORY",
-    "user_reported_envelope_only": {"length_ft": 135, "width_ft": 47, "drivable_width_in": 36},
-    "use_for_qualification": false
+    "status": "CANONICAL_APPROVED_RECOVERED",
+    "manifest": "course/canonical/speed_course/course_manifest.json",
+    "source_geometry_sha256": "2c76075f838a7a1c3e0891385b27f2e6f26e641ad13068280093fda273a84858",
+    "overall_dimensions_ft": {"length": 135, "width": 47},
+    "drivable_width_in": 36,
+    "use_for_course_qualification": true,
+    "use_for_closed_loop_vehicle_qualification": false
   },
   "upstream_bridge_constraint": "f1tenth_gym_ros dev-humble accepts only f1tenth, f1fifth, or fullscale vehicle presets"
 }

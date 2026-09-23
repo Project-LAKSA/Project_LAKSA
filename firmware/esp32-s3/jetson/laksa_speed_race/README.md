@@ -22,10 +22,12 @@ to mapping, localization, raceline generation, or race control.
 C0 is complete: exact external refs and licenses are pinned in
 [`speed_race_upstream.repos`](speed_race_upstream.repos), and
 [`UPSTREAM_PROVENANCE.md`](UPSTREAM_PROVENANCE.md) records the selection
-evidence. C1--C5 are deliberately blocked rather than simulated with an
-invented substitute: the selected upstream Gym ROS bridge does not expose a
-configuration-only custom LAKSA vehicle-parameter interface, and no approved
-Speed Course reconstruction exists in this repository.
+evidence. C1 now has a recovered, user-approved canonical course asset in
+[`course/canonical/speed_course`](course/canonical/speed_course), plus offline
+three-lap and metrics contracts. C1 cannot yet execute the official
+closed-loop simulation because the selected upstream Gym ROS bridge does not
+expose a configuration-only custom LAKSA vehicle-parameter interface. No
+invented simulator or controller is substituted.
 
 See [`SPEED_RACE_RESULTS.json`](SPEED_RACE_RESULTS.json) for machine-readable
 status and exact blockers. Do not launch any legacy manual-control, joystick,

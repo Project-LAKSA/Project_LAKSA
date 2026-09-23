@@ -1,0 +1,3 @@
+# Recovered canonical centreline is byte-preserved from the approved LAKSA
+# artifact. Its CRLF line endings are data provenance, not trailing whitespace.
+firmware/esp32-s3/jetson/laksa_speed_race/course/canonical/speed_course/centerline.csv whitespace=cr-at-eol

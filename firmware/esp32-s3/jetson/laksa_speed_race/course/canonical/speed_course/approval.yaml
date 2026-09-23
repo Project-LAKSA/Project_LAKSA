@@ -1,0 +1,11 @@
+approved_by_user: true
+approval_status: CANONICAL_APPROVED
+approval_note: >
+  User visually validated source/geometry overlay. Remaining red discrepancy
+  samples are accepted as scan-registration/ink residuals and do not represent
+  a material course-geometry error.
+geometry_file: geometry.yaml
+approved_geometry_sha256: 2c76075f838a7a1c3e0891385b27f2e6f26e641ad13068280093fda273a84858
+geometry_frozen: true
+modification_condition: Later quantitative validation discovers a real dimensional inconsistency.
+scope: Speed Course reconstruction only.

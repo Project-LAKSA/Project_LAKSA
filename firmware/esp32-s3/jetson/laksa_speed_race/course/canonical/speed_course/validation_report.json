@@ -1,0 +1,1342 @@
+{
+  "schema_version": "laksa-reconstruction-validation-v1",
+  "reconstruction_status": "CANONICAL_APPROVED",
+  "course": "speed_course",
+  "training_allowed": false,
+  "geometry_authority": "geometry.yaml",
+  "documented_bounds_m": [
+    41.148,
+    14.325600000000001
+  ],
+  "drivable_bounds_m": [
+    [
+      0.504470727709833,
+      0.45403031798928795
+    ],
+    [
+      40.73912050540331,
+      13.75677450174774
+    ]
+  ],
+  "maximum_drivable_envelope_excess_m": 0.0,
+  "dimension_comparisons": [
+    {
+      "id": "overall_width",
+      "original_text": "135′",
+      "original_value": 135,
+      "original_unit": "ft",
+      "value_si": 41.148,
+      "si_unit": "m",
+      "feature_id": "overall_bounds",
+      "source": "speed_course_full.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "HIGH",
+      "approximate": false,
+      "reference_position_px": [
+        1057,
+        947
+      ],
+      "notes": "",
+      "reconstructed_value_si": 41.148,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.02,
+      "validation_status": "PASS",
+      "validation_note": "Documented envelope, not drivable-surface extent."
+    },
+    {
+      "id": "overall_height",
+      "original_text": "47′",
+      "original_value": 47,
+      "original_unit": "ft",
+      "value_si": 14.325600000000001,
+      "si_unit": "m",
+      "feature_id": "overall_bounds",
+      "source": "speed_course_full.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "HIGH",
+      "approximate": false,
+      "reference_position_px": [
+        94,
+        576
+      ],
+      "notes": "",
+      "reconstructed_value_si": 14.325600000000001,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.07162800000000001,
+      "validation_status": "PASS",
+      "validation_note": "Documented envelope, not drivable-surface extent."
+    },
+    {
+      "id": "path_width",
+      "original_text": "36″ wide path",
+      "original_value": 36,
+      "original_unit": "in",
+      "value_si": 0.9144,
+      "si_unit": "m",
+      "feature_id": "all_lane_segments",
+      "source": "speed_course_full.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "HIGH",
+      "approximate": false,
+      "reference_position_px": [
+        1050,
+        237
+      ],
+      "notes": "",
+      "reconstructed_value_si": 0.9144,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.02,
+      "validation_status": "PASS",
+      "validation_note": "Analytic normal offsets."
+    },
+    {
+      "id": "inner_straight_44ft",
+      "original_text": "44′ long",
+      "original_value": 44,
+      "original_unit": "ft",
+      "value_si": 13.411200000000001,
+      "si_unit": "m",
+      "feature_id": "inner_straight",
+      "source": "speed_course_full.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "HIGH",
+      "approximate": false,
+      "reference_position_px": [
+        960,
+        796
+      ],
+      "notes": "",
+      "reconstructed_value_si": 13.411200000000001,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.067056,
+      "validation_status": "PASS",
+      "validation_note": "Sum of two portions split by start/finish."
+    },
+    {
+      "id": "outer_straight_44ft",
+      "original_text": "44′ long",
+      "original_value": 44,
+      "original_unit": "ft",
+      "value_si": 13.411200000000001,
+      "si_unit": "m",
+      "feature_id": "outer_straight",
+      "source": "speed_course_full.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "HIGH",
+      "approximate": false,
+      "reference_position_px": [
+        1032,
+        861
+      ],
+      "notes": "",
+      "reconstructed_value_si": 13.411199019177094,
+      "absolute_error_si": 9.808229073371422e-07,
+      "tolerance_si": 0.067056,
+      "validation_status": "PASS",
+      "validation_note": "Endpoint distance."
+    },
+    {
+      "id": "radius_R_00",
+      "original_text": "55.3′ radius",
+      "original_value": 55.3,
+      "original_unit": "ft",
+      "value_si": 16.85544,
+      "si_unit": "m",
+      "feature_id": "R_00",
+      "source": "speed_course_right_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        1441.0,
+        788.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 16.85544,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.16855440000000002,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_R_01",
+      "original_text": "45.3′ radius",
+      "original_value": 45.3,
+      "original_unit": "ft",
+      "value_si": 13.80744,
+      "si_unit": "m",
+      "feature_id": "R_01",
+      "source": "speed_course_right_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        1592.5,
+        757.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 13.80744,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.1380744,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_R_02",
+      "original_text": "35.3′ radius",
+      "original_value": 35.3,
+      "original_unit": "ft",
+      "value_si": 10.75944,
+      "si_unit": "m",
+      "feature_id": "R_02",
+      "source": "speed_course_right_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        1727.0,
+        695.5
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 10.75944,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.10759439999999999,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_R_03",
+      "original_text": "25.3′ radius",
+      "original_value": 25.3,
+      "original_unit": "ft",
+      "value_si": 7.7114400000000005,
+      "si_unit": "m",
+      "feature_id": "R_03",
+      "source": "speed_course_right_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        1819.0,
+        615.5
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 7.7114400000000005,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.07711440000000001,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_R_04",
+      "original_text": "6′ radius",
+      "original_value": 6,
+      "original_unit": "ft",
+      "value_si": 1.8288000000000002,
+      "si_unit": "m",
+      "feature_id": "R_04",
+      "source": "speed_course_right_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        1826.5,
+        513.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 1.8288000000000002,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.03,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_R_05",
+      "original_text": "6′ radius",
+      "original_value": 6,
+      "original_unit": "ft",
+      "value_si": 1.8288000000000002,
+      "si_unit": "m",
+      "feature_id": "R_05",
+      "source": "speed_course_right_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        1854.5,
+        388.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 1.8288000000000002,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.03,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_R_06",
+      "original_text": "10′ radius",
+      "original_value": 10,
+      "original_unit": "ft",
+      "value_si": 3.048,
+      "si_unit": "m",
+      "feature_id": "R_06",
+      "source": "speed_course_right_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        1928.5,
+        354.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 3.048,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.03048,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_R_07",
+      "original_text": "20′ radius",
+      "original_value": 20,
+      "original_unit": "ft",
+      "value_si": 6.096,
+      "si_unit": "m",
+      "feature_id": "R_07",
+      "source": "speed_course_right_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        1940.5,
+        471.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 6.096,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.06096,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_R_08",
+      "original_text": "30′ radius",
+      "original_value": 30,
+      "original_unit": "ft",
+      "value_si": 9.144,
+      "si_unit": "m",
+      "feature_id": "R_08",
+      "source": "speed_course_right_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        1885.0,
+        623.5
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 9.144,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.09144000000000001,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_R_09",
+      "original_text": "40′ radius",
+      "original_value": 40,
+      "original_unit": "ft",
+      "value_si": 12.192,
+      "si_unit": "m",
+      "feature_id": "R_09",
+      "source": "speed_course_right_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        1772.0,
+        740.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 12.192,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.12192,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_R_10",
+      "original_text": "50′ radius",
+      "original_value": 50,
+      "original_unit": "ft",
+      "value_si": 15.24,
+      "si_unit": "m",
+      "feature_id": "R_10",
+      "source": "speed_course_right_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        1623.5,
+        819.5
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 15.24,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.1524,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_R_11",
+      "original_text": "60′ radius",
+      "original_value": 60,
+      "original_unit": "ft",
+      "value_si": 18.288,
+      "si_unit": "m",
+      "feature_id": "R_11",
+      "source": "speed_course_right_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        1453.0,
+        854.5
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 18.288,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.18288000000000001,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_L_00",
+      "original_text": "55.3′ radius",
+      "original_value": 55.3,
+      "original_unit": "ft",
+      "value_si": 16.85544,
+      "si_unit": "m",
+      "feature_id": "L_00",
+      "source": "speed_course_left_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        671.0,
+        785.5
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 16.85544,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.16855440000000002,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_L_01",
+      "original_text": "45.3′ radius",
+      "original_value": 45.3,
+      "original_unit": "ft",
+      "value_si": 13.80744,
+      "si_unit": "m",
+      "feature_id": "L_01",
+      "source": "speed_course_left_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        520.0,
+        751.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 13.80744,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.1380744,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_L_02",
+      "original_text": "35.3′ radius",
+      "original_value": 35.3,
+      "original_unit": "ft",
+      "value_si": 10.75944,
+      "si_unit": "m",
+      "feature_id": "L_02",
+      "source": "speed_course_left_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        385.0,
+        684.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 10.75944,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.10759439999999999,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_L_03",
+      "original_text": "25.3′ radius",
+      "original_value": 25.3,
+      "original_unit": "ft",
+      "value_si": 7.7114400000000005,
+      "si_unit": "m",
+      "feature_id": "L_03",
+      "source": "speed_course_left_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        292.0,
+        606.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 7.7114400000000005,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.07711440000000001,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_L_04",
+      "original_text": "6′ radius",
+      "original_value": 6,
+      "original_unit": "ft",
+      "value_si": 1.8288000000000002,
+      "si_unit": "m",
+      "feature_id": "L_04",
+      "source": "speed_course_left_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        277.5,
+        511.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 1.8288000000000002,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.03,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_L_05",
+      "original_text": "6′ radius",
+      "original_value": 6,
+      "original_unit": "ft",
+      "value_si": 1.8288000000000002,
+      "si_unit": "m",
+      "feature_id": "L_05",
+      "source": "speed_course_left_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        243.5,
+        387.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 1.8288000000000002,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.03,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_L_06",
+      "original_text": "10′ radius",
+      "original_value": 10,
+      "original_unit": "ft",
+      "value_si": 3.048,
+      "si_unit": "m",
+      "feature_id": "L_06",
+      "source": "speed_course_left_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        180.5,
+        354.5
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 3.048,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.03048,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_L_07",
+      "original_text": "20′ radius",
+      "original_value": 20,
+      "original_unit": "ft",
+      "value_si": 6.096,
+      "si_unit": "m",
+      "feature_id": "L_07",
+      "source": "speed_course_left_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        174.0,
+        467.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 6.096,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.06096,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_L_08",
+      "original_text": "30′ radius",
+      "original_value": 30,
+      "original_unit": "ft",
+      "value_si": 9.144,
+      "si_unit": "m",
+      "feature_id": "L_08",
+      "source": "speed_course_left_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        228.5,
+        613.5
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 9.144,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.09144000000000001,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_L_09",
+      "original_text": "40′ radius",
+      "original_value": 40,
+      "original_unit": "ft",
+      "value_si": 12.192,
+      "si_unit": "m",
+      "feature_id": "L_09",
+      "source": "speed_course_left_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        344.0,
+        729.5
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 12.192,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.12192,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_L_10",
+      "original_text": "50′ radius",
+      "original_value": 50,
+      "original_unit": "ft",
+      "value_si": 15.24,
+      "si_unit": "m",
+      "feature_id": "L_10",
+      "source": "speed_course_left_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        496.5,
+        804.5
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 15.24,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.1524,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    },
+    {
+      "id": "radius_L_11",
+      "original_text": "60′ radius",
+      "original_value": 60,
+      "original_unit": "ft",
+      "value_si": 18.288,
+      "si_unit": "m",
+      "feature_id": "L_11",
+      "source": "speed_course_left_detail.jpeg",
+      "provenance": "DIRECT_LABEL",
+      "confidence": "MEDIUM",
+      "approximate": false,
+      "reference_position_px": [
+        665.5,
+        845.0
+      ],
+      "notes": "Value visually checked. Centerline reference inferred; no radius-center leader. Placement fitted to full image.",
+      "reconstructed_value_si": 18.288,
+      "absolute_error_si": 0.0,
+      "tolerance_si": 0.18288000000000001,
+      "validation_status": "PASS",
+      "validation_note": "Exact labeled radius; its centerline interpretation requires review."
+    }
+  ],
+  "dimensions_pass": 29,
+  "dimensions_low_confidence": [],
+  "dimensions_not_independently_verified": [],
+  "radius_reference_uncertainty": "Speed and narrow-turn labels read clearly; centerline vs boundary radius reference is not explicitly led.",
+  "route_reference_length_m": 110.78755444788182,
+  "geometry_primitive_count": 27,
+  "checkpoint_count": 32,
+  "maximum_sample_spacing_m": 0.024999072157394556,
+  "raster_to_vector_residual": {
+    "method": "VECTOR_TO_LOCAL_CONTRAST_INK_DISTANCE",
+    "scope": "diagnostic nearest visible ink, NOT independently segmented physical boundary truth",
+    "includes_internal_region_seams": true,
+    "mean_residual_m": 0.02659779686978897,
+    "p95_residual_m": 0.10281531100478469,
+    "max_residual_m": 0.2908829666859894,
+    "mean_residual_px": 0.7756721163543008,
+    "p95_residual_px": 2.9984051036682615,
+    "max_residual_px": 8.483026150072599,
+    "pixel_frame": "rectified_source.png",
+    "limitations": [
+      "text and barrier hatch may lower residual",
+      "blank terrain/variable boundaries may increase residual",
+      "hand verification required; not a complete bidirectional boundary residual"
+    ],
+    "worst_locations_m": [
+      [
+        39.468362752218184,
+        12.959679874445767
+      ],
+      [
+        39.49598990800674,
+        12.98826870589843
+      ],
+      [
+        36.65356024312778,
+        5.2726886564302795
+      ],
+      [
+        36.65356024312778,
+        5.2726886564302795
+      ],
+      [
+        31.242874653378152,
+        1.0202399630123127
+      ],
+      [
+        31.242874653378152,
+        1.0202399630123127
+      ],
+      [
+        39.13683688275551,
+        12.61661389701381
+      ],
+      [
+        39.13683688275551,
+        12.61661389701381
+      ],
+      [
+        39.440735596429626,
+        12.931091042993103
+      ],
+      [
+        39.440735596429626,
+        12.931091042993103
+      ],
+      [
+        39.16446403854406,
+        12.645202728466472
+      ],
+      [
+        39.16446403854406,
+        12.645202728466472
+      ],
+      [
+        39.21971835012118,
+        12.702380391371799
+      ],
+      [
+        39.21971835012118,
+        12.702380391371799
+      ],
+      [
+        39.19209119433262,
+        12.673791559919135
+      ],
+      [
+        39.19209119433262,
+        12.673791559919135
+      ],
+      [
+        39.247345505909735,
+        12.730969222824461
+      ],
+      [
+        39.247345505909735,
+        12.730969222824461
+      ],
+      [
+        39.27497266169829,
+        12.759558054277125
+      ],
+      [
+        39.30259981748684,
+        12.788146885729788
+      ],
+      [
+        39.27497266169829,
+        12.759558054277125
+      ],
+      [
+        39.30259981748684,
+        12.788146885729788
+      ],
+      [
+        39.3302269732754,
+        12.816735717182452
+      ],
+      [
+        39.35785412906396,
+        12.845324548635114
+      ],
+      [
+        39.38548128485252,
+        12.873913380087778
+      ],
+      [
+        39.413108440641075,
+        12.90250221154044
+      ],
+      [
+        39.3302269732754,
+        12.816735717182452
+      ],
+      [
+        39.35785412906396,
+        12.845324548635114
+      ],
+      [
+        39.38548128485252,
+        12.873913380087778
+      ],
+      [
+        39.413108440641075,
+        12.90250221154044
+      ]
+    ]
+  },
+  "topology_checks": {
+    "free_component_count": 1,
+    "free_component_sizes_cells": [
+      258023
+    ],
+    "route_sample_count": 4446,
+    "route_samples_occupied": 0,
+    "route_occupied_locations_m": [],
+    "all_route_samples_free": true,
+    "enclosed_non_drivable_components": 1
+  },
+  "map_exports": {
+    "nav2": {
+      "image": "speed_course_nav2.png",
+      "resolution": 0.05,
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "negate": 0,
+      "occupied_thresh": 0.65,
+      "free_thresh": 0.196,
+      "mode": "trinary",
+      "width": 823,
+      "height": 287,
+      "coordinate_frame": "speed_course_map",
+      "reconstruction_status": "CANONICAL_APPROVED"
+    },
+    "hires": {
+      "image": "speed_course_hires.png",
+      "resolution": 0.02,
+      "origin": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "negate": 0,
+      "occupied_thresh": 0.65,
+      "free_thresh": 0.196,
+      "mode": "trinary",
+      "width": 2058,
+      "height": 717,
+      "coordinate_frame": "speed_course_map",
+      "reconstruction_status": "CANONICAL_APPROVED"
+    }
+  },
+  "limitations": {
+    "registration_m": 0.07,
+    "confidence": "MEDIUM",
+    "radius_reference": "centerline interpretation needs user verification",
+    "unmodeled": "local paper distortion and actual barrier thickness",
+    "joint_fit_mean_m": 0.09924895665312163,
+    "joint_fit_max_m": 0.2820866132827553,
+    "optimizer_success": true
+  },
+  "nominal_path_width_m": 0.9144,
+  "measured_vector_width_min_m": 0.9143999999999928,
+  "measured_vector_width_max_m": 0.9144000000000071,
+  "closed_route_error_m": 0.0,
+  "max_primitive_connection_gap_m": 0.0,
+  "boundary_landmark_residual": {
+    "method": "MANUALLY_INSPECTED_VISIBLE_FREE_SPACE_BOUNDARY_LANDMARKS",
+    "confidence": "LOW",
+    "sample_count": 28,
+    "independence": "Held-out from radius fit",
+    "reading_uncertainty_reference_px": 3,
+    "mean_residual_m": 0.04707659491937829,
+    "p95_residual_m": 0.12124088260000516,
+    "max_residual_m": 0.1283010262560708,
+    "mean_residual_px": 11.986620945196451,
+    "p95_residual_px": 30.915938634734776,
+    "max_residual_px": 32.71606606162048,
+    "pixel_frame": "original full-authority source image",
+    "mean_reference_px": 2.1507514675740187,
+    "p95_reference_px": 5.548180988447328,
+    "limitations": "Independent sparse visual edge checks in full-plan reference pixels. These points were not used by the radius fitter. Reading uncertainty is 3 reference pixels; paper warp remains. This is a sparse boundary residual, not dense certified segmentation. Use the overlay to inspect regions between points.",
+    "samples": [
+      {
+        "source_reference_px": [
+          750.0,
+          775.0
+        ],
+        "source_metric_m": [
+          13.919955390334573,
+          2.742266462480858
+        ],
+        "matched_vector_m": [
+          13.918979345731383,
+          2.7559487215543266
+        ],
+        "residual_m": 0.013717028702344097
+      },
+      {
+        "source_reference_px": [
+          1050.0,
+          775.0
+        ],
+        "source_metric_m": [
+          20.475664365374403,
+          2.742266462480858
+        ],
+        "matched_vector_m": [
+          20.473839879902652,
+          2.755887754872269
+        ],
+        "residual_m": 0.01374293831933136
+      },
+      {
+        "source_reference_px": [
+          1363.0,
+          775.0
+        ],
+        "source_metric_m": [
+          27.315454062665964,
+          2.742266462480858
+        ],
+        "matched_vector_m": [
+          27.313872849769258,
+          2.755887754872269
+        ],
+        "residual_m": 0.013712761962384773
+      },
+      {
+        "source_reference_px": [
+          750.0,
+          815.0
+        ],
+        "source_metric_m": [
+          13.919955390334573,
+          1.8647411944869834
+        ],
+        "matched_vector_m": [
+          13.91995897609176,
+          1.8415445486778648
+        ],
+        "residual_m": 0.023196646086263314
+      },
+      {
+        "source_reference_px": [
+          1050.0,
+          815.0
+        ],
+        "source_metric_m": [
+          20.475664365374403,
+          1.8647411944869834
+        ],
+        "matched_vector_m": [
+          20.473839879902652,
+          1.8414877548722692
+        ],
+        "residual_m": 0.02332490516919174
+      },
+      {
+        "source_reference_px": [
+          1363.0,
+          815.0
+        ],
+        "source_metric_m": [
+          27.315454062665964,
+          1.8647411944869834
+        ],
+        "matched_vector_m": [
+          27.313872849769258,
+          1.8414877548722692
+        ],
+        "residual_m": 0.02330713813705724
+      },
+      {
+        "source_reference_px": [
+          750.0,
+          841.0
+        ],
+        "source_metric_m": [
+          13.919955390334573,
+          1.2943497702909648
+        ],
+        "matched_vector_m": [
+          13.962630797552677,
+          1.2934815359050518
+        ],
+        "residual_m": 0.042684238451445505
+      },
+      {
+        "source_reference_px": [
+          1050.0,
+          841.0
+        ],
+        "source_metric_m": [
+          20.475664365374403,
+          1.2943497702909648
+        ],
+        "matched_vector_m": [
+          20.475928209687478,
+          1.3684313660000396
+        ],
+        "residual_m": 0.07408206555317118
+      },
+      {
+        "source_reference_px": [
+          1363.0,
+          842.0
+        ],
+        "source_metric_m": [
+          27.315454062665964,
+          1.272411638591118
+        ],
+        "matched_vector_m": [
+          27.373828063993976,
+          1.273492613067286
+        ],
+        "residual_m": 0.05838400925648119
+      },
+      {
+        "source_reference_px": [
+          750.0,
+          880.0
+        ],
+        "source_metric_m": [
+          13.919955390334573,
+          0.4387626339969373
+        ],
+        "matched_vector_m": [
+          13.920083810437863,
+          0.4540850201535103
+        ],
+        "residual_m": 0.015322924304912187
+      },
+      {
+        "source_reference_px": [
+          1050.0,
+          880.0
+        ],
+        "source_metric_m": [
+          20.475664365374403,
+          0.4387626339969373
+        ],
+        "matched_vector_m": [
+          20.475928070761018,
+          0.4540313660000501
+        ],
+        "residual_m": 0.015271009053556703
+      },
+      {
+        "source_reference_px": [
+          1363.0,
+          881.0
+        ],
+        "source_metric_m": [
+          27.315454062665964,
+          0.41682450229709045
+        ],
+        "matched_vector_m": [
+          27.313891369551794,
+          0.454030327095826
+        ],
+        "residual_m": 0.03723862791139441
+      },
+      {
+        "source_reference_px": [
+          249.0,
+          271.0
+        ],
+        "source_metric_m": [
+          2.9719214020180567,
+          13.799084839203676
+        ],
+        "matched_vector_m": [
+          2.974978237614484,
+          13.75089170224441
+        ],
+        "residual_m": 0.04828998544044311
+      },
+      {
+        "source_reference_px": [
+          249.0,
+          311.0
+        ],
+        "source_metric_m": [
+          2.9719214020180567,
+          12.921559571209803
+        ],
+        "matched_vector_m": [
+          2.979431189337289,
+          12.83311997348122
+        ],
+        "residual_m": 0.08875786923971239
+      },
+      {
+        "source_reference_px": [
+          362.0,
+          376.0
+        ],
+        "source_metric_m": [
+          5.441238449283059,
+          11.495581010719755
+        ],
+        "matched_vector_m": [
+          5.424707805187048,
+          11.494388179346036
+        ],
+        "residual_m": 0.016573624857438487
+      },
+      {
+        "source_reference_px": [
+          320.0,
+          376.0
+        ],
+        "source_metric_m": [
+          4.523439192777483,
+          11.495581010719755
+        ],
+        "matched_vector_m": [
+          4.510174210606709,
+          11.496965436564075
+        ],
+        "residual_m": 0.013337030663133385
+      },
+      {
+        "source_reference_px": [
+          140.0,
+          450.0
+        ],
+        "source_metric_m": [
+          0.5900138077535848,
+          9.872159264931089
+        ],
+        "matched_vector_m": [
+          0.5082874198343685,
+          9.867323413596738
+        ],
+        "residual_m": 0.0818693345548268
+      },
+      {
+        "source_reference_px": [
+          184.0,
+          450.0
+        ],
+        "source_metric_m": [
+          1.5515177907594266,
+          9.872159264931089
+        ],
+        "matched_vector_m": [
+          1.4233204652655311,
+          9.86700183586486
+        ],
+        "residual_m": 0.1283010262560708
+      },
+      {
+        "source_reference_px": [
+          231.0,
+          521.0
+        ],
+        "source_metric_m": [
+          2.5785788635156663,
+          8.314551914241962
+        ],
+        "matched_vector_m": [
+          2.543580755519259,
+          8.315436171942828
+        ],
+        "residual_m": 0.03500927698496107
+      },
+      {
+        "source_reference_px": [
+          271.0,
+          521.0
+        ],
+        "source_metric_m": [
+          3.4526733935209775,
+          8.314551914241962
+        ],
+        "matched_vector_m": [
+          3.4589965675574517,
+          8.313698886606238
+        ],
+        "residual_m": 0.006380453435520908
+      },
+      {
+        "source_reference_px": [
+          1860.0,
+          278.0
+        ],
+        "source_metric_m": [
+          38.17607859798195,
+          13.64551791730475
+        ],
+        "matched_vector_m": [
+          38.18258362487602,
+          13.738829273418897
+        ],
+        "residual_m": 0.09353782419296415
+      },
+      {
+        "source_reference_px": [
+          1860.0,
+          319.0
+        ],
+        "source_metric_m": [
+          38.17607859798195,
+          12.746054517611027
+        ],
+        "matched_vector_m": [
+          38.1865942605299,
+          12.819933215095832
+        ],
+        "residual_m": 0.0746233281278294
+      },
+      {
+        "source_reference_px": [
+          1754.0,
+          377.0
+        ],
+        "source_metric_m": [
+          35.85972809346787,
+          11.47364287901991
+        ],
+        "matched_vector_m": [
+          35.73201445098101,
+          11.474080287283051
+        ],
+        "residual_m": 0.1277143915275416
+      },
+      {
+        "source_reference_px": [
+          1795.0,
+          377.0
+        ],
+        "source_metric_m": [
+          36.755674986723314,
+          11.47364287901991
+        ],
+        "matched_vector_m": [
+          36.64646089821668,
+          11.474641256896737
+        ],
+        "residual_m": 0.10921865173458044
+      },
+      {
+        "source_reference_px": [
+          1976.0,
+          450.0
+        ],
+        "source_metric_m": [
+          40.71095273499735,
+          9.872159264931089
+        ],
+        "matched_vector_m": [
+          40.73844659048136,
+          9.871464738483382
+        ],
+        "residual_m": 0.027502626353899693
+      },
+      {
+        "source_reference_px": [
+          1938.0,
+          450.0
+        ],
+        "source_metric_m": [
+          39.8805629314923,
+          9.872159264931089
+        ],
+        "matched_vector_m": [
+          39.82397738203008,
+          9.872946410979205
+        ],
+        "residual_m": 0.056591024083704235
+      },
+      {
+        "source_reference_px": [
+          1885.0,
+          526.0
+        ],
+        "source_metric_m": [
+          38.72238767923527,
+          8.204861255742726
+        ],
+        "matched_vector_m": [
+          38.692575016713185,
+          8.204913107205618
+        ],
+        "residual_m": 0.029812707613194496
+      },
+      {
+        "source_reference_px": [
+          1843.0,
+          526.0
+        ],
+        "source_metric_m": [
+          37.804588422729694,
+          8.204861255742726
+        ],
+        "matched_vector_m": [
+          37.778067677728686,
+          8.202330615001724
+        ],
+        "residual_m": 0.026641209769237464
+      }
+    ]
+  },
+  "validation_result": "CANONICAL_APPROVED",
+  "approved_by_user": true,
+  "approval_status": "CANONICAL_APPROVED",
+  "approval_note": "User visually validated source/geometry overlay. Remaining red discrepancy samples are accepted as scan-registration/ink residuals and do not represent a material course-geometry error.\n"
+}

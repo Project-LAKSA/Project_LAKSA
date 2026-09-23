@@ -1,0 +1,632 @@
+schema_version: laksa-vector-geometry-v1
+course: speed_course
+reconstruction_status: USER_VALIDATION_REQUIRED
+overall_bounds:
+  min_x_m: 0
+  min_y_m: 0
+  max_x_m: 41.148
+  max_y_m: 14.325600000000001
+  provenance: DIRECT_LABEL
+  scope: documented outer barrier envelope
+nominal_path_width_m: 0.9144
+dimension_provenance: geometry_annotations.yaml
+coordinate_frame:
+  name: speed_course_map
+  origin: lower-left of documented envelope
+  x: right on drawing
+  y: up on drawing
+  z: up physically
+  yaw_zero: +X
+  yaw_positive: counterclockwise
+  units:
+  - m
+  - rad
+  - s
+direction:
+  provenance: REGISTERED_FROM_DRAWING
+  inner_straight: +X
+  outer_straight: -X
+  source_arrow_pixels:
+  - - - 1103
+      - 796
+    - - 1136
+      - 796
+  - - - 836
+      - 861
+    - - 810
+      - 861
+start_finish:
+  position_m:
+  - 20.62863090812533
+  - 2.2986877548722693
+  yaw_rad: 0.0
+  line_width_m: 0.9144
+  provenance: REGISTERED_FROM_DRAWING
+  start_side: west
+  finish_crossing_direction: +X
+primitives:
+- id: inner_straight_east
+  type: LINE
+  start_m:
+  - 20.62863090812533
+  - 2.2986877548722693
+  end_m:
+  - 27.373830176600144
+  - 2.2986877548722693
+  start_yaw_rad: 0.0
+  end_yaw_rad: 0.0
+  length_m: 6.745199268474813
+  provenance: DERIVED_FROM_LABELS
+  width_m: 0.9144
+  dimension_id: inner_straight_44ft
+- id: R_00
+  type: ARC
+  start_m:
+  - 27.373830176600144
+  - 2.2986877548722693
+  end_m:
+  - 30.728183266129587
+  - 2.6358296299332373
+  center_m:
+  - 27.373830176600144
+  - 19.15412775487227
+  radius_m: 16.85544
+  start_angle_rad: -1.5707963267948966
+  sweep_rad: 0.20034470290223372
+  start_yaw_rad: 0.0
+  end_yaw_rad: 0.20034470290223372
+  length_m: 3.3768981190864267
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_R_00
+  radius_reference_confidence: MEDIUM
+- id: R_01
+  type: ARC
+  start_m:
+  - 30.728183266129587
+  - 2.6358296299332373
+  end_m:
+  - 33.91084906703645
+  - 3.6981234363710254
+  center_m:
+  - 27.98040397217509
+  - 16.167093735895953
+  radius_m: 13.80744
+  start_angle_rad: -1.370451623892663
+  sweep_rad: 0.24360633116660474
+  start_yaw_rad: 0.20034470290223372
+  end_yaw_rad: 0.44395103406883846
+  length_m: 3.363579801203025
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_R_01
+  radius_reference_confidence: MEDIUM
+- id: R_02
+  type: ARC
+  start_m:
+  - 33.91084906703645
+  - 3.6981234363710254
+  end_m:
+  - 36.506884579781655
+  - 5.434857783149863
+  center_m:
+  - 29.289552999738305
+  - 13.414561660945639
+  radius_m: 10.75944
+  start_angle_rad: -1.1268452927260582
+  sweep_rad: 0.2913232922317102
+  start_yaw_rad: 0.44395103406883846
+  end_yaw_rad: 0.7352743263005487
+  length_m: 3.134475483369552
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_R_02
+  radius_reference_confidence: MEDIUM
+- id: R_03
+  type: ARC
+  start_m:
+  - 36.506884579781655
+  - 5.434857783149863
+  end_m:
+  - 37.983757251628916
+  - 7.249067872100866
+  center_m:
+  - 31.3341228524418
+  - 11.154022318793862
+  radius_m: 7.7114400000000005
+  start_angle_rad: -0.8355220004943479
+  sweep_rad: 0.3045351015145971
+  start_yaw_rad: 0.7352743263005487
+  end_yaw_rad: 1.0398094278151457
+  length_m: 2.348404163223725
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_R_03
+  radius_reference_confidence: MEDIUM
+- id: R_04
+  type: ARC
+  start_m:
+  - 37.983757251628916
+  - 7.249067872100866
+  end_m:
+  - 37.21235296494187
+  - 9.816955124323872
+  center_m:
+  - 36.406768856564774
+  - 8.175144025466794
+  radius_m: 1.8288000000000002
+  start_angle_rad: -0.5309868989797508
+  sweep_rad: 1.6456290779138356
+  start_yaw_rad: 1.0398094278151457
+  end_yaw_rad: 2.6854385057289814
+  length_m: 3.009526457688823
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_R_04
+  radius_reference_confidence: MEDIUM
+- id: R_05
+  type: ARC
+  start_m:
+  - 37.21235296494187
+  - 9.816955124323872
+  end_m:
+  - 39.28878623959257
+  - 12.773852470003456
+  center_m:
+  - 38.01793707331897
+  - 11.45876622318095
+  radius_m: 1.8288000000000002
+  start_angle_rad: 4.256234832523878
+  sweep_rad: -3.4537315373183706
+  start_yaw_rad: 2.6854385057289814
+  end_yaw_rad: -0.7682930315893892
+  length_m: 6.316184235447837
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_R_05
+  radius_reference_confidence: MEDIUM
+- id: R_06
+  type: ARC
+  start_m:
+  - 39.28878623959257
+  - 12.773852470003456
+  end_m:
+  - 40.1554880652834
+  - 11.199593554014005
+  center_m:
+  - 37.17070429580324
+  - 10.582042058632615
+  radius_m: 3.048
+  start_angle_rad: 0.8025032952055073
+  sweep_rad: -0.598482094516442
+  start_yaw_rad: -0.7682930315893892
+  end_yaw_rad: -1.3667751261058312
+  length_m: 1.8241734240861152
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_R_06
+  radius_reference_confidence: MEDIUM
+- id: R_07
+  type: ARC
+  start_m:
+  - 40.1554880652834
+  - 11.199593554014005
+  end_m:
+  - 39.71071570703021
+  - 7.388087215319224
+  center_m:
+  - 34.18592052632307
+  - 9.964490563251225
+  radius_m: 6.096
+  start_angle_rad: 0.20402120068906537
+  sweep_rad: -0.6403756726499569
+  start_yaw_rad: -1.3667751261058312
+  end_yaw_rad: -2.007150798755788
+  length_m: 3.903730100474137
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_R_07
+  radius_reference_confidence: MEDIUM
+- id: R_08
+  type: ARC
+  start_m:
+  - 39.71071570703021
+  - 7.388087215319224
+  end_m:
+  - 37.68102305219809
+  - 4.58512684230738
+  center_m:
+  - 31.42352293596951
+  - 11.252692237217223
+  radius_m: 9.144
+  start_angle_rad: -0.4363544719608914
+  sweep_rad: -0.38075941279970726
+  start_yaw_rad: -2.007150798755788
+  end_yaw_rad: -2.387910211555495
+  length_m: 3.481664070640523
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_R_08
+  radius_reference_confidence: MEDIUM
+- id: R_09
+  type: ARC
+  start_m:
+  - 37.68102305219809
+  - 4.58512684230738
+  end_m:
+  - 34.65543176633181
+  - 2.504048105301207
+  center_m:
+  - 29.337689563893314
+  - 13.475214035520501
+  radius_m: 12.192
+  start_angle_rad: -0.8171138847605985
+  sweep_rad: -0.3023482463806351
+  start_yaw_rad: -2.387910211555495
+  end_yaw_rad: -2.6902584579361304
+  length_m: 3.6862298198727035
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_R_09
+  radius_reference_confidence: MEDIUM
+- id: R_10
+  type: ARC
+  start_m:
+  - 34.65543176633181
+  - 2.504048105301207
+  end_m:
+  - 31.18080304194777
+  - 1.3118815195060591
+  center_m:
+  - 28.008254013283693
+  - 16.218005518075326
+  radius_m: 15.24
+  start_angle_rad: -1.1194621311412338
+  sweep_rad: -0.241628033408794
+  start_yaw_rad: -2.6902584579361304
+  end_yaw_rad: -2.9318864913449243
+  length_m: 3.6824112291500204
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_R_10
+  radius_reference_confidence: MEDIUM
+- id: R_11
+  type: ARC
+  start_m:
+  - 31.18080304194777
+  - 1.3118815195060591
+  end_m:
+  - 27.3738297586538
+  - 0.9112303179892827
+  center_m:
+  - 27.373744207550878
+  - 19.19923031778918
+  radius_m: 18.288
+  start_angle_rad: -1.3610901645500277
+  sweep_rad: -0.20970148425367652
+  start_yaw_rad: -2.9318864913449243
+  end_yaw_rad: -3.141587975598601
+  length_m: 3.8350207440312363
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_R_11
+  radius_reference_confidence: MEDIUM
+- id: outer_straight_44ft
+  type: LINE
+  start_m:
+  - 27.3738297586538
+  - 0.9112303179892827
+  end_m:
+  - 13.962630739476863
+  - 0.9112323555771873
+  start_yaw_rad: 3.141592501657971
+  end_yaw_rad: 3.141592501657971
+  length_m: 13.411199019177094
+  provenance: DERIVED_FROM_LABELS
+  width_m: 0.9144
+  dimension_id: outer_straight_44ft
+- id: L_11
+  type: ARC
+  start_m:
+  - 13.962630739476863
+  - 0.9112323555771873
+  end_m:
+  - 10.204466414887872
+  - 1.3015947471217277
+  center_m:
+  - 13.962858635935186
+  - 19.199232354157218
+  radius_m: 18.288
+  start_angle_rad: 4.712376518854816
+  sweep_rad: -0.20697375650179975
+  start_yaw_rad: 9.424765499239506
+  end_yaw_rad: 9.217791742737706
+  length_m: 3.785136058904914
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_L_11
+  radius_reference_confidence: MEDIUM
+- id: L_10
+  type: ARC
+  start_m:
+  - 10.204466414887872
+  - 1.3015947471217277
+  end_m:
+  - 6.540411164212071
+  - 2.5754965467494504
+  center_m:
+  - 13.3364599324273
+  - 16.216292752984636
+  radius_m: 15.24
+  start_angle_rad: 4.505402762353016
+  sweep_rad: -0.2552323414525893
+  start_yaw_rad: 9.217791742737706
+  end_yaw_rad: 8.962559401285116
+  length_m: 3.8897408837374607
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_L_10
+  radius_reference_confidence: MEDIUM
+- id: L_09
+  type: ARC
+  start_m:
+  - 6.540411164212071
+  - 2.5754965467494504
+  end_m:
+  - 3.4918431774805
+  - 4.733550025230362
+  center_m:
+  - 11.977250178784253
+  - 13.488133511737601
+  radius_m: 12.192
+  start_angle_rad: 4.250170420900427
+  sweep_rad: -0.30756737865095707
+  start_yaw_rad: 8.962559401285116
+  end_yaw_rad: 8.65499202263416
+  length_m: 3.7498614805124686
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_L_09
+  radius_reference_confidence: MEDIUM
+- id: L_08
+  type: ARC
+  start_m:
+  - 3.4918431774805
+  - 4.733550025230362
+  end_m:
+  - 1.4611748119145016
+  - 7.674387448137942
+  center_m:
+  - 9.855898428458314
+  - 11.299487640110792
+  radius_m: 9.144
+  start_angle_rad: 3.9426030422494702
+  sweep_rad: -0.3933682504847166
+  start_yaw_rad: 8.65499202263416
+  end_yaw_rad: 8.261623772149443
+  length_m: 3.5969592824322483
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_L_08
+  radius_reference_confidence: MEDIUM
+- id: L_07
+  type: ARC
+  start_m:
+  - 1.4611748119145016
+  - 7.674387448137942
+  end_m:
+  - 1.0766905161868126
+  - 11.269786787751835
+  center_m:
+  - 7.05765722294371
+  - 10.091120909453176
+  radius_m: 6.096
+  start_angle_rad: 3.5492347917647535
+  sweep_rad: -0.6022182895055463
+  start_yaw_rad: 8.261623772149443
+  end_yaw_rad: 7.659405482643897
+  length_m: 3.6711226928258105
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_L_07
+  radius_reference_confidence: MEDIUM
+- id: L_06
+  type: ARC
+  start_m:
+  - 1.0766905161868126
+  - 11.269786787751835
+  end_m:
+  - 1.7463774263556666
+  - 12.656360695897108
+  center_m:
+  - 4.067173869565261
+  - 10.680453848602506
+  radius_m: 3.048
+  start_angle_rad: 2.947016502259207
+  sweep_rad: -0.51072531633789
+  start_yaw_rad: 7.659405482643897
+  end_yaw_rad: 7.148680166306007
+  length_m: 1.5566907641978887
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_L_06
+  radius_reference_confidence: MEDIUM
+- id: L_05
+  type: ARC
+  start_m:
+  - 1.7463774263556666
+  - 12.656360695897108
+  end_m:
+  - 3.983327181669411
+  - 9.848664724089094
+  center_m:
+  - 3.138855292281423
+  - 11.470816587520346
+  radius_m: 1.8288000000000002
+  start_angle_rad: 2.436291185921317
+  sweep_rad: -3.5271059246701677
+  start_yaw_rad: 7.148680166306007
+  end_yaw_rad: 3.621574241635839
+  length_m: 6.450371315036803
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_L_05
+  radius_reference_confidence: MEDIUM
+- id: L_04
+  type: ARC
+  start_m:
+  - 3.983327181669411
+  - 9.848664724089094
+  end_m:
+  - 3.25588551402228
+  - 7.291848637950456
+  center_m:
+  - 4.827799071057399
+  - 8.226512860657841
+  radius_m: 1.8288000000000002
+  start_angle_rad: 2.0507779148409426
+  sweep_rad: 1.6272562680592317
+  start_yaw_rad: 3.621574241635839
+  end_yaw_rad: 5.248830509695071
+  length_m: 2.9759262630267234
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_L_04
+  radius_reference_confidence: MEDIUM
+- id: L_03
+  type: ARC
+  start_m:
+  - 3.25588551402228
+  - 7.291848637950456
+  end_m:
+  - 4.543063096084005
+  - 5.670695802858967
+  center_m:
+  - 9.884121012853697
+  - 11.233016110366599
+  radius_m: 7.7114400000000005
+  start_angle_rad: 3.6780341829001744
+  sweep_rad: 0.2692468616908382
+  start_yaw_rad: 5.248830509695071
+  end_yaw_rad: 5.518077371385909
+  length_m: 2.076281019117198
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_L_03
+  radius_reference_confidence: MEDIUM
+- id: L_02
+  type: ARC
+  start_m:
+  - 4.543063096084005
+  - 5.670695802858967
+  end_m:
+  - 7.293094873278191
+  - 3.7539766510362416
+  center_m:
+  - 11.995211098533417
+  - 13.431561686456572
+  radius_m: 10.75944
+  start_angle_rad: 3.9472810445910125
+  sweep_rad: 0.31282240722274646
+  start_yaw_rad: 5.518077371385909
+  end_yaw_rad: 5.830899778608655
+  length_m: 3.365793921168707
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_L_02
+  radius_reference_confidence: MEDIUM
+- id: L_01
+  type: ARC
+  start_m:
+  - 7.293094873278191
+  - 3.7539766510362416
+  end_m:
+  - 10.449007413038867
+  - 2.668973443523406
+  center_m:
+  - 13.327255354979659
+  - 16.17308719224137
+  radius_m: 13.80744
+  start_angle_rad: 4.260103451813759
+  sweep_rad: 0.24228920282979666
+  start_yaw_rad: 5.830899778608655
+  end_yaw_rad: 6.073188981438452
+  length_m: 3.3453936307202476
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_L_01
+  radius_reference_confidence: MEDIUM
+- id: L_00
+  type: ARC
+  start_m:
+  - 10.449007413038867
+  - 2.668973443523406
+  end_m:
+  - 13.962630176600143
+  - 2.2986877548722693
+  center_m:
+  - 13.962630176600143
+  - 19.15412775487227
+  radius_m: 16.85544
+  start_angle_rad: 4.502392654643556
+  sweep_rad: 0.20999632574113417
+  start_yaw_rad: 6.073188981438452
+  end_yaw_rad: 6.283185307179586
+  length_m: 3.5395804687501426
+  provenance: DIRECT_LABEL
+  placement_provenance: REGISTERED_FROM_DRAWING
+  width_m: 0.9144
+  dimension_id: radius_L_00
+  radius_reference_confidence: MEDIUM
+- id: inner_straight_west
+  type: LINE
+  start_m:
+  - 13.962630176600143
+  - 2.2986877548722693
+  end_m:
+  - 20.62863090812533
+  - 2.2986877548722693
+  start_yaw_rad: 0.0
+  end_yaw_rad: 0.0
+  length_m: 6.6660007315251875
+  provenance: DERIVED_FROM_LABELS
+  width_m: 0.9144
+  dimension_id: inner_straight_44ft
+physical_boundary_definition:
+  method: exact normal offsets of line and circular-arc centerline primitives
+  left_offset_m: 0.4572
+  right_offset_m: -0.4572
+  outside: occupied/non-drivable
+  barrier_thickness_m: null
+  barrier_thickness_provenance: UNRESOLVED
+reconstruction_uncertainty:
+  registration_m: 0.07
+  confidence: MEDIUM
+  radius_reference: centerline interpretation needs user verification
+  unmodeled: local paper distortion and actual barrier thickness
+  joint_fit_mean_m: 0.09924895665312163
+  joint_fit_max_m: 0.2820866132827553
+  optimizer_success: true

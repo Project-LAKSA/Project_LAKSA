@@ -1,0 +1,82 @@
+schema_version: laksa-canonical-course-v1
+course: speed_course
+reconstruction_status: CANONICAL_APPROVED
+approved_by_user: true
+approval_status: CANONICAL_APPROVED
+approval_note: >
+  User visually validated source/geometry overlay. Remaining red discrepancy
+  samples are accepted as scan-registration/ink residuals and do not represent
+  a material course-geometry error.
+approval_record: approval.yaml
+training_allowed: false
+global_geometry_authority: speed_course_full.jpeg
+detail_authorities:
+- speed_course_left_detail.jpeg
+- speed_course_right_detail.jpeg
+original_pixel_dimensions:
+- 11412
+- 6132
+registration:
+  method: AXIS_ALIGNED_AFFINE
+  original_pixel_to_metric_matrix:
+  - - 0.003921629857717482
+    - 0
+    - -2.469317047265003
+  - - 0
+    - -0.003935411753071029
+    - 19.744318529862177
+  - - 0
+    - 0
+    - 1
+  reference_canvas_px:
+  - 2048
+  - 1100
+  envelope_reference_px:
+  - 113
+  - 247
+  - 1996
+  - 900
+  envelope_original_px:
+  - 629.666015625
+  - 1376.9127272727271
+  - 11122.2421875
+  - 5017.090909090909
+  source_pixel_magnification:
+  - 5.572265625
+  - 5.574545454545454
+  uncertainty_reference_px: 3
+  control_points_metric:
+  - - 0
+    - 0
+  - - 41.148
+    - 0
+  - - 41.148
+    - 14.325600000000001
+  - - 0
+    - 14.325600000000001
+  notes: Envelope includes drawn barriers. The scan has local page warp; global independent
+    X/Y calibration cannot remove that warp. No undocumented local warp is applied
+    to force a radius fit.
+coordinate_frame:
+  name: speed_course_map
+  origin: lower-left of documented envelope
+  x: right on drawing
+  y: up on drawing
+  z: up physically
+  yaw_zero: +X
+  yaw_positive: counterclockwise
+  units:
+  - m
+  - rad
+  - s
+competition_window_s: 1200
+objective: MINIMIZE_VALID_COMPLETION_TIME
+unknown_competition_rules:
+  penalties: UNKNOWN
+  retry_limits: UNKNOWN
+  scoring_bonuses: UNKNOWN
+  disqualification: UNKNOWN
+  timing_trigger: UNKNOWN
+conversions:
+  ft_to_m: 0.3048
+  in_to_m: 0.0254

@@ -6,7 +6,7 @@ or modify their algorithms. The refs below were resolved on 2026-09-22.
 | Component | Pinned ref | License | Role | Integration status |
 |---|---|---|---|---|
 | [f1tenth_system](https://github.com/f1tenth/f1tenth_system) `humble-devel` | `94cb8d7fb5439315316bf80aadbc7256b80cb4e2` | MIT | Hardware-topic and Ackermann interface reference only | Reference; no joystick/teleop imported |
-| [f1tenth_gym_ros](https://github.com/f1tenth/f1tenth_gym_ros) `dev-humble` | `08395766c4d9dc5a763381f1dd6fa4a3d68df66e` | MIT | Primary ROS 2 Humble simulator | Selected, blocked on custom-vehicle configuration interface |
+| [f1tenth_gym_ros](https://github.com/f1tenth/f1tenth_gym_ros) `dev-humble` | `08395766c4d9dc5a763381f1dd6fa4a3d68df66e` | MIT | Primary ROS 2 Humble simulator | Re-read at exact pin; its bridge still exposes only `f1tenth`, `f1fifth`, or `fullscale` vehicle presets |
 | [f1tenth_gym](https://github.com/f1tenth/f1tenth_gym) `dev-humble` | `bdaec1420c3b0f103858d289866d0d4e2e597c30` | MIT | Simulator dynamics and LiDAR engine | Selected through Gym ROS |
 | [f1tenth/particle_filter](https://github.com/f1tenth/particle_filter) `humble-devel` | `ec599a1c4f3d4edc5f7d356e2f2990839e56bb7d` | No SPDX license declared | Frozen-map localization candidate | External-only; legal approval/attribution required before distribution |
 | [f1tenth/range_libc](https://github.com/f1tenth/range_libc) `humble-devel` | `f55480a7044367c219745480b436b8b7117f8282` | NOASSERTION | PF ray-casting dependency | External-only; license must be resolved before distribution |
@@ -32,3 +32,9 @@ At the selected ref, Gym ROS publishes `/scan`, `/ego_racecar/odom`, and
 `/ego_racecar/collision`, and accepts `ackermann_msgs/AckermannDriveStamped`
 on `/drive`. Its bundled keyboard teleop is disabled by setting
 `kb_teleop: false`; it is not a LAKSA competition dependency.
+
+At the exact pinned ref, the bridge's parameter dispatch rejects a custom
+vehicle name before constructing `F110Env`. This remains
+`UPSTREAM_CAPABILITY_GAP=F1TENTH_GYM_ROS_CONFIGURABLE_LAKSA_VEHICLE_PARAMETERS`.
+The canonical course recovery does not alter this finding or any dependency
+SHA.

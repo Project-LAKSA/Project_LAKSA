@@ -1,0 +1,515 @@
+reconstruction_status: CANONICAL_APPROVED
+ordered: true
+gates:
+- id: gate_001
+  s_m: 3.3725996342374067
+  center_m:
+  - 24.001230542362737
+  - 2.2986877548722693
+  yaw_rad: 0.0
+  width_m: 0.9144
+  endpoints_m:
+  - - 24.001230542362737
+    - 2.755887754872269
+  - - 24.001230542362737
+    - 1.8414877548722692
+  primitive: inner_straight_east
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 1
+- id: gate_002
+  s_m: 6.745199268474813
+  center_m:
+  - 27.373830176600144
+  - 2.298687754872269
+  yaw_rad: 0.0
+  width_m: 0.9144
+  endpoints_m:
+  - - 27.373830176600144
+    - 2.7558877548722687
+  - - 27.373830176600144
+    - 1.8414877548722688
+  primitive: R_00
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 2
+- id: gate_003
+  s_m: 10.12209738756124
+  center_m:
+  - 30.728183266129587
+  - 2.635829629933239
+  yaw_rad: 0.2003447029022336
+  width_m: 0.9144
+  endpoints_m:
+  - - 30.637197196793345
+    - 3.0838847327796866
+  - - 30.81916933546583
+    - 2.1877745270867917
+  primitive: R_01
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 3
+- id: gate_004
+  s_m: 13.485677188764265
+  center_m:
+  - 33.91084906703645
+  - 3.6981234363710254
+  yaw_rad: 0.4439510340688384
+  width_m: 0.9144
+  endpoints_m:
+  - - 33.71447671290197
+    - 4.1110032476135725
+  - - 34.107221421170934
+    - 3.2852436251284782
+  primitive: R_02
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 4
+- id: gate_005
+  s_m: 16.620152672133816
+  center_m:
+  - 36.506884579781655
+  - 5.434857783149863
+  yaw_rad: 0.7352743263005487
+  width_m: 0.9144
+  endpoints_m:
+  - - 36.20019910187613
+    - 5.77393868447263
+  - - 36.81357005768718
+    - 5.0957768818270965
+  primitive: R_03
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 5
+- id: gate_006
+  s_m: 18.968556835357543
+  center_m:
+  - 37.983757251628916
+  - 7.249067872100866
+  yaw_rad: 1.0398094278151457
+  width_m: 0.9144
+  endpoints_m:
+  - - 37.58951015286288
+    - 7.480586910442348
+  - - 38.37800435039495
+    - 7.017548833759385
+  primitive: R_04
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 6
+- id: gate_007
+  s_m: 21.978083293046367
+  center_m:
+  - 37.21235296494188
+  - 9.816955124323872
+  yaw_rad: 2.685438505728982
+  width_m: 0.9144
+  endpoints_m:
+  - - 37.0109569378476
+    - 9.406502349609603
+  - - 37.413748992036155
+    - 10.227407899038141
+  primitive: R_05
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 7
+- id: gate_008
+  s_m: 25.148657988310696
+  center_m:
+  - 36.52850645021081
+  - 12.519947573821668
+  yaw_rad: 0.9517471806719344
+  width_m: 0.9144
+  endpoints_m:
+  - - 36.156148794433776
+    - 12.785242911481847
+  - - 36.90086410598785
+    - 12.254652236161489
+  primitive: R_05
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 8
+- id: gate_009
+  s_m: 28.294267528494203
+  center_m:
+  - 39.28878623959257
+  - 12.773852470003456
+  yaw_rad: -0.7682930315893892
+  width_m: 0.9144
+  endpoints_m:
+  - - 39.606498531160966
+    - 13.102624031709082
+  - - 38.97107394802417
+    - 12.44508090829783
+  primitive: R_06
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 9
+- id: gate_010
+  s_m: 30.11844095258032
+  center_m:
+  - 40.1554880652834
+  - 11.199593554014005
+  yaw_rad: -1.3667751261058312
+  width_m: 0.9144
+  endpoints_m:
+  - - 40.603205630705425
+    - 11.292226278321213
+  - - 39.707770499861375
+    - 11.106960829706797
+  primitive: R_07
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 10
+- id: gate_011
+  s_m: 34.02217105305446
+  center_m:
+  - 39.71071570703021
+  - 7.3880872153192225
+  yaw_rad: -2.007150798755788
+  width_m: 0.9144
+  endpoints_m:
+  - - 40.12507534558325
+    - 7.194856964224322
+  - - 39.29635606847717
+    - 7.581317466414123
+  primitive: R_08
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 11
+- id: gate_012
+  s_m: 37.503835123694984
+  center_m:
+  - 37.68102305219809
+  - 4.585126842307378
+  yaw_rad: -2.387910211555495
+  width_m: 0.9144
+  endpoints_m:
+  - - 37.99389805800952
+    - 4.251748572561886
+  - - 37.368148046386665
+    - 4.918505112052871
+  primitive: R_09
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 12
+- id: gate_013
+  s_m: 41.190064943567684
+  center_m:
+  - 34.65543176633181
+  - 2.504048105301207
+  yaw_rad: -2.6902584579361304
+  width_m: 0.9144
+  endpoints_m:
+  - - 34.85484709892325
+    - 2.092629382917983
+  - - 34.456016433740366
+    - 2.9154668276844307
+  primitive: R_10
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 13
+- id: gate_014
+  s_m: 44.872476172717704
+  center_m:
+  - 31.18080304194777
+  - 1.3118815195060591
+  yaw_rad: -2.9318864913449243
+  width_m: 0.9144
+  endpoints_m:
+  - - 31.27597951280769
+    - 0.8646977995489811
+  - - 31.085626571087847
+    - 1.7590652394631372
+  primitive: R_11
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 14
+- id: gate_015
+  s_m: 48.70749691674894
+  center_m:
+  - 27.3738297586538
+  - 0.9112303179892827
+  yaw_rad: 3.141592501657971
+  width_m: 0.9144
+  endpoints_m:
+  - - 27.373829689190572
+    - 0.45403031798928795
+  - - 27.37382982811703
+    - 1.3684303179892774
+  primitive: outer_straight_44ft
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 15
+- id: gate_016
+  s_m: 55.42558357626223
+  center_m:
+  - 20.655743099140587
+  - 0.9112313386804304
+  yaw_rad: 3.141592501657971
+  width_m: 0.9144
+  endpoints_m:
+  - - 20.655743029677357
+    - 0.45403133868043566
+  - - 20.655743168603816
+    - 1.3684313386804252
+  primitive: outer_straight_44ft
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 16
+- id: gate_017
+  s_m: 62.11869593592603
+  center_m:
+  - 13.962630739476857
+  - 0.9112323555771873
+  yaw_rad: 3.1415801920599193
+  width_m: 0.9144
+  endpoints_m:
+  - - 13.9626250420654
+    - 0.45403235561268657
+  - - 13.962636436888316
+    - 1.368432355541688
+  primitive: L_11
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 17
+- id: gate_018
+  s_m: 65.90383199483094
+  center_m:
+  - 10.20446641488787
+  - 1.3015947471217277
+  yaw_rad: 2.93460643555812
+  width_m: 0.9144
+  endpoints_m:
+  - - 10.110506609361687
+    - 0.8541538069458405
+  - - 10.298426220414052
+    - 1.749035687297615
+  primitive: L_10
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 18
+- id: gate_019
+  s_m: 69.7935728785684
+  center_m:
+  - 6.5404111642120695
+  - 2.575496546749452
+  yaw_rad: 2.6793740941055306
+  width_m: 0.9144
+  endpoints_m:
+  - - 6.336529701165612
+    - 2.1662726605623965
+  - - 6.744292627258527
+    - 2.984720432936508
+  primitive: L_09
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 19
+- id: gate_020
+  s_m: 73.54343435908086
+  center_m:
+  - 3.4918431774805
+  - 4.733550025230362
+  yaw_rad: 2.3718067154545737
+  width_m: 0.9144
+  endpoints_m:
+  - - 3.1736404149316093
+    - 4.40525314448634
+  - - 3.8100459400293905
+    - 5.061846905974384
+  primitive: L_08
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 20
+- id: gate_021
+  s_m: 77.14039364151311
+  center_m:
+  - 1.4611748119145016
+  - 7.674387448137943
+  yaw_rad: 1.978438464969857
+  width_m: 0.9144
+  endpoints_m:
+  - - 1.0414386310873112
+    - 7.4931324385393
+  - - 1.880910992741692
+    - 7.855642457736586
+  primitive: L_07
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 21
+- id: gate_022
+  s_m: 80.81151633433892
+  center_m:
+  - 1.0766905161868126
+  - 11.269786787751835
+  yaw_rad: 1.3762201754643106
+  width_m: 0.9144
+  endpoints_m:
+  - - 0.6281180131800452
+    - 11.358186728624235
+  - - 1.5252630191935799
+    - 11.181386846879436
+  primitive: L_06
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 22
+- id: gate_023
+  s_m: 82.3682070985368
+  center_m:
+  - 1.7463774263556666
+  - 12.656360695897108
+  yaw_rad: 0.8654948591264207
+  width_m: 0.9144
+  endpoints_m:
+  - - 1.3982579598742275
+    - 12.952746722991298
+  - - 2.094496892837106
+    - 12.359974668802918
+  primitive: L_05
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 23
+- id: gate_024
+  s_m: 85.60584521033134
+  center_m:
+  - 4.5769195754394945
+  - 12.60063097825232
+  yaw_rad: -0.9048671880053238
+  width_m: 0.9144
+  endpoints_m:
+  - - 4.936435646229012
+    - 12.883084575935314
+  - - 4.217403504649977
+    - 12.318177380569328
+  primitive: L_05
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 24
+- id: gate_025
+  s_m: 88.8185784135736
+  center_m:
+  - 3.983327181669411
+  - 9.848664724089094
+  yaw_rad: 3.621574241635839
+  width_m: 0.9144
+  endpoints_m:
+  - - 4.194445154016408
+    - 9.443126758231282
+  - - 3.772209209322414
+    - 10.254202689946906
+  primitive: L_04
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 25
+- id: gate_026
+  s_m: 91.79450467660033
+  center_m:
+  - 3.25588551402228
+  - 7.291848637950455
+  yaw_rad: 5.248830509695071
+  width_m: 0.9144
+  endpoints_m:
+  - - 3.6488639032810597
+    - 7.525514693627302
+  - - 2.8629071247635003
+    - 7.058182582273608
+  primitive: L_03
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 26
+- id: gate_027
+  s_m: 93.87078569571753
+  center_m:
+  - 4.543063096084005
+  - 5.670695802858968
+  yaw_rad: 5.518077371385909
+  width_m: 0.9144
+  endpoints_m:
+  - - 4.859726608935963
+    - 6.0004776392724635
+  - - 4.2263995832320465
+    - 5.340913966445473
+  primitive: L_02
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 27
+- id: gate_028
+  s_m: 97.23657961688623
+  center_m:
+  - 7.293094873278189
+  - 3.7539766510362416
+  yaw_rad: 5.830899778608655
+  width_m: 0.9144
+  endpoints_m:
+  - - 7.492901511745125
+    - 4.165205476903961
+  - - 7.093288234811253
+    - 3.342747825168522
+  primitive: L_01
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 28
+- id: gate_029
+  s_m: 100.58197324760648
+  center_m:
+  - 10.449007413038869
+  - 2.668973443523406
+  yaw_rad: 6.073188981438452
+  width_m: 0.9144
+  endpoints_m:
+  - - 10.544313636281942
+    - 3.1161295279180403
+  - - 10.353701189795796
+    - 2.2218173591287713
+  primitive: L_00
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 29
+- id: gate_030
+  s_m: 104.12155371635663
+  center_m:
+  - 13.962630176600143
+  - 2.2986877548722693
+  yaw_rad: 0.0
+  width_m: 0.9144
+  endpoints_m:
+  - - 13.962630176600143
+    - 2.755887754872269
+  - - 13.962630176600143
+    - 1.8414877548722692
+  primitive: inner_straight_west
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 30
+- id: gate_031
+  s_m: 107.46703722955654
+  center_m:
+  - 17.30811368980005
+  - 2.2986877548722693
+  yaw_rad: 0.0
+  width_m: 0.9144
+  endpoints_m:
+  - - 17.30811368980005
+    - 2.755887754872269
+  - - 17.30811368980005
+    - 1.8414877548722692
+  primitive: inner_straight_west
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 31
+- id: finish
+  s_m: 110.78755444788182
+  center_m:
+  - 20.62863090812533
+  - 2.2986877548722693
+  yaw_rad: 0.0
+  width_m: 0.9144
+  endpoints_m:
+  - - 20.62863090812533
+    - 2.755887754872269
+  - - 20.62863090812533
+    - 1.8414877548722692
+  primitive: inner_straight_east
+  kind: VIRTUAL_TOPOLOGY_GATE
+  provenance: DERIVED_FROM_LABELS
+  order: 32

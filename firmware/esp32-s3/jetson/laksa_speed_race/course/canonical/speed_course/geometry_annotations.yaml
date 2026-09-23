@@ -1,0 +1,460 @@
+dimensions:
+- id: overall_width
+  original_text: "135\u2032"
+  original_value: 135
+  original_unit: ft
+  value_si: 41.148
+  si_unit: m
+  feature_id: overall_bounds
+  source: speed_course_full.jpeg
+  provenance: DIRECT_LABEL
+  confidence: HIGH
+  approximate: false
+  reference_position_px:
+  - 1057
+  - 947
+  notes: ''
+- id: overall_height
+  original_text: "47\u2032"
+  original_value: 47
+  original_unit: ft
+  value_si: 14.325600000000001
+  si_unit: m
+  feature_id: overall_bounds
+  source: speed_course_full.jpeg
+  provenance: DIRECT_LABEL
+  confidence: HIGH
+  approximate: false
+  reference_position_px:
+  - 94
+  - 576
+  notes: ''
+- id: path_width
+  original_text: "36\u2033 wide path"
+  original_value: 36
+  original_unit: in
+  value_si: 0.9144
+  si_unit: m
+  feature_id: all_lane_segments
+  source: speed_course_full.jpeg
+  provenance: DIRECT_LABEL
+  confidence: HIGH
+  approximate: false
+  reference_position_px:
+  - 1050
+  - 237
+  notes: ''
+- id: inner_straight_44ft
+  original_text: "44\u2032 long"
+  original_value: 44
+  original_unit: ft
+  value_si: 13.411200000000001
+  si_unit: m
+  feature_id: inner_straight
+  source: speed_course_full.jpeg
+  provenance: DIRECT_LABEL
+  confidence: HIGH
+  approximate: false
+  reference_position_px:
+  - 960
+  - 796
+  notes: ''
+- id: outer_straight_44ft
+  original_text: "44\u2032 long"
+  original_value: 44
+  original_unit: ft
+  value_si: 13.411200000000001
+  si_unit: m
+  feature_id: outer_straight
+  source: speed_course_full.jpeg
+  provenance: DIRECT_LABEL
+  confidence: HIGH
+  approximate: false
+  reference_position_px:
+  - 1032
+  - 861
+  notes: ''
+- id: radius_R_00
+  original_text: "55.3\u2032 radius"
+  original_value: 55.3
+  original_unit: ft
+  value_si: 16.85544
+  si_unit: m
+  feature_id: R_00
+  source: speed_course_right_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 1441.0
+  - 788.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_R_01
+  original_text: "45.3\u2032 radius"
+  original_value: 45.3
+  original_unit: ft
+  value_si: 13.80744
+  si_unit: m
+  feature_id: R_01
+  source: speed_course_right_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 1592.5
+  - 757.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_R_02
+  original_text: "35.3\u2032 radius"
+  original_value: 35.3
+  original_unit: ft
+  value_si: 10.75944
+  si_unit: m
+  feature_id: R_02
+  source: speed_course_right_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 1727.0
+  - 695.5
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_R_03
+  original_text: "25.3\u2032 radius"
+  original_value: 25.3
+  original_unit: ft
+  value_si: 7.7114400000000005
+  si_unit: m
+  feature_id: R_03
+  source: speed_course_right_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 1819.0
+  - 615.5
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_R_04
+  original_text: "6\u2032 radius"
+  original_value: 6
+  original_unit: ft
+  value_si: 1.8288000000000002
+  si_unit: m
+  feature_id: R_04
+  source: speed_course_right_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 1826.5
+  - 513.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_R_05
+  original_text: "6\u2032 radius"
+  original_value: 6
+  original_unit: ft
+  value_si: 1.8288000000000002
+  si_unit: m
+  feature_id: R_05
+  source: speed_course_right_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 1854.5
+  - 388.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_R_06
+  original_text: "10\u2032 radius"
+  original_value: 10
+  original_unit: ft
+  value_si: 3.048
+  si_unit: m
+  feature_id: R_06
+  source: speed_course_right_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 1928.5
+  - 354.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_R_07
+  original_text: "20\u2032 radius"
+  original_value: 20
+  original_unit: ft
+  value_si: 6.096
+  si_unit: m
+  feature_id: R_07
+  source: speed_course_right_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 1940.5
+  - 471.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_R_08
+  original_text: "30\u2032 radius"
+  original_value: 30
+  original_unit: ft
+  value_si: 9.144
+  si_unit: m
+  feature_id: R_08
+  source: speed_course_right_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 1885.0
+  - 623.5
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_R_09
+  original_text: "40\u2032 radius"
+  original_value: 40
+  original_unit: ft
+  value_si: 12.192
+  si_unit: m
+  feature_id: R_09
+  source: speed_course_right_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 1772.0
+  - 740.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_R_10
+  original_text: "50\u2032 radius"
+  original_value: 50
+  original_unit: ft
+  value_si: 15.24
+  si_unit: m
+  feature_id: R_10
+  source: speed_course_right_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 1623.5
+  - 819.5
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_R_11
+  original_text: "60\u2032 radius"
+  original_value: 60
+  original_unit: ft
+  value_si: 18.288
+  si_unit: m
+  feature_id: R_11
+  source: speed_course_right_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 1453.0
+  - 854.5
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_L_00
+  original_text: "55.3\u2032 radius"
+  original_value: 55.3
+  original_unit: ft
+  value_si: 16.85544
+  si_unit: m
+  feature_id: L_00
+  source: speed_course_left_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 671.0
+  - 785.5
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_L_01
+  original_text: "45.3\u2032 radius"
+  original_value: 45.3
+  original_unit: ft
+  value_si: 13.80744
+  si_unit: m
+  feature_id: L_01
+  source: speed_course_left_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 520.0
+  - 751.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_L_02
+  original_text: "35.3\u2032 radius"
+  original_value: 35.3
+  original_unit: ft
+  value_si: 10.75944
+  si_unit: m
+  feature_id: L_02
+  source: speed_course_left_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 385.0
+  - 684.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_L_03
+  original_text: "25.3\u2032 radius"
+  original_value: 25.3
+  original_unit: ft
+  value_si: 7.7114400000000005
+  si_unit: m
+  feature_id: L_03
+  source: speed_course_left_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 292.0
+  - 606.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_L_04
+  original_text: "6\u2032 radius"
+  original_value: 6
+  original_unit: ft
+  value_si: 1.8288000000000002
+  si_unit: m
+  feature_id: L_04
+  source: speed_course_left_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 277.5
+  - 511.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_L_05
+  original_text: "6\u2032 radius"
+  original_value: 6
+  original_unit: ft
+  value_si: 1.8288000000000002
+  si_unit: m
+  feature_id: L_05
+  source: speed_course_left_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 243.5
+  - 387.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_L_06
+  original_text: "10\u2032 radius"
+  original_value: 10
+  original_unit: ft
+  value_si: 3.048
+  si_unit: m
+  feature_id: L_06
+  source: speed_course_left_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 180.5
+  - 354.5
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_L_07
+  original_text: "20\u2032 radius"
+  original_value: 20
+  original_unit: ft
+  value_si: 6.096
+  si_unit: m
+  feature_id: L_07
+  source: speed_course_left_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 174.0
+  - 467.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_L_08
+  original_text: "30\u2032 radius"
+  original_value: 30
+  original_unit: ft
+  value_si: 9.144
+  si_unit: m
+  feature_id: L_08
+  source: speed_course_left_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 228.5
+  - 613.5
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_L_09
+  original_text: "40\u2032 radius"
+  original_value: 40
+  original_unit: ft
+  value_si: 12.192
+  si_unit: m
+  feature_id: L_09
+  source: speed_course_left_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 344.0
+  - 729.5
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_L_10
+  original_text: "50\u2032 radius"
+  original_value: 50
+  original_unit: ft
+  value_si: 15.24
+  si_unit: m
+  feature_id: L_10
+  source: speed_course_left_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 496.5
+  - 804.5
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.
+- id: radius_L_11
+  original_text: "60\u2032 radius"
+  original_value: 60
+  original_unit: ft
+  value_si: 18.288
+  si_unit: m
+  feature_id: L_11
+  source: speed_course_left_detail.jpeg
+  provenance: DIRECT_LABEL
+  confidence: MEDIUM
+  approximate: false
+  reference_position_px:
+  - 665.5
+  - 845.0
+  notes: Value visually checked. Centerline reference inferred; no radius-center leader.
+    Placement fitted to full image.

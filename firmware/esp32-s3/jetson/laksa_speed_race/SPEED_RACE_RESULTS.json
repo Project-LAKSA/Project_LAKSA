@@ -4,7 +4,12 @@
   "ros_distro": "humble",
   "ubuntu_target": "22.04",
   "C0": {"status": "PASS", "evidence": "UPSTREAM_PROVENANCE.md and speed_race_upstream.repos"},
-  "C1": {"status": "BLOCKED", "reasons": ["UPSTREAM_CAPABILITY_GAP=F1TENTH_GYM_ROS_CONFIGURABLE_LAKSA_VEHICLE_PARAMETERS", "APPROVED_SPEED_COURSE_RECONSTRUCTION_NOT_FOUND"]},
+  "C1": {
+    "status": "PARTIAL",
+    "completed": ["CANONICAL_SPEED_COURSE_RECOVERED", "COURSE_VALIDATION_PASS", "THREE_LAP_AND_METRICS_CONTRACTS_PRESENT", "PHYSICAL_TOPIC_ISOLATION_STATIC_PASS"],
+    "blockers": ["UPSTREAM_CAPABILITY_GAP=F1TENTH_GYM_ROS_CONFIGURABLE_LAKSA_VEHICLE_PARAMETERS", "ROS2_HUMBLE_SIMULATOR_EXECUTION_NOT_YET_AVAILABLE"],
+    "simulation_run": "NOT_EXECUTED"
+  },
   "C2": {"status": "BLOCKED", "reason": "C1 simulator and course qualification blocked"},
   "C3": {"status": "BLOCKED", "reason": "UPSTREAM_CAPABILITY_GAP=AUTOMATIC_MAP_TO_CENTERLINE; inspected Waterloo flow documents manual map cleanup and no licensed automatic pipeline was verified"},
   "C4": {"status": "BLOCKED", "reason": "C3 frozen map/raceline unavailable"},

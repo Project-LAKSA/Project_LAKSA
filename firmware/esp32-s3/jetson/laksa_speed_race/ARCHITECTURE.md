@@ -37,7 +37,16 @@ raceline optimization, path tracking, or exploration.
 No joystick, teleop, physical actuator, ESP32, VESC, or ZED process is part of
 this competition simulation architecture.
 
-## C0 finding that blocks C1--C5
+## C1 recovered course asset
+
+The canonical, user-approved LAKSA Speed Course is now stored in
+[`course/canonical/speed_course`](course/canonical/speed_course). It has an
+explicit `speed_course_map` frame, a frozen analytic geometry hash, 135 ft by
+47 ft documented bounds, a 36-inch corridor, directed Start/Finish and ordered
+gates. The simulator ground-truth occupancy asset is still never an input to
+mapping, localization, raceline generation, or race control.
+
+## Remaining C1 upstream boundary
 
 The selected upstream `f1tenth_gym_ros` bridge accepts only
 `vehicle_params: f1tenth|f1fifth|fullscale`. Although its underlying Gym API
@@ -46,10 +55,7 @@ surface for LAKSA's wheelbase, mass, asymmetric steering constraints, or
 conservative steering bound. Creating another bridge or patching upstream
 would violate the sprint constraints.
 
-The repository also contains no approved Speed Course map, image, GeoJSON, or
-reconstruction. The user-provided envelope is retained as a provisional
-simulation requirement, not fabricated as a competition track.
-
-Therefore no C1 vehicle/course qualification or later autonomy claim is made
-until the two blockers are resolved using an upstream-supported mechanism or
-an explicitly authorized exception.
+The course-geometry blocker is closed. No C1 vehicle qualification or
+closed-loop autonomy claim is made until the simulator interface can represent
+LAKSA_PROXY_V0 through an upstream-supported mechanism or a separately scoped
+simulation-only adapter. C2--C5 remain blocked.

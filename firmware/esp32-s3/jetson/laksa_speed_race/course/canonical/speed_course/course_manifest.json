@@ -1,0 +1,103 @@
+{
+  "schema_version": "laksa-speed-race-course-manifest-v1",
+  "course_name": "LAKSA Speed Course",
+  "course_id": "speed_course",
+  "version": "1.0.0",
+  "approval_status": "CANONICAL_APPROVED",
+  "geometry_frozen": true,
+  "source_provenance": {
+    "authority_order": [
+      "competition blueprint",
+      "existing LAKSA user-approved reconstruction",
+      "explicit dimensions in recovered LAKSA artifacts"
+    ],
+    "original_blueprint_name": "Obstacle and Speed Course Blueprints.png",
+    "raw_blueprint_local_copy": "UNAVAILABLE",
+    "recovered_reference": "source/speed_course_full.jpeg",
+    "recovered_reference_role": "Speed-Course crop derived from the user-supplied blueprint; global geometry authority",
+    "recovery_status": "RECOVERED_FROM_PREEXISTING_LAKSA_WORKTREE_ARTIFACT",
+    "approved_geometry_sha256": "2c76075f838a7a1c3e0891385b27f2e6f26e641ad13068280093fda273a84858"
+  },
+  "units": {
+    "length": "m",
+    "angle": "rad",
+    "time": "s"
+  },
+  "coordinate_frame": {
+    "name": "speed_course_map",
+    "origin": "lower-left of documented outer-barrier envelope",
+    "x_axis": "right on drawing",
+    "y_axis": "up on drawing",
+    "yaw_zero": "+X",
+    "yaw_positive": "counterclockwise"
+  },
+  "overall_dimensions_m": {
+    "length": 41.148,
+    "width": 14.325600000000001
+  },
+  "track_width_m": 0.9144,
+  "start_finish": {
+    "position_m": [20.62863090812533, 2.2986877548722693],
+    "crossing_direction": "+X",
+    "line_width_m": 0.9144,
+    "requires_ordered_gates": true
+  },
+  "required_direction": {
+    "inner_straight": "+X",
+    "outer_straight": "-X"
+  },
+  "authoritative_representation": {
+    "geometry": "geometry.yaml",
+    "boundaries": "boundaries.geojson",
+    "centerline": "centerline.csv",
+    "mission": "mission.yaml",
+    "occupancy_map": "speed_course_nav2.png",
+    "occupancy_metadata": "speed_course_nav2.yaml"
+  },
+  "laksa_proxy_v0": {
+    "wheelbase_m": 0.324,
+    "body_length_m": 0.568,
+    "body_width_m": 0.296,
+    "steering_limit_rad": 0.288,
+    "min_turning_radius_m": 1.0937226373133722,
+    "max_curvature_1pm": 0.91431,
+    "asymmetric_physical_steering_preserved_in_sim_assumptions": true
+  },
+  "raceline_contract": {
+    "input": "centerline.csv with left/right clearance",
+    "upstream_input": "raceline_input.csv: x_m,y_m,width_right_m,width_left_m; no header",
+    "generator": "external pinned CL2-UWaterloo/Raceline-Optimization",
+    "output": "raceline.csv: s_m,x_m,y_m,psi_rad,curvature_1pm,target_speed_mps,target_acceleration_mps2",
+    "status": "UPSTREAM_GENERATION_PENDING"
+  },
+  "generation": {
+    "tool": "course/scripts/rebuild_speed_course.py",
+    "tool_version": "recovered-a045-canonical-generator",
+    "manual_gui_point_editing": false
+  },
+  "source_files": {
+    "speed_course_full.jpeg": "222c897f6835a4877318cfd0ac7d76be98b7173faaeec44e028814ca3c6eb13e",
+    "speed_course_left_detail.jpeg": "3bcb86b2ce65b706fad0b073df9caf2cd508f93e903c5eed028b331142591926",
+    "speed_course_right_detail.jpeg": "20197fcc9a20f10152fd912459e148965b6a7f61d7795e8845fd0b3d336f18b6"
+  },
+  "generated_asset_sha256": {
+    "approval.yaml": "30d8aa03ad694fde586990cbea396591319568ee059ddf1c1f3585299e3a3493",
+    "boundaries.geojson": "39570a1306e9c51883491eea40caf4ba63ecce0c7b2ce5559dc7155cbd589db1",
+    "boundary_primitives.yaml": "b942df47ccc86f16de652a6487df8b91cdfc7f79ece311e1c4dae96a0b620dc3",
+    "centerline.csv": "3c0cc2ea3c07a9c488237163a9a064d469d059fec06a45e77b005608b95af282",
+    "centerline.geojson": "8330201614226f57573b0eca4c3eedc5e93600e0b767c2703d27f9ecb44ede1f",
+    "checkpoints.yaml": "2e9de846c1af2c393dcdf0d54e23312686b16801dc3ed80749e0687a9f6ec1f1",
+    "geometry.yaml": "2c76075f838a7a1c3e0891385b27f2e6f26e641ad13068280093fda273a84858",
+    "geometry_annotations.yaml": "7074ed8b39649df268e5043e93fd41fd75634a8ae356404289793e2a4dcf5721",
+    "mission.yaml": "4f36db08ccbba396c8ccaf76ece6f8228c187b0824fcdf2888708f8519f37580",
+    "rectified_source.png": "074bd1beb9d680aceca6e67503e916f039e1ce626063095c88dcfa0f960c1ab9",
+    "raceline_input.csv": "6c3147d5013ad2a2446b0116b27ea844f2112156dcd606d8078ad9a0140ab645",
+    "source_metadata.yaml": "4b62517d8cf5adae06d53a0064c02571231c7b699881b2f611d1d33656248959",
+    "speed_course_hires.png": "0fcdf875051df2230d96fba540b96355a2da5708eb131723d1065606d2a10815",
+    "speed_course_hires.yaml": "e7b0809ae826906d8d1bfaaf6668e939cdd503c6d8fbe2bb6d215a4d64e96a14",
+    "speed_course_nav2.png": "58e21de2b840b6eb5cf86a9e3a86ef48f7e7756b7ebd934a08d136208d995db3",
+    "speed_course_nav2.yaml": "7bf75c7c91e4847357942f11bdc7fadc5a42bb017fc7b2a434584df71e6580e6",
+    "validation_overlay.html": "50077289ae6bd5f6c8cdb722cc3ea147e92770ca40e05014f587d45c993db2bf",
+    "validation_report.json": "68bc3e33d2987b84990c09b17b60214e72f887e6ca910e682ae194f35bdd94ea"
+  }
+}
