@@ -15,6 +15,7 @@ install(PROGRAMS
   scripts/lidar_cruise_node.py
   scripts/lidar_rollout_core.py
   scripts/lidar_watchdog_node.py
+  scripts/state_measurements_node.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -29,6 +30,7 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_release_safety_contract test/test_release_safety_contract.py)
   ament_add_pytest_test(test_zed_configuration test/test_zed_configuration.py)
   ament_add_pytest_test(test_canonical_runtime_modes test/test_canonical_runtime_modes.py)
+  ament_add_pytest_test(test_mapping_runtime_packaging test/test_mapping_runtime_packaging.py)
 endif()
 
 ament_package()
