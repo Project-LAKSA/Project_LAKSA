@@ -92,7 +92,9 @@ def build_safe_mask_reference(data: list[int], width: int, height: int, resoluti
         for column in range(width):
             source_index = row * width + column
             cost = data[source_index]
-            if cost >= 0 and cost < 99 and squared[row + 1][column + 1] + 1.0e-12 >= threshold:
+            # Keep the pure-Python fallback conservative at the exact
+            # clearance boundary, like the optional SciPy implementation.
+            if cost >= 0 and cost < 99 and squared[row + 1][column + 1] > threshold + 1.0e-12:
                 packed[source_index >> 3] |= 1 << (source_index & 7)
                 safe_cells += 1
     return bytes(packed), safe_cells

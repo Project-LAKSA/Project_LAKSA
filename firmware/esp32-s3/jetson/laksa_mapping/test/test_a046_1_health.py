@@ -112,6 +112,7 @@ class A0461HealthTest(unittest.TestCase):
     def test_single_mapper_no_shadow_or_motion_runtime(self):
         launch = (ROOT / "launch/mapping_stack.launch.py").read_text()
         dashboard = (ROOT.parent / "laksa_dashboard/laksa_dashboard/cockpit_server.py").read_text()
+        measurements = (ROOT.parent / "laksa_bringup/scripts/state_measurements_node.py").read_text()
         ui = (ROOT.parent / "laksa_dashboard/web/index.html").read_text()
         self.assertEqual(launch.count('package="rtabmap_slam"'), 2)
         self.assertEqual(launch.count('plugin="rtabmap_slam::CoreWrapper"'), 1)
@@ -120,8 +121,11 @@ class A0461HealthTest(unittest.TestCase):
         self.assertNotIn("mapping_shadow", launch + dashboard)
         for value in ("SIDE BY SIDE", "DIFFERENCE OVERLAY", "A/B verdict"):
             self.assertNotIn(value, ui)
-        for value in ("cmd_vel", "AckermannDrive", "DriveCommand", "VESC"):
+        for value in ("cmd_vel", "AckermannDrive", "DriveCommand"):
             self.assertNotIn(value, launch + dashboard)
+            self.assertNotIn(value, measurements)
+        self.assertIn('executable="state_measurements_node.py"', launch)
+        self.assertIn('Odometry, "/laksa/vesc_odom"', measurements)
 
 
 if __name__ == "__main__":

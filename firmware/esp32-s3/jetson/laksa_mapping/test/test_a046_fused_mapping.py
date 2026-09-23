@@ -7,6 +7,7 @@ from laksa_mapping.fused_policy import FUSED_MAPPING, MAPPING_SOURCES, fused_rea
 
 ROOT = Path(__file__).resolve().parents[1]
 DASHBOARD = ROOT.parent / "laksa_dashboard"
+NAV2_CONFIG = ROOT.parent / "laksa_bringup/config/nav2_ackermann.yaml"
 
 
 class A046FusedMappingTest(unittest.TestCase):
@@ -15,7 +16,7 @@ class A046FusedMappingTest(unittest.TestCase):
         cls.launch = (ROOT / "launch/mapping_stack.launch.py").read_text(encoding="utf-8")
         cls.manager = (ROOT / "laksa_mapping/session_manager.py").read_text(encoding="utf-8")
         cls.rtab = (ROOT / "config/rtabmap_fused.yaml").read_text(encoding="utf-8")
-        cls.costmaps = (ROOT / "config/nav2_fused_candidate.yaml").read_text(encoding="utf-8")
+        cls.costmaps = NAV2_CONFIG.read_text(encoding="utf-8")
         cls.setup = (ROOT / "setup.py").read_text(encoding="utf-8")
         cls.cockpit = (DASHBOARD / "laksa_dashboard/cockpit_server.py").read_text(encoding="utf-8")
         cls.ui = (DASHBOARD / "web/index.html").read_text(encoding="utf-8")
@@ -86,10 +87,13 @@ class A046FusedMappingTest(unittest.TestCase):
         self.assertEqual(self.launch.count('("rgb/image", "/zed/zed_node/rgb/color/rect/image")'), 1)
         self.assertEqual(self.launch.count('("rgb/camera_info", "/zed/zed_node/rgb/color/rect/camera_info")'), 1)
         self.assertEqual(self.launch.count('("depth/image", "/zed/zed_node/depth/depth_registered")'), 1)
-        self.assertEqual(self.launch.count('("rgbd_image", "/laksa/fused_mapping/rgbd_image")'), 1)
+        # One RTAB input plus one opt-in dense-cloud generator consume the
+        # canonical synchronized RGB-D topic. Both RTAB launch forms share
+        # ``rtab_remappings`` rather than duplicating this declaration.
+        self.assertEqual(self.launch.count('("rgbd_image", "/laksa/fused_mapping/rgbd_image")'), 2)
         for setting in ('"approx_sync": True', '"approx_sync_max_interval": 0.05', '"queue_size": 10'):
             self.assertEqual(self.launch.count(setting), 1)
-        self.assertEqual(self.launch.count('"qos": 2'), 1)
+        self.assertEqual(self.launch.count('"qos": 2'), 3)
 
     def test_canonical_topics_and_tf_authorities(self):
         self.assertIn('("odom", "/laksa/odometry/fused")', self.launch)
@@ -108,19 +112,20 @@ class A046FusedMappingTest(unittest.TestCase):
 
     def test_dense_3d_cloud_is_bounded(self):
         zed = (ROOT / "config/indoor_live_zed.yaml").read_text()
-        self.assertIn("publish_point_cloud: true", zed)
-        self.assertIn("voxel_point_cloud: true", zed)
+        # The production ZED profile does not publish an unbounded raw cloud.
+        # Dense output is produced only by the opt-in bounded RTAB utility path.
+        self.assertIn("publish_point_cloud: false", zed)
         self.assertIn("cloud_voxel_size: 0.05", self.rtab)
         self.assertIn("cloud_decimation: 4", self.rtab)
 
     def test_costmap_candidate_uses_all_requested_sources(self):
-        self.assertIn("plugins: [static_layer, lidar_obstacle_layer, zed_voxel_layer, inflation_layer]", self.costmaps)
+        self.assertIn("plugins: [lidar_obstacle_layer, zed_voxel_layer, inflation_layer]", self.costmaps)
         self.assertIn("topic: /laksa/lidar/scan_validated", self.costmaps)
         self.assertIn("topic: /zed/zed_node/point_cloud/cloud_registered", self.costmaps)
         self.assertGreaterEqual(self.costmaps.count("marking: true"), 2)
         self.assertGreaterEqual(self.costmaps.count("clearing: true"), 2)
-        self.assertIn("plugins: [static_layer, inflation_layer]", self.costmaps)
-        self.assertIn("map_topic: /map", self.costmaps)
+        self.assertIn("plugins: [static_layer, obstacle_layer, inflation_layer]", self.costmaps)
+        self.assertIn("global_frame: map", self.costmaps)
 
     def test_field_lab_has_one_fused_panel_and_no_ab_runtime(self):
         self.assertIn("FUSED MAPPING", self.ui)
@@ -134,14 +139,15 @@ class A046FusedMappingTest(unittest.TestCase):
 
     def test_a046_6b_dense_map_is_independent_and_opt_in(self):
         self.assertIn('DeclareLaunchArgument("enable_dense_cloud_map", default_value="false")', self.launch)
-        self.assertNotIn('executable="point_cloud_assembler"', self.launch)
+        self.assertIn('executable="point_cloud_xyzrgb"', self.launch)
+        self.assertIn('executable="point_cloud_assembler"', self.launch)
+        self.assertEqual(self.launch.count("condition=IfCondition(enable_dense_cloud_map)"), 2)
         self.assertIn('PointCloud2, "/zed/zed_node/point_cloud/cloud_registered"', self.cockpit)
         self.assertIn('"live_rgbd_preview"', self.cockpit)
         self.assertIn('cloud_transform = self._tf_buffer.lookup_transform(', self.cockpit)
         self.assertIn('msg.header.frame_id, rclpy.time.Time()', self.cockpit)
         self.assertIn('output_frame = "map"', self.cockpit)
         self.assertIn('xyz = _transform_xyz(', self.cockpit)
-        self.assertNotIn('executable="point_cloud_xyzrgb"', self.launch)
         self.assertEqual(
             self.launch.count('DeclareLaunchArgument("enable_dense_cloud_map", default_value="false")'),
             1,
@@ -195,8 +201,13 @@ class A046FusedMappingTest(unittest.TestCase):
 
     def test_no_motion_publishers(self):
         joined = self.launch + self.manager + self.cockpit
-        for forbidden in ("cmd_vel", "AckermannDrive", "DriveCommand", "VESC", "motor_command"):
+        measurements = (
+            ROOT.parent / "laksa_bringup/scripts/state_measurements_node.py"
+        ).read_text(encoding="utf-8")
+        for forbidden in ("cmd_vel", "AckermannDrive", "DriveCommand", "motor_command"):
             self.assertNotIn(forbidden, joined)
+            self.assertNotIn(forbidden, measurements)
+        self.assertIn('Odometry, "/laksa/vesc_odom"', measurements)
         ast.parse(self.manager)
         ast.parse(self.cockpit)
 

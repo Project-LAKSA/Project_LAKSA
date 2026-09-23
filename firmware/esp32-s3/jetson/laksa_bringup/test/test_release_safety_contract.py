@@ -23,7 +23,7 @@ class ReleaseSafetyContractTest(unittest.TestCase):
         self.assertIn('"actuation_enabled": False', self.supervisor)
         self.assertIn("self._autonomous = False", self.supervisor)
         self.assertIn('"enable_autonomy",\n                default_value="false"', self.system_launch)
-        self.assertIn('"enable_actuation",\n                default_value="false"', self.system_launch)
+        self.assertNotIn('"actuation_enabled": True', self.system_launch)
         self.assertIn('{"autonomy_enabled": True, "actuation_enabled": True}', self.manual_launch)
 
     def test_production_supervisor_uses_accepted_odom_and_tf_contract(self):

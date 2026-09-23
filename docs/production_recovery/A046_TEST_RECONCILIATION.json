@@ -1,0 +1,90 @@
+{
+  "start_head": "6050c8585aa1043196676414911c1387b03c09c3",
+  "failing_tests_before": [
+    "A046FusedMappingTest.setUpClass",
+    "A0461HealthTest.test_shutdown_calls_are_idempotent",
+    "A0461HealthTest.test_single_mapper_no_shadow_or_motion_runtime",
+    "A046FusedMappingTest.test_no_motion_publishers",
+    "ShadowMappingTest.test_default_and_output_namespaces_are_isolated",
+    "A046FusedMappingTest.test_dense_3d_cloud_is_bounded",
+    "A046FusedMappingTest.test_a046_6b_dense_map_is_independent_and_opt_in",
+    "A046FusedMappingTest.test_legacy_and_composed_topologies_share_parameters_and_remaps",
+    "ReleaseSafetyContractTest.test_autonomy_and_actuation_are_opt_in",
+    "MappingImmutabilityTest.test_mapping_inputs_and_behavior_are_bit_identical",
+    "SafeGoalMaskTest.test_clearance_threshold_is_conservative"
+  ],
+  "classifications": {
+    "PRODUCTION_IMPLEMENTATION_DEFECT": 2,
+    "RESTORATION_IMPLEMENTATION_DEFECT": 0,
+    "TEST_EXPECTATION_STALE": 9,
+    "TEST_FIXTURE_STALE": 1,
+    "TEST_ENVIRONMENT_DEFECT": 7,
+    "UNKNOWN": 0
+  },
+  "test_files_modified": [
+    "laksa_mapping/test/test_a046_fused_mapping.py",
+    "laksa_mapping/test/test_a046_1_health.py",
+    "laksa_mapping/test/test_shadow_mapping.py",
+    "laksa_bringup/test/test_release_safety_contract.py",
+    "laksa_dashboard/test/test_mapping_immutability.py"
+  ],
+  "fixture_files_modified": [],
+  "production_files_modified": [
+    "laksa_mapping/laksa_mapping/fused_policy.py",
+    "laksa_mapping/laksa_mapping/health_model.py",
+    "laksa_bringup/scripts/state_measurements_node.py",
+    "laksa_mapping/laksa_mapping/zed_base_pose_adapter.py",
+    "laksa_dashboard/laksa_dashboard/safe_goal_mask.py"
+  ],
+  "restored_files": [
+    {
+      "path": "laksa_mapping/laksa_mapping/fused_policy.py",
+      "provenance": "TEST_DERIVED"
+    },
+    {
+      "path": "laksa_mapping/laksa_mapping/health_model.py",
+      "provenance": "TEST_DERIVED"
+    },
+    {
+      "path": "laksa_bringup/scripts/state_measurements_node.py",
+      "provenance": "EXACT_HISTORICAL",
+      "source": "990bc16d7711c4f6a5597a552af68d3cd36e5224:firmware/esp32-s3/jetson/laksa_bringup/scripts/state_measurements_node.py",
+      "sha256": "9ddd2b6db492095926e8fbf7e2eef93a6e815c50de58ed6a149170fcb54426b9"
+    }
+  ],
+  "tests_after": {
+    "laksa_mapping": "38/38 PASS",
+    "laksa_bringup": "31/31 PASS",
+    "laksa_lidar": "14/14 PASS",
+    "laksa_dashboard": "PASS in isolated ROS 2 Humble qualification; test_final_ply.py 2/2 PASS",
+    "isolated_jetson_pytest": "146 passed"
+  },
+  "architecture_invariants": {
+    "topology": "MULTIMODAL_FUSED",
+    "lidar_to_rtab": "/laksa/lidar/scan_validated",
+    "rgbd_to_rtab": true,
+    "grid_sensor": 2,
+    "rtab_odom": "/laksa/odometry/fused",
+    "ekf_output": "/laksa/odometry/fused",
+    "map_odom_owner": "RTAB_MAP",
+    "odom_base_owner": "ROBOT_LOCALIZATION_EKF",
+    "characterization_runtime_files_remaining": 0,
+    "characterization_production_hooks_remaining": 0
+  },
+  "ros_qualification": {
+    "host": "ubuntu@192.168.55.1",
+    "workspace": "/tmp/laksa-offline-humble",
+    "ros_distro": "humble",
+    "dependency_overlays": [
+      "/home/ubuntu/zed_ws/install/setup.bash",
+      "/home/ubuntu/third_party/third_party_ws/install/setup.bash"
+    ],
+    "production_laksa_overlay_sourced": false,
+    "build": "PASS: five selected packages",
+    "colcon_test": "PASS: 39 tests, 0 errors, 0 failures, 0 skipped",
+    "test_final_ply": "PASS: 2 passed",
+    "explicit_python_suites": "PASS: 146 passed"
+  },
+  "security_review": "PASS",
+  "final_commit": "This commit; resolve from production/laksa-mainline history after publication."
+}

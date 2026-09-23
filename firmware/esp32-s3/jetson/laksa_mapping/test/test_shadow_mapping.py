@@ -1,6 +1,7 @@
 import unittest
 from pathlib import Path
 
+from laksa_mapping.fused_policy import FUSED_MAPPING
 from laksa_mapping.shadow_policy import HYBRID_SHADOW, ZED_ONLY, hybrid_ready, output_prefix
 
 
@@ -8,9 +9,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ShadowMappingTest(unittest.TestCase):
-    def test_default_and_output_namespaces_are_isolated(self):
+    def test_production_default_is_fused_and_shadow_namespaces_are_isolated(self):
         manager = (ROOT / "laksa_mapping" / "session_manager.py").read_text(encoding="utf-8")
-        self.assertIn('declare_parameter("mapping_source", ZED_ONLY)', manager)
+        self.assertIn('declare_parameter("mapping_source", FUSED_MAPPING)', manager)
+        self.assertNotIn("ZED_ONLY", manager)
         self.assertEqual(output_prefix(ZED_ONLY), "/zed_rtabmap")
         self.assertEqual(output_prefix(HYBRID_SHADOW), "/laksa/mapping_shadow")
 
