@@ -8,6 +8,7 @@ executable from its package install rule.
 from __future__ import annotations
 
 import ast
+import os
 import re
 from pathlib import Path
 
@@ -60,6 +61,10 @@ def test_fused_mapping_launch_packages_every_laksa_executable() -> None:
     }
 
     assert "state_measurements_node.py" in _bringup_installed_programs()
+    state_measurements = JETSON_ROOT / "laksa_bringup" / "scripts" / "state_measurements_node.py"
+    assert os.access(state_measurements, os.X_OK), (
+        "state_measurements_node.py must be executable so install(PROGRAMS) and ros2 can resolve it"
+    )
 
     mapping_setup = MAPPING_SETUP.read_text(encoding="utf-8")
     assert re.search(
