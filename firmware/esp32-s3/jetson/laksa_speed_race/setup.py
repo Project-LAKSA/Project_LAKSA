@@ -11,13 +11,21 @@ def course_data_files():
     files = []
     for path in sorted((ROOT / "course").rglob("*")):
         if path.is_file() and "__pycache__" not in path.parts:
-            files.append((str(Path("share") / PACKAGE_NAME / path.parent.relative_to(ROOT)), [str(path)]))
+            files.append(
+                (
+                    str(Path("share") / PACKAGE_NAME / path.parent.relative_to(ROOT)),
+                    [str(path.relative_to(ROOT))],
+                )
+            )
     return files
 
 
 def directory_data_files(directory):
     return [
-        (str(Path("share") / PACKAGE_NAME / directory), [str(path)])
+        (
+            str(Path("share") / PACKAGE_NAME / directory),
+            [str(path.relative_to(ROOT))],
+        )
         for path in sorted((ROOT / directory).glob("*"))
         if path.is_file()
     ]
