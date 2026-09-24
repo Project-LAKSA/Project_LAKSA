@@ -93,8 +93,11 @@ def write_outputs(output_dir: Path, source_track: np.ndarray, raceline: np.ndarr
     output_dir.mkdir(parents=True, exist_ok=True)
 
     map_yaml = {
-        "image": "speed_course_nav2.png",
-        "resolution": 0.05,
+        # Gym collision checks need the already-versioned 0.02 m canonical
+        # raster.  The 0.05 m Nav2 raster can consume 25 mm of the legal lane
+        # at a cell boundary and produced a false collision in C1 qualification.
+        "image": "speed_course_hires.png",
+        "resolution": 0.02,
         "origin": [0.0, 0.0, 0.0],
         "negate": 0,
         "occupied_thresh": 0.65,

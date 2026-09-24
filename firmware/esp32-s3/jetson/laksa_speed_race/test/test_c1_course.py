@@ -2,6 +2,8 @@
 
 import unittest
 from pathlib import Path
+
+import yaml
 import csv
 
 from laksa_speed_race.c1_contract import (
@@ -16,9 +18,15 @@ from laksa_speed_race.three_lap_gate import MissionState, ThreeLapGate
 
 
 ROOT = Path(__file__).resolve().parents[1]
+COURSE = ROOT / "course" / "canonical" / "speed_course"
 
 
 class C1CourseTests(unittest.TestCase):
+    def test_gym_uses_canonical_high_resolution_raster(self):
+        map_config = yaml.safe_load((COURSE / "speed_course_map.yaml").read_text())
+        self.assertEqual(map_config["image"], "speed_course_hires.png")
+        self.assertEqual(map_config["resolution"], 0.02)
+
     def test_recovered_course_contract(self):
         result = validate(ROOT / "course")
         self.assertEqual(result["status"], "PASS")
