@@ -14,6 +14,8 @@ import hashlib
 import json
 import math
 import os
+import platform
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -279,6 +281,7 @@ def main(args: list[str] | None = None) -> None:
         def __init__(self):
             super().__init__("c1_gym_adapter")
             share = Path(get_package_share_directory("laksa_speed_race"))
+            self.share = share
             course_dir = share / "course" / "canonical" / "speed_course"
             self.course_dir = course_dir
             self.declare_parameter("output_dir", "/tmp/laksa-c1-results/official")
@@ -286,6 +289,7 @@ def main(args: list[str] | None = None) -> None:
             if int(self.get_parameter("max_laps").value) != MAX_LAPS:
                 raise ValueError("C1 max_laps is frozen at exactly 3")
             self.output_dir = Path(self.get_parameter("output_dir").value)
+            self.started_at_utc = datetime.now(timezone.utc).isoformat()
             env, observation = create_gym_environment(course_dir)
             envelope = CourseEnvelope(
                 course_dir / "centerline.csv",
@@ -391,12 +395,21 @@ def main(args: list[str] | None = None) -> None:
                 "course_source_sha256": "222c897f6835a4877318cfd0ac7d76be98b7173faaeec44e028814ca3c6eb13e",
                 "course_geometry_sha256": "2c76075f838a7a1c3e0891385b27f2e6f26e641ad13068280093fda273a84858",
                 "raceline_file_sha256": _sha256(self.course_dir / "speed_course_raceline.csv"),
-                "controller_config_sha256": _sha256(share / "config" / "c1_pure_pursuit.yaml"),
-                "proxy_config_sha256": _sha256(share / "config" / "laksa_proxy_v0.yaml"),
+                "controller_config_sha256": _sha256(self.share / "config" / "c1_pure_pursuit.yaml"),
+                "proxy_config_sha256": _sha256(self.share / "config" / "laksa_proxy_v0.yaml"),
                 "seed": SEED,
                 "dt_s": DT_S,
                 "dynamics_model": "KS",
                 "max_laps": MAX_LAPS,
+                "started_at_utc": self.started_at_utc,
+                "ended_at_utc": datetime.now(timezone.utc).isoformat(),
+                "runtime_environment": {
+                    "execution_path": "NATIVE_HUMBLE",
+                    "ros_distro": os.environ.get("ROS_DISTRO", "UNKNOWN"),
+                    "python_version": platform.python_version(),
+                    "machine": platform.machine(),
+                },
+                "shutdown_state": "REQUESTED_AFTER_EVIDENCE_FLUSH",
             }
             persist_run(
                 self.output_dir,

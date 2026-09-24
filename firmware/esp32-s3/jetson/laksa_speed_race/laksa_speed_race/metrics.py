@@ -148,6 +148,13 @@ class C1Metrics:
             "final_requested_command": final_requested_command,
             "final_applied_command": final_applied_command,
             "steps_after_terminal": steps_after_terminal,
+            "requested_speed_min_mps": min(self.speed_commands_mps, default=None),
+            "requested_speed_mean_mps": (
+                sum(self.speed_commands_mps) / len(self.speed_commands_mps)
+                if self.speed_commands_mps
+                else None
+            ),
+            "requested_speed_max_mps": max(self.speed_commands_mps, default=None),
         }
         if metadata:
             result.update(metadata)

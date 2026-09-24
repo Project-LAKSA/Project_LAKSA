@@ -1,6 +1,7 @@
 """Atomic Gym-step and three-lap terminal behavior without ROS."""
 
 import unittest
+from pathlib import Path
 
 from laksa_speed_race.gym_adapter_node import Command, GymStepAuthority
 from laksa_speed_race.metrics import C1Metrics
@@ -38,6 +39,13 @@ class FakeGym:
 
 
 class RuntimeGateTests(unittest.TestCase):
+    def test_terminal_metadata_uses_persisted_package_share(self):
+        source = Path(__file__).resolve().parents[1] / "laksa_speed_race" / "gym_adapter_node.py"
+        text = source.read_text()
+        self.assertIn("self.share = share", text)
+        self.assertIn('_sha256(self.share / "config" / "c1_pure_pursuit.yaml")', text)
+        self.assertNotIn('_sha256(share / "config" / "c1_pure_pursuit.yaml")', text)
+
     def test_exactly_three_steps_laps_and_terminal_zero(self):
         env = FakeGym()
         authority = GymStepAuthority(env, AlwaysInside(), C1Metrics(seed=12345))

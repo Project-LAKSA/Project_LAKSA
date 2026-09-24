@@ -50,8 +50,10 @@ class MetricsTests(unittest.TestCase):
             self.assertEqual(summary["cte_pass_threshold"], "UNSET")
             self.assertTrue((Path(directory) / "trajectory.csv").is_file())
             self.assertTrue((Path(directory) / "commands.csv").is_file())
+            self.assertTrue((Path(directory) / "events.csv").is_file())
             loaded = json.loads((Path(directory) / "summary.json").read_text())
             self.assertEqual(loaded["completed_laps"], 3)
+            self.assertEqual(loaded["acceptance"]["invalid_commands"], "PASS")
 
 
 if __name__ == "__main__":

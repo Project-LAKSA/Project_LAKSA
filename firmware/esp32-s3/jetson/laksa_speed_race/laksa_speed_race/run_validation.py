@@ -63,6 +63,57 @@ def persist_run(
             "applied_steering_rad", "applied_speed_mps", "mission_state",
         ],
     )
+    events: list[dict[str, object]] = []
+    previous_lap = 0
+    collision_active = False
+    off_track_active = False
+    for row in metrics.trajectory_rows:
+        lap_count = int(row["lap_count"])
+        if lap_count > previous_lap:
+            events.append(
+                {
+                    "step": row["step"],
+                    "sim_time_s": row["sim_time_s"],
+                    "event": "lap_complete",
+                    "value": lap_count,
+                }
+            )
+            previous_lap = lap_count
+        collision = bool(row["collision"])
+        if collision and not collision_active:
+            events.append(
+                {
+                    "step": row["step"],
+                    "sim_time_s": row["sim_time_s"],
+                    "event": "collision_edge",
+                    "value": 1,
+                }
+            )
+        collision_active = collision
+        off_track = bool(row["off_track"])
+        if off_track and not off_track_active:
+            events.append(
+                {
+                    "step": row["step"],
+                    "sim_time_s": row["sim_time_s"],
+                    "event": "off_track_edge",
+                    "value": 1,
+                }
+            )
+        off_track_active = off_track
+    events.append(
+        {
+            "step": metrics.simulator_steps,
+            "sim_time_s": sim_time_s,
+            "event": "terminal_state",
+            "value": gate.state.value if gate.fault is None else f"{gate.state.value}:{gate.fault}",
+        }
+    )
+    _write_csv(
+        output_dir / "events.csv",
+        events,
+        ["step", "sim_time_s", "event", "value"],
+    )
     return summary
 
 
@@ -74,6 +125,7 @@ def validate_summary(summary: dict[str, object]) -> dict[str, str]:
         "collision": "PASS" if summary.get("collision_edges") == 0 else "FAIL",
         "off_track": "PASS" if summary.get("off_track_events") == 0 else "FAIL",
         "reverse": "PASS" if summary.get("reverse_command_events") == 0 else "FAIL",
+        "invalid_commands": "PASS" if summary.get("invalid_command_events") == 0 else "FAIL",
         "steering": "PASS" if float(summary.get("max_abs_steering_rad", 99.0)) <= 0.288 else "FAIL",
         "terminal_zero": "PASS"
         if summary.get("final_applied_command") == {"steering_rad": 0.0, "speed_mps": 0.0}
