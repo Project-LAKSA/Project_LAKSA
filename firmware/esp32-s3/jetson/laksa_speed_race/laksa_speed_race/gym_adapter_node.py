@@ -317,6 +317,7 @@ def main(args: list[str] | None = None) -> None:
             self.readiness_ticks = 0
             self.initial_odom_sent = False
             self.readiness_timer = self.create_timer(0.05, self.publish_readiness)
+            self.shutdown_timer = None
 
         def publish_applied(self, command: Command) -> None:
             message = AckermannDriveStamped()
@@ -423,9 +424,13 @@ def main(args: list[str] | None = None) -> None:
                 },
                 final_applied_command={"steering_rad": 0.0, "speed_mps": 0.0},
             )
-            self.create_timer(0.2, self.shutdown_once)
+            # Keep the timer alive until it fires; otherwise rclpy may collect
+            # it after this callback and leave the launch graph orphaned.
+            self.shutdown_timer = self.create_timer(0.2, self.shutdown_once)
 
         def shutdown_once(self) -> None:
+            if self.shutdown_timer is not None:
+                self.shutdown_timer.cancel()
             if rclpy.ok():
                 rclpy.shutdown()
 

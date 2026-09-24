@@ -46,6 +46,12 @@ class RuntimeGateTests(unittest.TestCase):
         self.assertIn('_sha256(self.share / "config" / "c1_pure_pursuit.yaml")', text)
         self.assertNotIn('_sha256(share / "config" / "c1_pure_pursuit.yaml")', text)
 
+    def test_terminal_shutdown_timer_is_retained(self):
+        source = Path(__file__).resolve().parents[1] / "laksa_speed_race" / "gym_adapter_node.py"
+        text = source.read_text()
+        self.assertIn("self.shutdown_timer = self.create_timer(0.2, self.shutdown_once)", text)
+        self.assertNotIn("\n            self.create_timer(0.2, self.shutdown_once)", text)
+
     def test_exactly_three_steps_laps_and_terminal_zero(self):
         env = FakeGym()
         authority = GymStepAuthority(env, AlwaysInside(), C1Metrics(seed=12345))
