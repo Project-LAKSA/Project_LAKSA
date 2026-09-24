@@ -30,6 +30,18 @@ OUTPUT_NAMES = (
     "speed_course_raceline.csv",
     "pure_pursuit_raceline.csv",
 )
+# The pinned optimizer differs by up to 1e-9 between x86_64 and ARM64 for a
+# handful of samples.  Eight decimal places retain sub-micrometre resolution
+# while making the checked-in derived trajectory byte-reproducible across the
+# two qualification architectures.  Authoritative source geometry is not
+# quantized by this policy.
+DERIVED_OUTPUT_DECIMAL_PLACES = 8
+
+
+def format_derived_value(value: float) -> str:
+    """Serialize optimizer-derived values at the cross-platform precision."""
+
+    return f"{value:.{DERIVED_OUTPUT_DECIMAL_PLACES}f}"
 
 
 def sha256(path: Path) -> str:
@@ -104,12 +116,12 @@ def write_outputs(output_dir: Path, source_track: np.ndarray, raceline: np.ndarr
         stream.write("# source: canonical speed_course centerline; speed fixed at 1.0 m/s\n")
         stream.write("# s_m; x_m; y_m; psi_rad; kappa_radpm; vx_mps; ax_mps2\n")
         for row in raceline:
-            stream.write("; ".join(f"{value:.9f}" for value in row) + "\n")
+            stream.write("; ".join(format_derived_value(value) for value in row) + "\n")
 
     with (output_dir / "pure_pursuit_raceline.csv").open("w", newline="") as stream:
         writer = csv.writer(stream, lineterminator="\n")
         for row in raceline:
-            writer.writerow((f"{row[1]:.9f}", f"{row[2]:.9f}", f"{row[5]:.9f}"))
+            writer.writerow(tuple(format_derived_value(value) for value in (row[1], row[2], row[5])))
 
     return {name: sha256(output_dir / name) for name in OUTPUT_NAMES}
 
@@ -208,6 +220,7 @@ def update_manifest(course_dir: Path, result: dict[str, object]) -> None:
             "upstream_raceline_sha": "9290c5d503462e46f7e3e9033002e7ddf165ba7b",
             "trajectory_helpers_sha": "fde6cee2b7bf6dd7d0f8f3d32f6a1be3cfe35b56",
             "maximum_abs_curvature_1pm": result["maximum_abs_curvature_1pm"],
+            "derived_output_decimal_places": DERIVED_OUTPUT_DECIMAL_PLACES,
         }
     )
     manifest["generated_asset_sha256"].update(result["hashes"])
