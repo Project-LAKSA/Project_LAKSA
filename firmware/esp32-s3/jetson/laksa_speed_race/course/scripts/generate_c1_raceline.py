@@ -31,11 +31,11 @@ OUTPUT_NAMES = (
     "pure_pursuit_raceline.csv",
 )
 # The pinned optimizer differs by up to 1e-9 between x86_64 and ARM64 for a
-# handful of samples.  Eight decimal places retain sub-micrometre resolution
+# handful of samples.  Seven decimal places retain sub-micrometre resolution
 # while making the checked-in derived trajectory byte-reproducible across the
 # two qualification architectures.  Authoritative source geometry is not
 # quantized by this policy.
-DERIVED_OUTPUT_DECIMAL_PLACES = 8
+DERIVED_OUTPUT_DECIMAL_PLACES = 7
 
 
 def format_derived_value(value: float) -> str:

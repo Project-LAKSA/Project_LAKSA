@@ -45,13 +45,20 @@ class RacelineTests(unittest.TestCase):
         self.assertIn("fde6cee2b7bf6dd7d0f8f3d32f6a1be3cfe35b56", text)
 
     def test_derived_serialization_masks_observed_cross_architecture_jitter(self):
-        self.assertEqual(DERIVED_OUTPUT_DECIMAL_PLACES, 8)
+        self.assertEqual(DERIVED_OUTPUT_DECIMAL_PLACES, 7)
         observed_x86_64 = 0.100894160
         observed_arm64 = 0.100894159
         self.assertNotEqual(f"{observed_x86_64:.9f}", f"{observed_arm64:.9f}")
         self.assertEqual(
             format_derived_value(observed_x86_64),
             format_derived_value(observed_arm64),
+        )
+        curvature_x86_64 = -0.01755901
+        curvature_arm64 = -0.01755900
+        self.assertNotEqual(f"{curvature_x86_64:.8f}", f"{curvature_arm64:.8f}")
+        self.assertEqual(
+            format_derived_value(curvature_x86_64),
+            format_derived_value(curvature_arm64),
         )
 
 
