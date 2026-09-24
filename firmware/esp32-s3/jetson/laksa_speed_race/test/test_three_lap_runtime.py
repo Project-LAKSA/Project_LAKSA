@@ -52,6 +52,20 @@ class RuntimeGateTests(unittest.TestCase):
         self.assertIn("self.shutdown_timer = self.create_timer(0.2, self.shutdown_once)", text)
         self.assertNotIn("\n            self.create_timer(0.2, self.shutdown_once)", text)
 
+    def test_terminal_shutdown_exits_executor_before_context_shutdown(self):
+        source = Path(__file__).resolve().parents[1] / "laksa_speed_race" / "gym_adapter_node.py"
+        text = source.read_text()
+        shutdown_callback = text.split("        def shutdown_once(self) -> None:", 1)[1].split(
+            "\n    rclpy.init(args=args)", 1
+        )[0]
+        self.assertIn("self.shutdown_requested = True", shutdown_callback)
+        self.assertNotIn("rclpy.shutdown()", shutdown_callback)
+        self.assertIn(
+            "while rclpy.ok() and not node.shutdown_requested:",
+            text,
+        )
+        self.assertIn("rclpy.spin_once(node, timeout_sec=0.1)", text)
+
     def test_exactly_three_steps_laps_and_terminal_zero(self):
         env = FakeGym()
         authority = GymStepAuthority(env, AlwaysInside(), C1Metrics(seed=12345))

@@ -318,6 +318,7 @@ def main(args: list[str] | None = None) -> None:
             self.initial_odom_sent = False
             self.readiness_timer = self.create_timer(0.05, self.publish_readiness)
             self.shutdown_timer = None
+            self.shutdown_requested = False
 
         def publish_applied(self, command: Command) -> None:
             message = AckermannDriveStamped()
@@ -431,13 +432,16 @@ def main(args: list[str] | None = None) -> None:
         def shutdown_once(self) -> None:
             if self.shutdown_timer is not None:
                 self.shutdown_timer.cancel()
-            if rclpy.ok():
-                rclpy.shutdown()
+            # Request executor exit here and shut the ROS context down after
+            # spin_once returns.  Shutting the context down from inside its
+            # own timer callback can deadlock the single-threaded executor.
+            self.shutdown_requested = True
 
     rclpy.init(args=args)
     node = AdapterNode()
     try:
-        rclpy.spin(node)
+        while rclpy.ok() and not node.shutdown_requested:
+            rclpy.spin_once(node, timeout_sec=0.1)
     finally:
         node.destroy_node()
         if rclpy.ok():
