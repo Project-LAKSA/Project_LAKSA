@@ -1,7 +1,11 @@
 schema_version: laksa-speed-race-c1-raceline-v1
 optimizer: WATERLOO_MINIMUM_CURVATURE
 kappa_bound_1pm: 0.91431
-effective_vehicle_width_m: 0.336
+# Waterloo's width_opt is a virtual vehicle width that includes safety
+# distance.  0.381 m is the smallest 1 mm input increment that satisfies the
+# full-body contract below with the pinned optimizer.  Physical LAKSA width
+# remains 0.296 m in laksa_proxy_v0.yaml.
+effective_vehicle_width_m: 0.381
 stepsize_prep_m: 0.1
 stepsize_reg_m: 0.3
 stepsize_interp_after_opt_m: 0.2
@@ -10,3 +14,11 @@ s_reg: 10
 target_speed_mps: 1.0
 target_acceleration_mps2: 0.0
 course_geometry_frozen: true
+clearance_contract:
+  gym_ttc_threshold_m: 0.005
+  raster_resolution_m: 0.02
+  raster_half_cell_diagonal_m: 0.01414213562373095
+  gym_ray_march_epsilon_m: 0.0001
+  raceline_discretization_bound_m: 0.00457155
+  required_full_body_clearance_m: 0.02381368562373095
+  selection_increment_m: 0.001

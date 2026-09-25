@@ -215,6 +215,7 @@ def generate(course_dir: Path, output_dir: Path, waterloo_root: Path) -> dict[st
 def update_manifest(course_dir: Path, result: dict[str, object]) -> None:
     manifest_path = course_dir / "course_manifest.json"
     manifest = json.loads(manifest_path.read_text())
+    config = yaml.safe_load((PACKAGE_ROOT / "config" / "c1_raceline.yaml").read_text())
     manifest["raceline_contract"].update(
         {
             "output": "speed_course_raceline.csv: s_m,x_m,y_m,psi_rad,curvature_1pm,target_speed_mps,target_acceleration_mps2",
@@ -224,6 +225,9 @@ def update_manifest(course_dir: Path, result: dict[str, object]) -> None:
             "trajectory_helpers_sha": "fde6cee2b7bf6dd7d0f8f3d32f6a1be3cfe35b56",
             "maximum_abs_curvature_1pm": result["maximum_abs_curvature_1pm"],
             "derived_output_decimal_places": DERIVED_OUTPUT_DECIMAL_PLACES,
+            "upstream_virtual_vehicle_width_m": config["effective_vehicle_width_m"],
+            "output_sample_spacing_m": config["stepsize_interp_after_opt_m"],
+            "full_body_clearance": config["clearance_contract"],
         }
     )
     manifest["generated_asset_sha256"].update(result["hashes"])

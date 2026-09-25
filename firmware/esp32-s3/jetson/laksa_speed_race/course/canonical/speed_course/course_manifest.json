@@ -75,8 +75,19 @@
     "pure_pursuit_output": "pure_pursuit_raceline.csv: x_m,y_m,target_speed_mps",
     "upstream_raceline_sha": "9290c5d503462e46f7e3e9033002e7ddf165ba7b",
     "trajectory_helpers_sha": "fde6cee2b7bf6dd7d0f8f3d32f6a1be3cfe35b56",
-    "maximum_abs_curvature_1pm": 0.7149366116420127,
-    "derived_output_decimal_places": 7
+    "maximum_abs_curvature_1pm": 0.6988846677794767,
+    "derived_output_decimal_places": 7,
+    "upstream_virtual_vehicle_width_m": 0.381,
+    "output_sample_spacing_m": 0.2,
+    "full_body_clearance": {
+      "gym_ttc_threshold_m": 0.005,
+      "raster_resolution_m": 0.02,
+      "raster_half_cell_diagonal_m": 0.01414213562373095,
+      "gym_ray_march_epsilon_m": 0.0001,
+      "raceline_discretization_bound_m": 0.00457155,
+      "required_full_body_clearance_m": 0.02381368562373095,
+      "selection_increment_m": 0.001
+    }
   },
   "generation": {
     "tool": "course/scripts/rebuild_speed_course.py",
@@ -109,7 +120,7 @@
     "validation_report.json": "68bc3e33d2987b84990c09b17b60214e72f887e6ca910e682ae194f35bdd94ea",
     "speed_course_map.yaml": "3812afbdad82e94a5fc514d0e3249b7a3602f757aa77a849339b2d991507d8f8",
     "speed_course_centerline.csv": "2d39567359a353e478b8350ef928de08963d59b535fe080c4a203bb964f575dd",
-    "speed_course_raceline.csv": "5082057770360d4955195d66b2587102c03b7bea7f3c57da50ad957766f3a7f5",
-    "pure_pursuit_raceline.csv": "50bfbbb27bf8ed25b74728bdab52a767689e7e51d4569b8707119d23f7ad3ec1"
+    "speed_course_raceline.csv": "1086933179481201163c4ce30d566aca6a4b6377bd723632583f3eb935e043c4",
+    "pure_pursuit_raceline.csv": "22ad91de3edbcbdf765f2cf223db53d43be820d829409da356a9def5a4c41783"
   }
 }

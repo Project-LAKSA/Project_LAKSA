@@ -35,6 +35,7 @@ from .c1_contract import (
 from .metrics import C1Metrics
 from .run_validation import persist_run
 from .three_lap_gate import MissionState, ThreeLapGate
+from .course_validation import validate as validate_course
 
 
 class GymEnvironment(Protocol):
@@ -284,6 +285,13 @@ def main(args: list[str] | None = None) -> None:
             self.share = share
             course_dir = share / "course" / "canonical" / "speed_course"
             self.course_dir = course_dir
+            preflight = validate_course(share / "course")
+            clearance = preflight["raceline_clearance"]
+            self.get_logger().info(
+                "C1 full-body clearance preflight passed: "
+                f"{clearance['minimum_full_body_clearance_m']:.9f} m >= "
+                f"{clearance['required_clearance_m']:.9f} m"
+            )
             self.declare_parameter("output_dir", "/tmp/laksa-c1-results/official")
             self.declare_parameter("max_laps", MAX_LAPS)
             if int(self.get_parameter("max_laps").value) != MAX_LAPS:

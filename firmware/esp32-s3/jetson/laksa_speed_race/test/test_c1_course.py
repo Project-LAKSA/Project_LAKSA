@@ -1,10 +1,10 @@
 """Offline C1 course, mission, metrics, and simulator-only boundary tests."""
 
+import csv
 import unittest
 from pathlib import Path
 
 import yaml
-import csv
 
 from laksa_speed_race.c1_contract import (
     CONTROLLER_REQUEST_TOPIC,
@@ -12,7 +12,10 @@ from laksa_speed_race.c1_contract import (
     SIMULATOR_APPLIED_TOPIC,
     SIMULATOR_ODOM_TOPIC,
 )
-from laksa_speed_race.course_validation import validate
+from laksa_speed_race.course_validation import (
+    required_full_body_clearance_m,
+    validate,
+)
 from laksa_speed_race.metrics import C1Metrics
 from laksa_speed_race.three_lap_gate import MissionState, ThreeLapGate
 
@@ -32,6 +35,19 @@ class C1CourseTests(unittest.TestCase):
         self.assertEqual(result["status"], "PASS")
         self.assertEqual(result["checks"]["raceline"], "PASS")
         self.assertEqual(result["checks"]["raceline_body_envelope"], "PASS")
+        self.assertEqual(result["checks"]["raceline_full_body_clearance"], "PASS")
+        self.assertGreaterEqual(
+            result["raceline_clearance"]["minimum_full_body_clearance_m"],
+            result["raceline_clearance"]["required_clearance_m"],
+        )
+
+    def test_previous_4mm_clearance_regression_fails_closed(self):
+        import json
+
+        manifest = json.loads((COURSE / "course_manifest.json").read_text())
+        required = required_full_body_clearance_m(manifest)
+        self.assertLess(0.004017015281351566, required)
+        self.assertGreater(required, 0.005)
 
     def test_external_raceline_input_is_lossless_and_headerless(self):
         from course.scripts.export_raceline_input import export

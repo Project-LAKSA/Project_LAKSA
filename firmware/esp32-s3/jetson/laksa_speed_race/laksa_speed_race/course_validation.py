@@ -154,8 +154,83 @@ def _load_gym_raceline(path: Path) -> list[dict[str, float]]:
     return rows
 
 
-def _nearest_sample_distance(point: tuple[float, float], samples: list[tuple[float, float]]) -> float:
-    return math.sqrt(min((point[0] - x) ** 2 + (point[1] - y) ** 2 for x, y in samples))
+def _point_segment_distance(
+    point: tuple[float, float],
+    start: tuple[float, float],
+    end: tuple[float, float],
+) -> float:
+    delta_x, delta_y = end[0] - start[0], end[1] - start[1]
+    length_sq = delta_x * delta_x + delta_y * delta_y
+    if length_sq == 0.0:
+        return _distance(point, start)
+    fraction = (
+        (point[0] - start[0]) * delta_x + (point[1] - start[1]) * delta_y
+    ) / length_sq
+    fraction = min(1.0, max(0.0, fraction))
+    projection = (start[0] + fraction * delta_x, start[1] + fraction * delta_y)
+    return _distance(point, projection)
+
+
+def _polyline_distance(point: tuple[float, float], samples: list[tuple[float, float]]) -> float:
+    return min(
+        _point_segment_distance(point, start, end)
+        for start, end in zip(samples, samples[1:])
+    )
+
+
+def required_full_body_clearance_m(manifest: dict[str, Any]) -> float:
+    """Validate and return the source-derived C1 Gym clearance requirement."""
+
+    contract = manifest["raceline_contract"]["full_body_clearance"]
+    resolution = float(contract["raster_resolution_m"])
+    ttc_threshold = float(contract["gym_ttc_threshold_m"])
+    ray_epsilon = float(contract["gym_ray_march_epsilon_m"])
+    spacing = float(manifest["raceline_contract"]["output_sample_spacing_m"])
+    curvature_limit = float(manifest["laksa_proxy_v0"]["max_curvature_1pm"])
+    raster_tolerance = resolution * math.sqrt(2.0) / 2.0
+    discretization_tolerance = curvature_limit * spacing * spacing / 8.0
+    required = ttc_threshold + raster_tolerance + ray_epsilon + discretization_tolerance
+    for key, actual, expected in (
+        ("raster_half_cell_diagonal_m", contract["raster_half_cell_diagonal_m"], raster_tolerance),
+        ("raceline_discretization_bound_m", contract["raceline_discretization_bound_m"], discretization_tolerance),
+        ("required_full_body_clearance_m", contract["required_full_body_clearance_m"], required),
+    ):
+        if not math.isclose(float(actual), expected, rel_tol=0.0, abs_tol=1e-12):
+            raise ValueError(f"raceline clearance contract mismatch: {key}")
+    return required
+
+
+def minimum_full_body_clearance_m(
+    raceline: list[dict[str, float]],
+    centerline_points: list[tuple[float, float]],
+    *,
+    corridor_half_width_m: float,
+    body_length_m: float,
+    body_width_m: float,
+    collision_body_center_x_m: float,
+) -> float:
+    """Return the four-corner body clearance used by pinned Waterloo checks."""
+
+    half_length = body_length_m / 2.0
+    half_width = body_width_m / 2.0
+    minimum_clearance = math.inf
+    for row in raceline:
+        cosine, sine = math.cos(row["psi_rad"]), math.sin(row["psi_rad"])
+        body_center = (
+            row["x_m"] + collision_body_center_x_m * cosine,
+            row["y_m"] + collision_body_center_x_m * sine,
+        )
+        for longitudinal in (-half_length, half_length):
+            for lateral in (-half_width, half_width):
+                corner = (
+                    body_center[0] + longitudinal * cosine - lateral * sine,
+                    body_center[1] + longitudinal * sine + lateral * cosine,
+                )
+                clearance = corridor_half_width_m - _polyline_distance(
+                    corner, centerline_points
+                )
+                minimum_clearance = min(minimum_clearance, clearance)
+    return minimum_clearance
 
 
 def validate(course_root: Path | None = None) -> dict[str, Any]:
@@ -263,30 +338,37 @@ def validate(course_root: Path | None = None) -> dict[str, Any]:
     if any(row["target_speed_mps"] < 0.0 or row["target_speed_mps"] > 1.0 for row in raceline):
         raise ValueError("raceline speed profile violates C1 forward-only 1 m/s policy")
 
-    # Full rectangular LAKSA body, evaluated against the frozen centerline
-    # corridor. The authoritative centerline is sampled at <=0.025 m, so the
-    # sample-distance test is conservative to one sample interval.
-    half_length = manifest["laksa_proxy_v0"]["body_length_m"] / 2.0
-    half_body_width = manifest["laksa_proxy_v0"]["body_width_m"] / 2.0
-    body_center_x = 0.135
+    # Pinned Waterloo's vehicle-boundary check uses all four vehicle corners.
+    # Evaluate the same full rectangle, including Gym's collision-body offset,
+    # against exact centerline segments instead of centerline samples.
     corridor_half_width = manifest["track_width_m"] / 2.0
-    for row in raceline:
-        cosine, sine = math.cos(row["psi_rad"]), math.sin(row["psi_rad"])
-        body_center = (
-            row["x_m"] + body_center_x * cosine,
-            row["y_m"] + body_center_x * sine,
+    minimum_clearance = minimum_full_body_clearance_m(
+        raceline,
+        points,
+        corridor_half_width_m=corridor_half_width,
+        body_length_m=manifest["laksa_proxy_v0"]["body_length_m"],
+        body_width_m=manifest["laksa_proxy_v0"]["body_width_m"],
+        collision_body_center_x_m=0.135,
+    )
+    required_clearance = required_full_body_clearance_m(manifest)
+    if minimum_clearance < required_clearance:
+        raise ValueError(
+            "raceline full-body clearance is below the Gym/raster requirement: "
+            f"{minimum_clearance:.9f} < {required_clearance:.9f} m"
         )
-        for longitudinal in (-half_length, half_length):
-            for lateral in (-half_body_width, half_body_width):
-                corner = (
-                    body_center[0] + longitudinal * cosine - lateral * sine,
-                    body_center[1] + longitudinal * sine + lateral * cosine,
-                )
-                if _nearest_sample_distance(corner, points) > corridor_half_width:
-                    raise ValueError("raceline body rectangle leaves the authoritative track corridor")
     checks["raceline"] = "PASS"
     checks["raceline_body_envelope"] = "PASS"
-    return {"status": "PASS", "course": manifest["course_id"], "checks": checks}
+    checks["raceline_full_body_clearance"] = "PASS"
+    return {
+        "status": "PASS",
+        "course": manifest["course_id"],
+        "checks": checks,
+        "raceline_clearance": {
+            "minimum_full_body_clearance_m": minimum_clearance,
+            "required_clearance_m": required_clearance,
+            "margin_m": minimum_clearance - required_clearance,
+        },
+    }
 
 
 def main() -> None:

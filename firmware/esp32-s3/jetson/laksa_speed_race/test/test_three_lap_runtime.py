@@ -39,6 +39,13 @@ class FakeGym:
 
 
 class RuntimeGateTests(unittest.TestCase):
+    def test_adapter_runs_clearance_preflight_before_environment_creation(self):
+        source = Path(__file__).resolve().parents[1] / "laksa_speed_race" / "gym_adapter_node.py"
+        text = source.read_text()
+        preflight = text.index('preflight = validate_course(share / "course")')
+        environment = text.index("env, observation = create_gym_environment(course_dir)")
+        self.assertLess(preflight, environment)
+
     def test_terminal_metadata_uses_persisted_package_share(self):
         source = Path(__file__).resolve().parents[1] / "laksa_speed_race" / "gym_adapter_node.py"
         text = source.read_text()
