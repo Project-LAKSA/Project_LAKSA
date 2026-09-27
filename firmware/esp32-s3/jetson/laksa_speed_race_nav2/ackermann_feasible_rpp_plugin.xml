@@ -1,0 +1,9 @@
+<library path="ackermann_feasible_rpp_controller">
+  <class
+    type="laksa_speed_race_nav2::AckermannFeasibleRppController"
+    base_class_type="nav2_core::Controller">
+    <description>
+      Nav2 RPP 1.1.20 with LAKSA Ackermann curvature feasibility applied before upstream TTC.
+    </description>
+  </class>
+</library>

@@ -80,7 +80,7 @@ public:
     declare_parameter("map_yaml_path", std::string{});
     declare_parameter(
       "controller_plugin",
-      std::string{"nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"});
+      std::string{"laksa_speed_race_nav2::AckermannFeasibleRppController"});
   }
 
   void initialize()
@@ -112,6 +112,11 @@ public:
     load_costmap(map_yaml);
 
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
+    // The lockstep host injects each exact-state transform synchronously rather
+    // than running a TransformListener. Tell tf2 that transform population is
+    // externally controlled so upstream timeout checks do not emit false
+    // single-thread diagnostics.
+    tf_buffer_->setUsingDedicatedThread(true);
     const auto plugin_type = get_parameter("controller_plugin").as_string();
     controller_ = controller_loader_.createSharedInstance(plugin_type);
     controller_->configure(shared_from_this(), "RPP", tf_buffer_, costmap_ros_);

@@ -1,4 +1,4 @@
-"""Deterministic C1.2 contracts around the unmodified upstream Nav2 RPP plugin."""
+"""Deterministic contracts for the pinned RPP plus LAKSA feasibility delta."""
 
 import hashlib
 import math
@@ -58,7 +58,12 @@ class Nav2RppContractTests(unittest.TestCase):
 
     def test_rpp_initial_configuration_enables_selected_upstream_mechanisms(self):
         config = yaml.safe_load((ROOT / "config" / "c1_nav2_rpp.yaml").read_text())
-        params = config["/c1/rpp_lockstep_host"]["ros__parameters"]["RPP"]
+        host = config["/c1/rpp_lockstep_host"]["ros__parameters"]
+        self.assertEqual(
+            host["controller_plugin"],
+            "laksa_speed_race_nav2::AckermannFeasibleRppController",
+        )
+        params = host["RPP"]
         self.assertTrue(params["use_interpolation"])
         self.assertTrue(params["use_velocity_scaled_lookahead_dist"])
         self.assertTrue(params["use_regulated_linear_velocity_scaling"])
@@ -86,6 +91,33 @@ class Nav2RppContractTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             twist_to_ackermann(-0.1, 0.0)
 
+    def test_constrained_initial_command_is_not_materially_changed_downstream(self):
+        wheelbase = 0.324
+        steering_limit = 0.288
+        curvature_limit = math.tan(steering_limit) / wheelbase
+        linear = 0.4285508430
+        angular = linear * -curvature_limit
+        speed, steering, saturated = twist_to_ackermann(linear, angular)
+        self.assertEqual(speed, linear)
+        self.assertAlmostEqual(steering, -steering_limit, places=15)
+        self.assertFalse(saturated)
+
+    def test_ttc_and_returned_twist_share_the_feasible_command(self):
+        source = (
+            ROOT.parent
+            / "laksa_speed_race_nav2"
+            / "src"
+            / "ackermann_feasible_rpp_controller.cpp"
+        ).read_text()
+        constraint = source.index("const auto feasible = constrain_ackermann_curvature(")
+        ttc = source.index("isCollisionImminent(pose, linear_vel, angular_vel", constraint)
+        returned_linear = source.index("cmd_vel.twist.linear.x = linear_vel", ttc)
+        returned_angular = source.index("cmd_vel.twist.angular.z = angular_vel", ttc)
+        self.assertLess(constraint, ttc)
+        self.assertLess(ttc, returned_linear)
+        self.assertLess(ttc, returned_angular)
+        self.assertIn("feasible.commanded_curvature_1pm", source[constraint:ttc])
+
     def test_duplicate_state_stamp_cannot_be_accepted_twice(self):
         gate = StateStampGate()
         gate.update_state(1_000_000_000)
@@ -103,6 +135,7 @@ class Nav2RppContractTests(unittest.TestCase):
         self.assertEqual(source.count("computeVelocityCommands("), 1)
         self.assertIn("Rejected duplicate odometry stamp", source)
         self.assertIn('"/c1/nav2_cmd_vel"', source)
+        self.assertIn("setUsingDedicatedThread(true)", source)
 
     def test_three_lap_gate_is_byte_identical_to_c1_1(self):
         gate = ROOT / "laksa_speed_race" / "three_lap_gate.py"

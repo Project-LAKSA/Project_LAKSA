@@ -104,6 +104,13 @@ class RuntimeGateTests(unittest.TestCase):
         self.assertEqual(authority.gate.fault, "command_outside_c1_limits")
         self.assertEqual(env.calls, 0)
 
+    def test_zero_step_qualification_validates_without_gym_step(self):
+        env = FakeGym()
+        authority = GymStepAuthority(env, AlwaysInside(), C1Metrics(seed=12345))
+        self.assertIsNone(authority.validate_without_step(Command(-0.288, 0.4285508430)))
+        self.assertEqual(env.calls, 0)
+        self.assertEqual(authority.last_requested, Command(-0.288, 0.4285508430))
+
     def test_collision_and_off_track_are_hard_faults(self):
         collision_env = FakeGym(laps=(0,), collision=True)
         collision = GymStepAuthority(collision_env, AlwaysInside(), C1Metrics(seed=12345))

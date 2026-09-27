@@ -218,6 +218,23 @@ class GymStepAuthority:
         self.gate.fail(reason)
         return StepResult((0.0, 0.0, 0.0), 0.0, 0.0, self.gate.lap_count, True, reason)
 
+    def validate_without_step(self, command: Command) -> StepResult | None:
+        """Validate and retain a diagnostic command without advancing Gym."""
+        self.last_requested = command
+        if not math.isfinite(command.speed_mps) or not math.isfinite(command.steering_rad):
+            self.metrics.invalid_command_events += 1
+            return self.fail_without_step("non_finite_command")
+        if command.speed_mps < 0.0:
+            self.metrics.reverse_command_events += 1
+            return self.fail_without_step("reverse_command")
+        if (
+            command.speed_mps > MAX_SPEED_MPS + 1e-9
+            or abs(command.steering_rad) > STEERING_LIMIT_RAD + 1e-9
+        ):
+            self.metrics.invalid_command_events += 1
+            return self.fail_without_step("command_outside_c1_limits")
+        return None
+
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -323,6 +340,7 @@ def main(args: list[str] | None = None) -> None:
             self.declare_parameter("controller_repo", "CL2-UWaterloo/f1tenth_ws")
             self.declare_parameter("controller_sha", "c20cf63d04b9841ffdb6b2f963bd737d78074136")
             self.declare_parameter("controller_config", str(share / "config" / "c1_pure_pursuit.yaml"))
+            self.declare_parameter("qualification_step_limit", -1)
             if int(self.get_parameter("max_laps").value) != MAX_LAPS:
                 raise ValueError("C1 max_laps is frozen at exactly 3")
             self.output_dir = Path(self.get_parameter("output_dir").value)
@@ -330,10 +348,14 @@ def main(args: list[str] | None = None) -> None:
             self.controller_repo = str(self.get_parameter("controller_repo").value)
             self.controller_sha = str(self.get_parameter("controller_sha").value)
             self.controller_config = Path(str(self.get_parameter("controller_config").value))
+            self.qualification_step_limit = int(self.get_parameter("qualification_step_limit").value)
+            if self.qualification_step_limit < -1:
+                raise ValueError("qualification_step_limit must be -1 or nonnegative")
             self.state_stamp_gate = StateStampGate()
             self.duplicate_state_stamp_rejections = 0
             self.state_stamp_mismatch_events = 0
             self.last_sim_time_s = 0.0
+            self.accepted_drive_requests = 0
             self.started_at_utc = datetime.now(timezone.utc).isoformat()
             env, observation = create_gym_environment(course_dir)
             envelope = CourseEnvelope(
@@ -440,10 +462,30 @@ def main(args: list[str] | None = None) -> None:
                     self.finish(self.authority.fail_without_step("state_stamp_mismatch"), message.header.stamp)
                     return
             command = Command(float(message.drive.steering_angle), float(message.drive.speed))
+            self.accepted_drive_requests += 1
+            if self.qualification_step_limit == 0:
+                invalid = self.authority.validate_without_step(command)
+                if invalid is not None:
+                    self.finish(invalid, message.header.stamp)
+                    return
+                self.finish(
+                    self.authority.fail_without_step("qualification_step_limit_reached"),
+                    message.header.stamp,
+                )
+                return
             result = self.authority.apply(command)
             self.last_sim_time_s = result.sim_time_s
             if not result.terminal:
                 self.publish_applied(command, message.header.stamp)
+                if (
+                    self.qualification_step_limit > 0
+                    and self.authority.metrics.simulator_steps >= self.qualification_step_limit
+                ):
+                    self.finish(
+                        self.authority.fail_without_step("qualification_step_limit_reached"),
+                        message.header.stamp,
+                    )
+                    return
                 self.publish_pose(self.authority.env.observation_type.observe())
                 return
             self.finish(result, message.header.stamp)
@@ -491,6 +533,11 @@ def main(args: list[str] | None = None) -> None:
                 "state_stamp_causality_required": self.require_state_stamp,
                 "duplicate_state_stamp_rejections": self.duplicate_state_stamp_rejections,
                 "state_stamp_mismatch_events": self.state_stamp_mismatch_events,
+                "accepted_drive_requests": self.accepted_drive_requests,
+                "qualification_step_limit": self.qualification_step_limit,
+                "qualification_limit_reached": (
+                    result.fault == "qualification_step_limit_reached"
+                ),
             }
             persist_run(
                 self.output_dir,

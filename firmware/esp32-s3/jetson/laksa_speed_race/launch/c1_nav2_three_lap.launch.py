@@ -58,6 +58,9 @@ def generate_launch_description():
                 "controller_repo": "ros-navigation/navigation2",
                 "controller_sha": "a097086719c88f781aa59788eca29ac6ca5e56db",
                 "controller_config": str(share / "config" / "c1_nav2_rpp.yaml"),
+                "qualification_step_limit": ParameterValue(
+                    LaunchConfiguration("qualification_step_limit"), value_type=int
+                ),
             }
         ],
     )
@@ -66,6 +69,7 @@ def generate_launch_description():
             DeclareLaunchArgument("headless", default_value="true"),
             DeclareLaunchArgument("max_laps", default_value="3"),
             DeclareLaunchArgument("output_dir", default_value="/tmp/laksa-c1-results/nav2_trial_1"),
+            DeclareLaunchArgument("qualification_step_limit", default_value="-1"),
             raceline,
             host,
             ackermann,

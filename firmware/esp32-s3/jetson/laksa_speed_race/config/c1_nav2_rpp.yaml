@@ -1,7 +1,7 @@
 /c1/rpp_lockstep_host:
   ros__parameters:
     controller_frequency: 100.0
-    controller_plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+    controller_plugin: laksa_speed_race_nav2::AckermannFeasibleRppController
     RPP:
       desired_linear_vel: 1.0
       lookahead_dist: 0.5
