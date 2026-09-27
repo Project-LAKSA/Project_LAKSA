@@ -12,7 +12,9 @@ class IsolationTests(unittest.TestCase):
     def test_launch_and_config_use_only_c1_motion_topics(self):
         sources = [
             ROOT / "launch" / "c1_three_lap.launch.py",
+            ROOT / "launch" / "c1_nav2_three_lap.launch.py",
             ROOT / "config" / "c1_pure_pursuit.yaml",
+            ROOT / "config" / "c1_nav2_rpp.yaml",
             ROOT / "docker-compose.c1.yaml",
         ]
         forbidden = ("/drive", "/cmd_vel", "/laksa/command", "/laksa/set_drive_command")
@@ -23,6 +25,9 @@ class IsolationTests(unittest.TestCase):
         controller = (ROOT / "config" / "c1_pure_pursuit.yaml").read_text()
         self.assertIn("/c1/drive_request", controller)
         self.assertIn("/c1/odom", controller)
+        nav2_launch = (ROOT / "launch" / "c1_nav2_three_lap.launch.py").read_text()
+        self.assertIn("require_state_stamp", nav2_launch)
+        self.assertIn("a097086719c88f781aa59788eca29ac6ca5e56db", nav2_launch)
 
     def test_runtime_container_has_no_host_or_device_authority(self):
         compose = (ROOT / "docker-compose.c1.yaml").read_text()

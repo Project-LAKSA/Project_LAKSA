@@ -23,6 +23,10 @@ repositories:
     type: git
     url: https://github.com/CL2-UWaterloo/f1tenth_ws.git
     version: c20cf63d04b9841ffdb6b2f963bd737d78074136
+  navigation2:
+    type: git
+    url: https://github.com/ros-navigation/navigation2.git
+    version: a097086719c88f781aa59788eca29ac6ca5e56db
   tum_raceline_optimization:
     type: git
     url: https://github.com/CL2-UWaterloo/Raceline-Optimization.git

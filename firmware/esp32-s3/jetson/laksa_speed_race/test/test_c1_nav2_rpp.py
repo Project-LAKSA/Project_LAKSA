@@ -1,0 +1,127 @@
+"""Deterministic C1.2 contracts around the unmodified upstream Nav2 RPP plugin."""
+
+import hashlib
+import math
+import unittest
+from pathlib import Path
+
+import yaml
+
+from laksa_speed_race.gym_adapter_node import StateStampGate
+from laksa_speed_race.nav2_ackermann_adapter_node import twist_to_ackermann
+from laksa_speed_race.nav2_raceline_node import (
+    FROZEN_FULL_RACELINE_SHA256,
+    FROZEN_RACELINE_SHA256,
+    UNROLLED_POSES,
+    load_frozen_raceline,
+    monotonic_progress_index,
+    unroll_closed_raceline,
+)
+
+
+ROOT = Path(__file__).resolve().parents[1]
+COURSE = ROOT / "course" / "canonical" / "speed_course"
+
+
+class Nav2RppContractTests(unittest.TestCase):
+    def setUp(self):
+        self.raceline_path = COURSE / "pure_pursuit_raceline.csv"
+        self.points = load_frozen_raceline(self.raceline_path)
+
+    def test_frozen_raceline_hash_and_parser_semantics(self):
+        self.assertEqual(hashlib.sha256(self.raceline_path.read_bytes()).hexdigest(), FROZEN_RACELINE_SHA256)
+        self.assertEqual(len(self.points), 547)
+        self.assertEqual(self.points[0], self.points[-1])
+        self.assertNotIn(self.points[0], self.points[1:-1])
+        self.assertEqual(
+            hashlib.sha256((COURSE / "speed_course_raceline.csv").read_bytes()).hexdigest(),
+            FROZEN_FULL_RACELINE_SHA256,
+        )
+
+    def test_four_copy_ring_unrolling_is_exact(self):
+        unrolled = unroll_closed_raceline(self.points)
+        self.assertEqual(len(unrolled), UNROLLED_POSES)
+        for copy in range(4):
+            self.assertEqual(unrolled[copy * 546], self.points[0])
+        self.assertEqual(unrolled[-1], self.points[0])
+
+    def test_seam_progression_is_monotonic(self):
+        unrolled = unroll_closed_raceline(self.points)
+        at_second_copy = monotonic_progress_index(
+            unrolled, unrolled[546].x_m, unrolled[546].y_m, 540
+        )
+        self.assertEqual(at_second_copy, 546)
+        self.assertGreaterEqual(
+            monotonic_progress_index(unrolled, unrolled[547].x_m, unrolled[547].y_m, at_second_copy),
+            at_second_copy,
+        )
+
+    def test_rpp_initial_configuration_enables_selected_upstream_mechanisms(self):
+        config = yaml.safe_load((ROOT / "config" / "c1_nav2_rpp.yaml").read_text())
+        params = config["/c1/rpp_lockstep_host"]["ros__parameters"]["RPP"]
+        self.assertTrue(params["use_interpolation"])
+        self.assertTrue(params["use_velocity_scaled_lookahead_dist"])
+        self.assertTrue(params["use_regulated_linear_velocity_scaling"])
+        self.assertTrue(params["use_collision_detection"])
+        self.assertFalse(params["allow_reversing"])
+        self.assertFalse(params["use_rotate_to_heading"])
+        self.assertEqual(params["max_robot_pose_search_dist"], 2.0)
+        self.assertEqual(params["desired_linear_vel"], 1.0)
+
+    def test_ackermann_analytical_sign_and_saturation_cases(self):
+        speed, positive, saturated = twist_to_ackermann(1.0, 0.5)
+        self.assertEqual(speed, 1.0)
+        self.assertAlmostEqual(positive, math.atan(0.324 * 0.5))
+        self.assertFalse(saturated)
+        _, negative, _ = twist_to_ackermann(1.0, -0.5)
+        self.assertAlmostEqual(negative, -positive)
+        _, clamped, saturated = twist_to_ackermann(0.428551, -0.91431)
+        self.assertEqual(clamped, -0.288)
+        self.assertTrue(saturated)
+
+    def test_ackermann_zero_and_reverse_fail_closed(self):
+        self.assertEqual(twist_to_ackermann(0.0, 0.0), (0.0, 0.0, False))
+        with self.assertRaises(ValueError):
+            twist_to_ackermann(0.0, 0.1)
+        with self.assertRaises(ValueError):
+            twist_to_ackermann(-0.1, 0.0)
+
+    def test_duplicate_state_stamp_cannot_be_accepted_twice(self):
+        gate = StateStampGate()
+        gate.update_state(1_000_000_000)
+        self.assertEqual(gate.accept_command(1_000_000_000), "ACCEPT")
+        self.assertEqual(gate.accept_command(1_000_000_000), "DUPLICATE")
+        gate.update_state(1_010_000_000)
+        self.assertEqual(gate.accept_command(1_000_000_000), "DUPLICATE")
+        self.assertEqual(gate.accept_command(1_010_000_001), "MISMATCH")
+        self.assertEqual(gate.accept_command(1_010_000_000), "ACCEPT")
+
+    def test_lockstep_host_has_no_control_timer_and_one_compute_site(self):
+        source = (ROOT.parent / "laksa_speed_race_nav2" / "src" / "rpp_lockstep_host.cpp").read_text()
+        self.assertNotIn("create_wall_timer", source)
+        self.assertNotIn("create_timer", source)
+        self.assertEqual(source.count("computeVelocityCommands("), 1)
+        self.assertIn("Rejected duplicate odometry stamp", source)
+        self.assertIn('"/c1/nav2_cmd_vel"', source)
+
+    def test_three_lap_gate_is_byte_identical_to_c1_1(self):
+        gate = ROOT / "laksa_speed_race" / "three_lap_gate.py"
+        self.assertEqual(
+            hashlib.sha256(gate.read_bytes()).hexdigest(),
+            "5255497ba4e81a10988debf9e49ae832cfaea14ff071d113c1c72fb560364ba1",
+        )
+
+    def test_c1_1_geometry_preflight_remains_present(self):
+        report = yaml.safe_load((COURSE / "course_manifest.json").read_text())
+        self.assertEqual(
+            report["generated_asset_sha256"]["pure_pursuit_raceline.csv"],
+            FROZEN_RACELINE_SHA256,
+        )
+        self.assertEqual(
+            report["generated_asset_sha256"]["speed_course_raceline.csv"],
+            FROZEN_FULL_RACELINE_SHA256,
+        )
+
+
+if __name__ == "__main__":
+    unittest.main()

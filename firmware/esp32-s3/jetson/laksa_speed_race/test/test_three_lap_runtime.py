@@ -50,7 +50,8 @@ class RuntimeGateTests(unittest.TestCase):
         source = Path(__file__).resolve().parents[1] / "laksa_speed_race" / "gym_adapter_node.py"
         text = source.read_text()
         self.assertIn("self.share = share", text)
-        self.assertIn('_sha256(self.share / "config" / "c1_pure_pursuit.yaml")', text)
+        self.assertIn('self.controller_config = Path(', text)
+        self.assertIn('_sha256(self.controller_config)', text)
         self.assertNotIn('_sha256(share / "config" / "c1_pure_pursuit.yaml")', text)
 
     def test_terminal_shutdown_timer_is_retained(self):

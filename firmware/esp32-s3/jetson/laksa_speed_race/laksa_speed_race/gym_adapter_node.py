@@ -58,6 +58,27 @@ class StepResult:
     fault: str | None
 
 
+class StateStampGate:
+    """Pure 1:1 state-command admission gate used only by the C1.2 launch."""
+
+    def __init__(self) -> None:
+        self.expected_stamp_ns: int | None = None
+        self.accepted_stamp_ns: int | None = None
+
+    def update_state(self, stamp_ns: int) -> None:
+        if stamp_ns <= 0:
+            raise ValueError("state stamp must be nonzero")
+        self.expected_stamp_ns = stamp_ns
+
+    def accept_command(self, stamp_ns: int) -> str:
+        if stamp_ns == self.accepted_stamp_ns:
+            return "DUPLICATE"
+        if self.expected_stamp_ns is None or stamp_ns != self.expected_stamp_ns:
+            return "MISMATCH"
+        self.accepted_stamp_ns = stamp_ns
+        return "ACCEPT"
+
+
 class CourseEnvelope:
     """Evaluate the full LAKSA rectangle against the frozen centerline corridor."""
 
@@ -193,6 +214,10 @@ class GymStepAuthority:
         self.gate.record_terminal_zero(zero.speed_mps, zero.steering_rad)
         return zero
 
+    def fail_without_step(self, reason: str) -> StepResult:
+        self.gate.fail(reason)
+        return StepResult((0.0, 0.0, 0.0), 0.0, 0.0, self.gate.lap_count, True, reason)
+
 
 def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -294,9 +319,21 @@ def main(args: list[str] | None = None) -> None:
             )
             self.declare_parameter("output_dir", "/tmp/laksa-c1-results/official")
             self.declare_parameter("max_laps", MAX_LAPS)
+            self.declare_parameter("require_state_stamp", False)
+            self.declare_parameter("controller_repo", "CL2-UWaterloo/f1tenth_ws")
+            self.declare_parameter("controller_sha", "c20cf63d04b9841ffdb6b2f963bd737d78074136")
+            self.declare_parameter("controller_config", str(share / "config" / "c1_pure_pursuit.yaml"))
             if int(self.get_parameter("max_laps").value) != MAX_LAPS:
                 raise ValueError("C1 max_laps is frozen at exactly 3")
             self.output_dir = Path(self.get_parameter("output_dir").value)
+            self.require_state_stamp = bool(self.get_parameter("require_state_stamp").value)
+            self.controller_repo = str(self.get_parameter("controller_repo").value)
+            self.controller_sha = str(self.get_parameter("controller_sha").value)
+            self.controller_config = Path(str(self.get_parameter("controller_config").value))
+            self.state_stamp_gate = StateStampGate()
+            self.duplicate_state_stamp_rejections = 0
+            self.state_stamp_mismatch_events = 0
+            self.last_sim_time_s = 0.0
             self.started_at_utc = datetime.now(timezone.utc).isoformat()
             env, observation = create_gym_environment(course_dir)
             envelope = CourseEnvelope(
@@ -320,6 +357,10 @@ def main(args: list[str] | None = None) -> None:
             self.subscription = self.create_subscription(
                 AckermannDriveStamped, CONTROLLER_REQUEST_TOPIC, self.on_command, 10
             )
+            from std_msgs.msg import String
+            self.fault_subscription = self.create_subscription(
+                String, "/c1/controller_fault", self.on_controller_fault, 10
+            )
             self.terminal = False
             self.initial_observation = observation
             self.readiness_ticks = 0
@@ -328,9 +369,13 @@ def main(args: list[str] | None = None) -> None:
             self.shutdown_timer = None
             self.shutdown_requested = False
 
-        def publish_applied(self, command: Command) -> None:
+        @staticmethod
+        def stamp_ns(stamp) -> int:
+            return int(stamp.sec) * 1_000_000_000 + int(stamp.nanosec)
+
+        def publish_applied(self, command: Command, stamp=None) -> None:
             message = AckermannDriveStamped()
-            message.header.stamp = self.get_clock().now().to_msg()
+            message.header.stamp = stamp if stamp is not None else self.get_clock().now().to_msg()
             message.header.frame_id = BASE_FRAME
             message.drive.steering_angle = command.steering_rad
             message.drive.speed = command.speed_mps
@@ -362,6 +407,8 @@ def main(args: list[str] | None = None) -> None:
             odom.pose.pose.orientation.z = z
             odom.pose.pose.orientation.w = w
             odom.twist.twist.linear.x = float(state[3])
+            if self.require_state_stamp:
+                self.state_stamp_gate.update_state(self.stamp_ns(now))
             self.odom_pub.publish(odom)
 
         def publish_readiness(self) -> None:
@@ -383,29 +430,50 @@ def main(args: list[str] | None = None) -> None:
             if not self.initial_odom_sent:
                 return
             self.readiness_timer.cancel()
+            if self.require_state_stamp:
+                admission = self.state_stamp_gate.accept_command(self.stamp_ns(message.header.stamp))
+                if admission == "DUPLICATE":
+                    self.duplicate_state_stamp_rejections += 1
+                    return
+                if admission == "MISMATCH":
+                    self.state_stamp_mismatch_events += 1
+                    self.finish(self.authority.fail_without_step("state_stamp_mismatch"), message.header.stamp)
+                    return
             command = Command(float(message.drive.steering_angle), float(message.drive.speed))
             result = self.authority.apply(command)
+            self.last_sim_time_s = result.sim_time_s
             if not result.terminal:
-                self.publish_applied(command)
+                self.publish_applied(command, message.header.stamp)
                 self.publish_pose(self.authority.env.observation_type.observe())
+                return
+            self.finish(result, message.header.stamp)
+
+        def on_controller_fault(self, message) -> None:
+            if self.terminal or not self.initial_odom_sent:
+                return
+            reason = str(message.data).strip() or "controller_fault"
+            self.finish(self.authority.fail_without_step(reason))
+
+        def finish(self, result: StepResult, stamp=None) -> None:
+            if self.terminal:
                 return
             self.terminal = True
             zero = self.authority.terminal_zero()
-            self.publish_applied(zero)
+            self.publish_applied(zero, stamp)
             metadata = {
                 "branch": "competition/speed-race-track",
                 "commit": os.environ.get("LAKSA_GIT_SHA", "UNKNOWN"),
                 "simulator_repo": "f1tenth/f1tenth_gym",
                 "simulator_sha": "bdaec1420c3b0f103858d289866d0d4e2e597c30",
-                "controller_repo": "CL2-UWaterloo/f1tenth_ws",
-                "controller_sha": "c20cf63d04b9841ffdb6b2f963bd737d78074136",
+                "controller_repo": self.controller_repo,
+                "controller_sha": self.controller_sha,
                 "raceline_repo": "CL2-UWaterloo/Raceline-Optimization",
                 "raceline_sha": "9290c5d503462e46f7e3e9033002e7ddf165ba7b",
                 "trajectory_helpers_sha": "fde6cee2b7bf6dd7d0f8f3d32f6a1be3cfe35b56",
                 "course_source_sha256": "222c897f6835a4877318cfd0ac7d76be98b7173faaeec44e028814ca3c6eb13e",
                 "course_geometry_sha256": "2c76075f838a7a1c3e0891385b27f2e6f26e641ad13068280093fda273a84858",
                 "raceline_file_sha256": _sha256(self.course_dir / "speed_course_raceline.csv"),
-                "controller_config_sha256": _sha256(self.share / "config" / "c1_pure_pursuit.yaml"),
+                "controller_config_sha256": _sha256(self.controller_config),
                 "proxy_config_sha256": _sha256(self.share / "config" / "laksa_proxy_v0.yaml"),
                 "seed": SEED,
                 "dt_s": DT_S,
@@ -420,12 +488,15 @@ def main(args: list[str] | None = None) -> None:
                     "machine": platform.machine(),
                 },
                 "shutdown_state": "REQUESTED_AFTER_EVIDENCE_FLUSH",
+                "state_stamp_causality_required": self.require_state_stamp,
+                "duplicate_state_stamp_rejections": self.duplicate_state_stamp_rejections,
+                "state_stamp_mismatch_events": self.state_stamp_mismatch_events,
             }
             persist_run(
                 self.output_dir,
                 metrics=self.authority.metrics,
                 gate=self.authority.gate,
-                sim_time_s=result.sim_time_s,
+                sim_time_s=result.sim_time_s if result.sim_time_s else self.last_sim_time_s,
                 metadata=metadata,
                 final_requested_command={
                     "steering_rad": self.authority.last_requested.steering_rad,
