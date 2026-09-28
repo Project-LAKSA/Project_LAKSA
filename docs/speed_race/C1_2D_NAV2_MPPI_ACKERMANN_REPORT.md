@@ -894,3 +894,106 @@ Course, costmap, footprint, ThreeLapGate, controller parameters, vehicle model,
 and F1TENTH Gym source were not modified. Production and physical hardware were
 not touched. The unrelated `firmware/esp32-s3/components/esp32_BNO08x`
 submodule deletion was not modified or staged by this work.
+
+## Gate C — One-Step Lockstep
+
+Gate C was executed once on the ARM64 Jetson with no stale C1 process present.
+The complete preflight passed before launch: the dynamically allocated domain
+was valid and empty, `ackermann_msgs` resolved from the isolated overlay, and
+the clean Gym checkout resolved from
+`/tmp/laksa-c1-native/f1tenth_gym/f1tenth_gym/__init__.py` at
+`bdaec1420c3b0f103858d289866d0d4e2e597c30`. The C1.1 raceline remained
+byte-identical at
+`22ad91de3edbcbdf765f2cf223db53d43be820d829409da356a9def5a4c41783`.
+
+The harness gained a dedicated `one-step` mode. It sets the existing
+`qualification_step_limit` to one and validates the resulting artifacts. The
+Gym adapter already stops before publishing post-step odometry when that limit
+is reached; consequently state N+1 cannot trigger a second controller
+evaluation. For evidence only, the adapter records state N, state N+1, their
+logical simulator stamps separated by the frozen 0.01-second `dt`, command
+index, collision/off-track state, and full-body clearance using the existing
+C1.1 four-corner/polyline clearance function. No controller, simulator, course,
+or safety behavior changed.
+
+The isolated rebuild passed. Targeted one-step/runtime tests passed **36/36**,
+and the complete LAKSA Python suite passed **92/92**.
+
+The single Gate-C run used dynamically allocated domain 204 and produced this
+state N:
+
+```text
+x=20.628631591796875 m
+y=2.298687696456909 m
+yaw=0.0 rad
+speed=0.0 m/s
+stamp=1790601697079106871 ns
+full_body_clearance=0.30919994145690904 m
+```
+
+MPPI evaluated that state once and returned:
+
+```text
+vx=0.016281509771943092 m/s
+wz=0.0044019222259521484 rad/s
+kappa=0.27036327021328854 1/m
+equivalent_steering=0.08737466934699005 rad
+effective_turning_radius=3.6987272687266426 m
+```
+
+The command was finite and within the frozen ±0.288-rad steering envelope.
+The downstream feasibility clamp did not activate, and the independent safety
+veto passed the exact command applied to Gym. Command index 1 caused exactly
+one `Gym.step()`.
+
+State N+1 was:
+
+```text
+x=20.628631591796875 m
+y=2.298687696456909 m
+yaw=5.0986074029424344e-08 rad
+speed=0.0001548371510580182 m/s
+stamp=1790601697089106871 ns
+full_body_clearance=0.3091999338599842 m
+collision=false
+off_track=false
+```
+
+The measured deltas were:
+
+```text
+dx=0.0 m
+dy=0.0 m
+dyaw=+5.0986074029424344e-08 rad
+dspeed=+0.0001548371510580182 m/s
+```
+
+At this very small first command and 10-ms integration interval, position did
+not change at the simulator's reported float32 resolution. Speed and yaw did
+advance, all values remained finite, and there was no teleportation. Positive
+steering predicts increasing yaw; observed yaw increased, so steering-sign
+semantics passed.
+
+The odometry input stamp, MPPI output stamp, safety evidence stamp, and drive
+request stamp were all `1790601697079106871`. State N+1's logical simulator
+stamp advanced by exactly 10,000,000 ns. Evidence contained one controller row,
+one command row, one trajectory row, one accepted request, one simulator step,
+zero duplicate/mismatched stamps, and zero post-terminal steps. N+1 was not
+fed back to MPPI.
+
+The intentional one-step qualification limit produced terminal zero and clean
+process shutdown. The launch returned zero, no C1 process remained, and an
+unrelated sentinel survived unchanged.
+
+```text
+ONE_STEP_LOCKSTEP=PASS
+ONE_STEP_CAUSALITY=PASS
+CONTROLLER_EVALUATIONS=1
+GYM_STEPS=1
+CLEAN_SHUTDOWN=PASS
+ORPHAN_PROCESSES=0
+SHORT_HORIZON_AUTHORIZED=YES
+```
+
+No short horizon, repeat, determinism run, or Trial 1 was executed. Those
+remain outside this Gate-C task.

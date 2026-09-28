@@ -35,7 +35,7 @@ from .c1_contract import (
 from .metrics import C1Metrics
 from .run_validation import persist_run
 from .three_lap_gate import MissionState, ThreeLapGate
-from .course_validation import validate as validate_course
+from .course_validation import minimum_full_body_clearance_m, validate as validate_course
 
 
 class GymEnvironment(Protocol):
@@ -90,6 +90,18 @@ class CourseEnvelope:
         self._half_length = length_m / 2.0
         self._half_body_width = width_m / 2.0
         self._center_x = center_x_m
+
+    def full_body_clearance_m(self, x_m: float, y_m: float, yaw_rad: float) -> float:
+        """Use the qualified C1.1 four-corner/polyline clearance semantics."""
+
+        return minimum_full_body_clearance_m(
+            [{"x_m": x_m, "y_m": y_m, "psi_rad": yaw_rad}],
+            self._samples,
+            corridor_half_width_m=self._half_width,
+            body_length_m=self._half_length * 2.0,
+            body_width_m=self._half_body_width * 2.0,
+            collision_body_center_x_m=self._center_x,
+        )
 
     def contains_body(self, x_m: float, y_m: float, yaw_rad: float) -> bool:
         cosine, sine = math.cos(yaw_rad), math.sin(yaw_rad)
@@ -390,6 +402,7 @@ def main(args: list[str] | None = None) -> None:
             self.readiness_timer = self.create_timer(0.05, self.publish_readiness)
             self.shutdown_timer = None
             self.shutdown_requested = False
+            self.qualification_transition = None
 
         @staticmethod
         def stamp_ns(stamp) -> int:
@@ -481,6 +494,34 @@ def main(args: list[str] | None = None) -> None:
                     self.qualification_step_limit > 0
                     and self.authority.metrics.simulator_steps >= self.qualification_step_limit
                 ):
+                    state_n = self.authority._observation(self.last_observation)
+                    latest = self.authority.metrics.trajectory_rows[-1]
+                    input_stamp_ns = self.stamp_ns(message.header.stamp)
+                    self.qualification_transition = {
+                        "command_index": self.accepted_drive_requests,
+                        "state_n": {
+                            "x_m": state_n[0],
+                            "y_m": state_n[1],
+                            "yaw_rad": state_n[2],
+                            "speed_mps": state_n[3],
+                            "stamp_ns": input_stamp_ns,
+                            "full_body_clearance_m": self.authority.envelope.full_body_clearance_m(
+                                state_n[0], state_n[1], state_n[2]
+                            ),
+                        },
+                        "state_n1": {
+                            "x_m": result.pose[0],
+                            "y_m": result.pose[1],
+                            "yaw_rad": result.pose[2],
+                            "speed_mps": result.speed_mps,
+                            "stamp_ns": input_stamp_ns + int(round(DT_S * 1_000_000_000)),
+                            "full_body_clearance_m": self.authority.envelope.full_body_clearance_m(
+                                result.pose[0], result.pose[1], result.pose[2]
+                            ),
+                            "collision": bool(latest["collision"]),
+                            "off_track": bool(latest["off_track"]),
+                        },
+                    }
                     self.finish(
                         self.authority.fail_without_step("qualification_step_limit_reached"),
                         message.header.stamp,
@@ -539,6 +580,8 @@ def main(args: list[str] | None = None) -> None:
                     result.fault == "qualification_step_limit_reached"
                 ),
             }
+            if self.qualification_transition is not None:
+                metadata["qualification_transition"] = self.qualification_transition
             persist_run(
                 self.output_dir,
                 metrics=self.authority.metrics,

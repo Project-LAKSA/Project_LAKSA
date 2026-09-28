@@ -367,6 +367,73 @@ def test_zero_step_artifacts_reject_any_gym_step(tmp_path):
         qualification.validate_zero_step_artifacts(tmp_path)
 
 
+def test_one_step_launch_permits_exactly_one_gym_step():
+    args = SimpleNamespace(mode="one-step", output_dir="/tmp/result")
+    command = qualification._launch_command(args)
+    assert "qualification_step_limit:=1" in command
+    assert "include_gym:=true" in command
+
+
+def test_one_step_artifacts_require_exactly_one_transition(tmp_path):
+    stamp = 1_000_000_000
+    summary = {
+        "simulator_step_count": 1,
+        "accepted_drive_requests": 1,
+        "duplicate_state_stamp_rejections": 0,
+        "state_stamp_mismatch_events": 0,
+        "qualification_limit_reached": True,
+        "fault": "qualification_step_limit_reached",
+        "steps_after_terminal": 0,
+        "collision_edges": 0,
+        "off_track_events": 0,
+        "reverse_command_events": 0,
+        "invalid_command_events": 0,
+        "final_applied_command": {"steering_rad": 0.0, "speed_mps": 0.0},
+        "qualification_transition": {
+            "command_index": 1,
+            "state_n": {
+                "x_m": 1.0, "y_m": 2.0, "yaw_rad": 0.0, "speed_mps": 0.0,
+                "stamp_ns": stamp, "full_body_clearance_m": 0.1,
+            },
+            "state_n1": {
+                "x_m": 1.0001, "y_m": 2.0, "yaw_rad": 0.00001,
+                "speed_mps": 0.01, "stamp_ns": stamp + 10_000_000,
+                "full_body_clearance_m": 0.1, "collision": False, "off_track": False,
+            },
+        },
+    }
+    (tmp_path / "summary.json").write_text(json.dumps(summary))
+    with (tmp_path / "controller_telemetry.csv").open("w", newline="") as stream:
+        writer = csv.DictWriter(
+            stream,
+            fieldnames=[
+                "state_stamp_ns", "delta_applied_rad", "upstream_linear_mps",
+                "upstream_angular_rps", "kappa_cmd_1pm", "physical_feasibility",
+                "safety_veto_pass", "downstream_steering_saturated",
+            ],
+        )
+        writer.writeheader()
+        writer.writerow(
+            {
+                "state_stamp_ns": stamp,
+                "delta_applied_rad": 0.08,
+                "upstream_linear_mps": 0.1,
+                "upstream_angular_rps": 0.025,
+                "kappa_cmd_1pm": 0.25,
+                "physical_feasibility": "true",
+                "safety_veto_pass": "true",
+                "downstream_steering_saturated": "0",
+            }
+        )
+    (tmp_path / "trajectory.csv").write_text(
+        "step,sim_time_s,x_m,y_m,yaw_rad\n1,0.01,1.0001,2.0,0.00001\n"
+    )
+    evidence = qualification.validate_one_step_artifacts(tmp_path)
+    assert evidence["controller_evaluations"] == 1
+    assert evidence["gym_steps"] == 1
+    assert evidence["steering_sign_semantics"] == "PASS"
+
+
 def test_native_launcher_sources_ackermann_before_c1_overlay():
     root = Path(__file__).resolve().parents[1]
     script = (root / "docker" / "c1_native_runtime.sh").read_text()
