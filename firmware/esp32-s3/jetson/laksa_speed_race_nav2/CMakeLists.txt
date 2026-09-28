@@ -34,6 +34,7 @@ ament_export_dependencies(nav2_core nav2_regulated_pure_pursuit_controller)
 
 add_executable(rpp_lockstep_host src/rpp_lockstep_host.cpp)
 target_compile_features(rpp_lockstep_host PUBLIC cxx_std_17)
+target_include_directories(rpp_lockstep_host PRIVATE include)
 ament_target_dependencies(
   rpp_lockstep_host
   geometry_msgs nav_msgs nav2_core nav2_costmap_2d nav2_map_server pluginlib

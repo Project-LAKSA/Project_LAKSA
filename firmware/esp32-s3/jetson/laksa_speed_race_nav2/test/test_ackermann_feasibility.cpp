@@ -13,6 +13,7 @@ using laksa_speed_race_nav2::constrain_ackermann_curvature;
 using laksa_speed_race_nav2::kAckermannWheelbaseM;
 using laksa_speed_race_nav2::kSteeringLimitRad;
 using laksa_speed_race_nav2::maximum_ackermann_curvature_1pm;
+using laksa_speed_race_nav2::validate_ackermann_twist;
 
 TEST(AckermannFeasibility, CurvatureCases)
 {
@@ -57,6 +58,17 @@ TEST(AckermannFeasibility, ReproducesC12aInitialConstraint)
   EXPECT_NEAR(command.angular_rps, -0.3918277161, 1.0e-10);
   EXPECT_NEAR(command.equivalent_steering_rad, -0.288, 1.0e-15);
   EXPECT_TRUE(command.curvature_saturated);
+}
+
+TEST(AckermannFeasibility, ValidatesMppiTwistWithoutHidingInfeasibility)
+{
+  const double limit = maximum_ackermann_curvature_1pm();
+  EXPECT_TRUE(validate_ackermann_twist(1.0, limit).feasible);
+  EXPECT_TRUE(validate_ackermann_twist(0.4, -0.4 * limit).feasible);
+  EXPECT_FALSE(validate_ackermann_twist(1.0, limit + 1.0e-5).feasible);
+  EXPECT_FALSE(validate_ackermann_twist(-0.1, 0.0).feasible);
+  EXPECT_TRUE(validate_ackermann_twist(0.0, 0.0).feasible);
+  EXPECT_FALSE(validate_ackermann_twist(0.0, 0.1).feasible);
 }
 
 }  // namespace

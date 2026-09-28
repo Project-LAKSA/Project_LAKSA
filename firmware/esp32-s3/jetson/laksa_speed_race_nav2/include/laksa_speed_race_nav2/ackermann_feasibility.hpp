@@ -25,6 +25,13 @@ struct FeasibleCommand
   bool curvature_saturated;
 };
 
+struct AckermannTwistValidation
+{
+  double curvature_1pm;
+  double equivalent_steering_rad;
+  bool feasible;
+};
+
 inline double maximum_ackermann_curvature_1pm()
 {
   return std::tan(kSteeringLimitRad) / kAckermannWheelbaseM;
@@ -50,6 +57,27 @@ inline FeasibleCommand constrain_ackermann_curvature(
     angular_rps,
     steering_rad,
     requested_curvature_1pm != commanded_curvature};
+}
+
+inline AckermannTwistValidation validate_ackermann_twist(
+  const double linear_mps, const double angular_rps)
+{
+  if (!std::isfinite(linear_mps) || !std::isfinite(angular_rps)) {
+    return {0.0, 0.0, false};
+  }
+  if (linear_mps < 0.0) {
+    return {0.0, 0.0, false};
+  }
+  if (std::abs(linear_mps) <= kZeroVelocityEpsilonMps) {
+    return {0.0, 0.0, std::abs(angular_rps) <= kZeroVelocityEpsilonMps};
+  }
+  const double curvature = angular_rps / linear_mps;
+  const double steering = std::atan(kAckermannWheelbaseM * curvature);
+  return {
+    curvature,
+    steering,
+    std::abs(curvature) <= maximum_ackermann_curvature_1pm() + 1.0e-9 &&
+    std::abs(steering) <= kSteeringLimitRad + 1.0e-9};
 }
 
 }  // namespace laksa_speed_race_nav2

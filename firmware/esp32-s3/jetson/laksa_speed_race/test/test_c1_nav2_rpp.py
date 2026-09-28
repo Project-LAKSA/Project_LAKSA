@@ -73,6 +73,38 @@ class Nav2RppContractTests(unittest.TestCase):
         self.assertEqual(params["max_robot_pose_search_dist"], 2.0)
         self.assertEqual(params["desired_linear_vel"], 1.0)
 
+    def test_mppi_ackermann_configuration_preserves_frozen_physics(self):
+        config = yaml.safe_load((ROOT / "config" / "c1_nav2_mppi.yaml").read_text())
+        host = config["/c1/mppi_lockstep_host"]["ros__parameters"]
+        self.assertEqual(host["controller_plugin"], "nav2_mppi_controller::MPPIController")
+        self.assertTrue(host["independent_safety_veto"])
+        params = host["MPPI"]
+        self.assertEqual(params["motion_model"], "Ackermann")
+        self.assertAlmostEqual(params["AckermannConstraints"]["min_turning_r"], 1.0937226373133722)
+        self.assertEqual(params["vx_min"], 0.0)
+        self.assertLessEqual(params["vx_max"], 1.0)
+        self.assertTrue(params["CostCritic"]["consider_footprint"])
+        self.assertEqual(params["model_dt"], 0.01)
+        self.assertFalse(params["regenerate_noises"])
+
+    def test_mppi_command_is_validated_and_vetoed_before_publication(self):
+        source = (
+            ROOT.parent / "laksa_speed_race_nav2" / "src" / "rpp_lockstep_host.cpp"
+        ).read_text()
+        validation = source.index("validate_ackermann_twist(")
+        veto = source.index("independent_safety_check(", validation)
+        publish = source.index("command_pub_->publish(command)", veto)
+        self.assertLess(validation, veto)
+        self.assertLess(veto, publish)
+        self.assertIn("physical_feasibility_violation", source[validation:publish])
+        self.assertIn("independent_full_footprint_safety_veto", source[veto:publish])
+
+    def test_arm64_path_align_disposition_is_per_trajectory_and_test_only(self):
+        patcher = (ROOT / "docker" / "patch_nav2_mppi_path_align.py").read_text()
+        self.assertIn("EXPECT_FLOAT_EQ(cost, 6.6f)", patcher)
+        self.assertIn("for (const auto cost : costs)", patcher)
+        self.assertNotIn("6600.0, 2e-2", patcher)
+
     def test_ackermann_analytical_sign_and_saturation_cases(self):
         speed, positive, saturated = twist_to_ackermann(1.0, 0.5)
         self.assertEqual(speed, 1.0)

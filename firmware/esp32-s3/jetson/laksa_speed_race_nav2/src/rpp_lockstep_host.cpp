@@ -5,8 +5,10 @@
 #include <cmath>
 #include <cstdint>
 #include <limits>
+#include <iomanip>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -23,11 +25,14 @@
 #include "nav2_core/goal_checker.hpp"
 #include "nav2_costmap_2d/cost_values.hpp"
 #include "nav2_costmap_2d/costmap_2d_ros.hpp"
+#include "nav2_costmap_2d/footprint_collision_checker.hpp"
 #include "nav2_map_server/map_io.hpp"
+#include "laksa_speed_race_nav2/ackermann_feasibility.hpp"
 #include "pluginlib/class_loader.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_lifecycle/lifecycle_node.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "tf2/utils.h"
 #include "tf2_ros/buffer.h"
 
 namespace laksa_speed_race_nav2
@@ -78,6 +83,9 @@ public:
   {
     declare_parameter("controller_frequency", 100.0);
     declare_parameter("map_yaml_path", std::string{});
+    declare_parameter("controller_name", std::string{"RPP"});
+    declare_parameter("independent_safety_veto", false);
+    declare_parameter("safety_veto_horizon_s", 1.0);
     declare_parameter(
       "controller_plugin",
       std::string{"laksa_speed_race_nav2::AckermannFeasibleRppController"});
@@ -110,6 +118,9 @@ public:
     });
     costmap_ros_->on_configure(rclcpp_lifecycle::State());
     load_costmap(map_yaml);
+    collision_checker_ = std::make_unique<
+      nav2_costmap_2d::FootprintCollisionChecker<nav2_costmap_2d::Costmap2D *>>(
+      costmap_ros_->getCostmap());
 
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(get_clock());
     // The lockstep host injects each exact-state transform synchronously rather
@@ -118,19 +129,24 @@ public:
     // single-thread diagnostics.
     tf_buffer_->setUsingDedicatedThread(true);
     const auto plugin_type = get_parameter("controller_plugin").as_string();
+    controller_name_ = get_parameter("controller_name").as_string();
+    independent_safety_veto_ = get_parameter("independent_safety_veto").as_bool();
+    safety_veto_horizon_s_ = get_parameter("safety_veto_horizon_s").as_double();
     controller_ = controller_loader_.createSharedInstance(plugin_type);
-    controller_->configure(shared_from_this(), "RPP", tf_buffer_, costmap_ros_);
+    controller_->configure(shared_from_this(), controller_name_, tf_buffer_, costmap_ros_);
     controller_->activate();
 
     command_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("/c1/nav2_cmd_vel", 10);
     fault_pub_ = create_publisher<std_msgs::msg::String>("/c1/controller_fault", 10);
+    feasibility_pub_ = create_publisher<std_msgs::msg::String>("/c1/controller_feasibility", 100);
     path_sub_ = create_subscription<nav_msgs::msg::Path>(
       "/c1/nav2_path", rclcpp::QoS(1).reliable().transient_local(),
       std::bind(&RppLockstepHost::on_path, this, std::placeholders::_1));
     odom_sub_ = create_subscription<nav_msgs::msg::Odometry>(
       "/c1/odom", 10, std::bind(&RppLockstepHost::on_odom, this, std::placeholders::_1));
     RCLCPP_INFO(
-      get_logger(), "C1.2 lockstep host loaded %s; no control timer exists", plugin_type.c_str());
+      get_logger(), "C1 lockstep host loaded %s as %s; no control timer exists",
+      plugin_type.c_str(), controller_name_.c_str());
   }
 
   ~RppLockstepHost() override
@@ -225,11 +241,81 @@ private:
       auto command = controller_->computeVelocityCommands(pose, message->twist.twist, &goal_checker_);
       command.header = message->header;
       command.header.frame_id = "c1/base_link";
+      const auto validation = validate_ackermann_twist(
+        command.twist.linear.x, command.twist.angular.z);
+      const bool veto_pass = validation.feasible &&
+        (!independent_safety_veto_ || independent_safety_check(pose, command.twist));
+      publish_feasibility(message->header.stamp, command.twist, validation, veto_pass);
+      if (!validation.feasible) {
+        publish_fault("physical_feasibility_violation");
+        return;
+      }
+      if (!veto_pass) {
+        publish_fault("independent_full_footprint_safety_veto");
+        return;
+      }
       command_pub_->publish(command);
       ++command_count_;
     } catch (const std::exception & error) {
-      publish_fault(std::string{"nav2_rpp_exception:"} + error.what());
+      publish_fault(std::string{"nav2_controller_exception:"} + error.what());
     }
+  }
+
+  bool independent_safety_check(
+    const geometry_msgs::msg::PoseStamped & pose,
+    const geometry_msgs::msg::Twist & command) const
+  {
+    double x = pose.pose.position.x;
+    double y = pose.pose.position.y;
+    double yaw = tf2::getYaw(pose.pose.orientation);
+    const double velocity = command.linear.x;
+    const double angular = command.angular.z;
+    const auto footprint = costmap_ros_->getRobotFootprint();
+    if (collision_checker_->footprintCostAtPose(x, y, yaw, footprint) >=
+      nav2_costmap_2d::LETHAL_OBSTACLE)
+    {
+      return false;
+    }
+    if (std::abs(velocity) <= kZeroVelocityEpsilonMps) {
+      return std::abs(angular) <= kZeroVelocityEpsilonMps;
+    }
+    const double dt = costmap_ros_->getCostmap()->getResolution() / std::abs(velocity);
+    for (double elapsed = dt; elapsed < safety_veto_horizon_s_; elapsed += dt) {
+      x += dt * velocity * std::cos(yaw);
+      y += dt * velocity * std::sin(yaw);
+      yaw += dt * angular;
+      if (collision_checker_->footprintCostAtPose(x, y, yaw, footprint) >=
+        nav2_costmap_2d::LETHAL_OBSTACLE)
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void publish_feasibility(
+    const builtin_interfaces::msg::Time & stamp,
+    const geometry_msgs::msg::Twist & command,
+    const AckermannTwistValidation & validation,
+    const bool safety_veto_pass)
+  {
+    std::ostringstream json;
+    json << std::setprecision(17)
+         << "{\"stamp_ns\":" << stamp_ns(stamp)
+         << ",\"kappa_req\":" << validation.curvature_1pm
+         << ",\"kappa_max\":" << maximum_ackermann_curvature_1pm()
+         << ",\"kappa_cmd\":" << validation.curvature_1pm
+         << ",\"v_cmd\":" << command.linear.x
+         << ",\"omega_pre_feasibility\":" << command.angular.z
+         << ",\"omega_cmd\":" << command.angular.z
+         << ",\"delta_equivalent\":" << validation.equivalent_steering_rad
+         << ",\"curvature_saturated\":false"
+         << ",\"physical_feasibility\":" << (validation.feasible ? "true" : "false")
+         << ",\"safety_veto_pass\":" << (safety_veto_pass ? "true" : "false")
+         << "}";
+    std_msgs::msg::String message;
+    message.data = json.str();
+    feasibility_pub_->publish(message);
   }
 
   void publish_fault(const std::string & fault)
@@ -249,14 +335,20 @@ private:
   FixedGoalChecker goal_checker_;
   std::shared_ptr<nav2_costmap_2d::Costmap2DROS> costmap_ros_;
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::unique_ptr<
+    nav2_costmap_2d::FootprintCollisionChecker<nav2_costmap_2d::Costmap2D *>> collision_checker_;
   rclcpp::Publisher<geometry_msgs::msg::TwistStamped>::SharedPtr command_pub_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr fault_pub_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr feasibility_pub_;
   rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr path_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
   std::optional<nav_msgs::msg::Odometry> pending_odom_;
   std::optional<int64_t> last_state_stamp_;
   uint64_t duplicate_stamp_rejections_{0};
   uint64_t command_count_{0};
+  std::string controller_name_{"RPP"};
+  double safety_veto_horizon_s_{1.0};
+  bool independent_safety_veto_{false};
   bool path_ready_{false};
   bool fault_published_{false};
 };

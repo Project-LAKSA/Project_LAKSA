@@ -55,6 +55,7 @@ setup(
             "c1_gym_adapter = laksa_speed_race.gym_adapter_node:main",
             "c1_nav2_raceline = laksa_speed_race.nav2_raceline_node:main",
             "c1_nav2_ackermann_adapter = laksa_speed_race.nav2_ackermann_adapter_node:main",
+            "c1_historical_replay = laksa_speed_race.historical_replay:main",
         ],
     },
 )

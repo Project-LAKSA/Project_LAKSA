@@ -62,7 +62,7 @@ def main(args: list[str] | None = None) -> None:
                     "upstream_linear_mps", "omega_pre_feasibility_rps", "upstream_angular_rps",
                     "delta_equivalent_rad", "delta_raw_rad", "delta_applied_rad",
                     "curvature_saturated", "downstream_steering_saturated", "ttc_pass",
-                    "ttc_horizon_s",
+                    "ttc_horizon_s", "physical_feasibility", "safety_veto_pass",
                 ],
             )
             self.telemetry.writeheader()
@@ -83,6 +83,7 @@ def main(args: list[str] | None = None) -> None:
             self.create_subscription(Odometry, "/c1/odom", self.on_odom, 10)
             self.create_subscription(PointStamped, "/c1/lookahead_point", self.on_carrot, 10)
             self.create_subscription(String, "/c1/rpp_feasibility", self.on_feasibility, 100)
+            self.create_subscription(String, "/c1/controller_feasibility", self.on_feasibility, 100)
             self.create_subscription(RosPath, "/c1/lookahead_collision_arc", self.on_ttc_arc, 10)
             self.create_subscription(TwistStamped, "/c1/nav2_cmd_vel", self.on_twist, 10)
 
@@ -174,6 +175,8 @@ def main(args: list[str] | None = None) -> None:
                     "downstream_steering_saturated": int(saturated),
                     "ttc_pass": feasibility.get("ttc_pass", ""),
                     "ttc_horizon_s": feasibility.get("ttc_horizon_s", ""),
+                    "physical_feasibility": feasibility.get("physical_feasibility", ""),
+                    "safety_veto_pass": feasibility.get("safety_veto_pass", ""),
                 }
             )
             self.telemetry_stream.flush()
