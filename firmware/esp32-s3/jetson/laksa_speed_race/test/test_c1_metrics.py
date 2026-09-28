@@ -24,6 +24,7 @@ class MetricsTests(unittest.TestCase):
                 requested_steering_rad=0.1,
                 applied_speed_mps=1.0,
                 applied_steering_rad=0.1,
+                actual_speed_mps=1.0,
                 x_m=float(index),
                 y_m=0.0,
                 yaw_rad=0.0,
@@ -31,6 +32,8 @@ class MetricsTests(unittest.TestCase):
                 heading_error_rad=0.02,
                 collision=False,
                 off_track=False,
+                full_body_clearance_m=0.2,
+                gym_step_latency_ms=0.5,
                 lap_count=index,
                 state="RUNNING",
             )

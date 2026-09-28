@@ -56,6 +56,7 @@ class C1Metrics:
         requested_steering_rad: float,
         applied_speed_mps: float,
         applied_steering_rad: float,
+        actual_speed_mps: float,
         x_m: float,
         y_m: float,
         yaw_rad: float,
@@ -63,6 +64,8 @@ class C1Metrics:
         heading_error_rad: float,
         collision: bool,
         off_track: bool,
+        full_body_clearance_m: float,
+        gym_step_latency_ms: float,
         lap_count: int,
         state: str,
     ) -> None:
@@ -95,10 +98,13 @@ class C1Metrics:
                 "x_m": x_m,
                 "y_m": y_m,
                 "yaw_rad": yaw_rad,
+                "actual_speed_mps": actual_speed_mps,
                 "signed_cte_m": cte_m,
                 "heading_error_rad": heading_error_rad,
                 "collision": int(collision),
                 "off_track": int(off_track),
+                "full_body_clearance_m": full_body_clearance_m,
+                "gym_step_latency_ms": gym_step_latency_ms,
                 "lap_count": lap_count,
             }
         )

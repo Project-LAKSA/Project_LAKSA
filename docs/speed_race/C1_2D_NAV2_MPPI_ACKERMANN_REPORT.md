@@ -997,3 +997,142 @@ SHORT_HORIZON_AUTHORIZED=YES
 
 No short horizon, repeat, determinism run, or Trial 1 was executed. Those
 remain outside this Gate-C task.
+
+## C1.2d Short-Horizon Closed Loop
+
+Exactly one short-horizon run was executed on the ARM64 Jetson. No prior C1.2d
+artifact defined a different exact horizon, so the run used the task's minimum
+authorized horizon of 50 causal controller evaluations and state transitions.
+This reaches beyond the historical RPP S32 and S39 regions without tuning the
+horizon after observing results.
+
+Before the run, the isolated packages rebuilt successfully. The Ackermann
+feasibility C++ suite passed **5/5**, and the complete LAKSA Python suite passed
+**94/94**. Pinned Gym provenance, the runtime overlay, the frozen raceline hash,
+physical-topic isolation, and the absence of stale C1 processes were verified.
+The preflight allocator selected domain 226; the single dynamic run independently
+selected and leased fresh domain 221.
+
+The run completed all 50 requested steps:
+
+```text
+CONTROLLER_EVALUATIONS=50
+GYM_STEPS=50
+LOCKSTEP_CAUSALITY=PASS
+DUPLICATE_STAMP_COUNT=0
+STALE_COMMAND_COUNT=0
+HIDDEN_GYM_STEP_COUNT=0
+COLLISIONS=0
+OFF_TRACK_EVENTS=0
+REVERSE_COMMANDS=0
+INVALID_COMMANDS=0
+SAFETY_VETO_COUNT=0
+DOWNSTREAM_FEASIBILITY_CLAMP_ACTIVATIONS=0
+```
+
+Each telemetry row contains the same state stamp at the MPPI input and output,
+one feasibility decision, one drive request, and one Gym transition. The exact
+executable command passed the independent safety veto before each Gym call.
+All commands were finite and inside the frozen Ackermann envelope. The maximum
+absolute steering was `0.08737466934699005 rad`; no steering saturation occurred.
+
+The 0.5-second tracking result was safe but does not yet demonstrate convergence.
+Using the first and last measured closed-loop samples, signed CTE changed from
+`0.26671643419952507 m` to `0.26683371350746476 m`, an increase of about
+0.117 mm. Heading error changed from `-0.000023786786456092557 rad` to
+`0.003839877844177053 rad`. These errors remained controlled over this horizon,
+but the evidence must not be read as a longer-horizon tracking or lap result.
+
+```text
+CTE_RMS=0.2667444078469783 m
+CTE_P95=0.26681693681593427 m
+CTE_MAX=0.26683371350746476 m
+HEADING_ERROR_RMS=0.00210082211541244 rad
+HEADING_ERROR_P95=0.0036173509335810203 rad
+HEADING_ERROR_MAX=0.003839877844177053 rad
+```
+
+The raw reset observation does not provide Gym's raceline CTE and therefore
+contains zero in `summary.json`. The initial CTE and heading values above come
+from the first machine-readable closed-loop sample; the independent metrics
+artifact records this scope explicitly.
+
+At MPPI step 32:
+
+```text
+x=20.647403717041016 m
+y=2.298712730407715 m
+yaw=0.0024150684475898743 rad
+actual_speed=0.13028880953788757 m/s
+CTE=0.26674258799167666 m
+heading_error=0.0023658613790815686 rad
+curvature=0.09163104620565092 1/m
+steering=0.029679741065838715 rad
+full_body_clearance=0.30816354350532355 m
+safety_veto=PASS
+```
+
+At MPPI step 39:
+
+```text
+x=20.657482147216797 m
+y=2.2987396717071533 m
+yaw=0.002913136500865221 rad
+actual_speed=0.1569029837846756 m/s
+CTE=0.2667696209893062 m
+heading_error=0.0029062067836678196 rad
+curvature=0.07438169349455119 1/m
+steering=0.02409500466951955 rad
+full_body_clearance=0.30792810881591065 m
+safety_veto=PASS
+```
+
+Thus the new MPPI trajectory had not recreated RPP's sustained maximum-steering
+policy by its own S32/S39 indices. This is a trajectory-index comparison only;
+those states are not claimed to equal the historical RPP states.
+
+Actual speed rose from `0.0 m/s` to `0.18972113728523254 m/s`, with mean
+`0.09792036229511723 m/s`, p95 `0.18333093971014022 m/s`, and maximum
+`0.18972113728523254 m/s`. Commanded speed averaged
+`0.17418503526598214 m/s` and peaked at `0.24063703417778015 m/s`.
+Full-body clearance decreased from `0.30919994145690904 m` to its minimum
+`0.3074667817231728 m` at step 50, remaining positive throughout.
+
+Maximum command-to-command steering change was
+`0.024858176040717925 rad`; the corresponding simulated 10-ms command slew was
+`2.4858176040717925 rad/s`. This is descriptive simulation telemetry only.
+No authoritative physical steering-rate limit exists, so
+`PHYSICAL_STEERING_RATE_QUALIFICATION=PENDING` remains mandatory.
+
+Controller compute latency was 28.431155 ms p50, 33.01263185 ms p95, and
+63.965212 ms maximum. Gym step latency was 1.4910375466570258 ms p50,
+2.513581817038357 ms p95, and 92.37696195486933 ms maximum. Initialization is
+reported separately by the harness; these values are the 50 recorded control
+cycles, including first-cycle warm-up.
+
+The step-limit stop is intentional. The generic three-lap `summary.json` marks
+the terminal state as `FAULT:qualification_step_limit_reached` and its
+three-lap overall acceptance as failed, while the mode-specific harness verifies
+the exact 50-step stop and records `status=PASS`. Terminal zero was observed,
+no post-terminal step occurred, the launch exited cleanly, no C1 process
+remained, and an unrelated sentinel survived unchanged.
+
+Machine-readable evidence is stored on the Jetson at
+`/tmp/laksa-c1.2-short-horizon.PnsLEF` and mirrored privately at
+`/private/tmp/laksa-c1.2-short-horizon.PnsLEF`. It includes raw summary,
+trajectory, command, event, feasibility, and controller telemetry CSV files;
+the merged `short_horizon_telemetry.csv`; `independent_metrics.json`; and these
+static plots:
+
+- `trajectory_vs_raceline.png`
+- `cte_vs_step.png`
+- `heading_error_vs_step.png`
+- `steering_vs_step.png`
+- `speed_vs_step.png`
+- `clearance_vs_step.png`
+
+No x3 determinism run or Trial 1 was executed. The completed short-horizon gate
+authorizes x3 determinism, subject to separate authorization. Course, raceline,
+costmap, footprint, ThreeLapGate, MPPI parameters, Gym source, production, and
+physical hardware remained unchanged. The unrelated BNO08x submodule deletion
+was neither modified nor staged.

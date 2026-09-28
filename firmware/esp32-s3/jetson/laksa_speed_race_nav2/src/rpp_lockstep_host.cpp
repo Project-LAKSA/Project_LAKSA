@@ -2,6 +2,7 @@
 // Licensed under the Apache License, Version 2.0
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <limits>
@@ -238,14 +239,19 @@ private:
     pose.header.frame_id = "map";
     pose.pose = message->pose.pose;
     try {
+      const auto controller_start = std::chrono::steady_clock::now();
       auto command = controller_->computeVelocityCommands(pose, message->twist.twist, &goal_checker_);
+      const auto controller_end = std::chrono::steady_clock::now();
+      const double controller_latency_ms =
+        std::chrono::duration<double, std::milli>(controller_end - controller_start).count();
       command.header = message->header;
       command.header.frame_id = "c1/base_link";
       const auto validation = validate_ackermann_twist(
         command.twist.linear.x, command.twist.angular.z);
       const bool veto_pass = validation.feasible &&
         (!independent_safety_veto_ || independent_safety_check(pose, command.twist));
-      publish_feasibility(message->header.stamp, command.twist, validation, veto_pass);
+      publish_feasibility(
+        message->header.stamp, command.twist, validation, veto_pass, controller_latency_ms);
       if (!validation.feasible) {
         publish_fault("physical_feasibility_violation");
         return;
@@ -297,11 +303,15 @@ private:
     const builtin_interfaces::msg::Time & stamp,
     const geometry_msgs::msg::Twist & command,
     const AckermannTwistValidation & validation,
-    const bool safety_veto_pass)
+    const bool safety_veto_pass,
+    const double controller_latency_ms)
   {
     std::ostringstream json;
     json << std::setprecision(17)
          << "{\"stamp_ns\":" << stamp_ns(stamp)
+         << ",\"controller_input_stamp_ns\":" << stamp_ns(stamp)
+         << ",\"controller_output_stamp_ns\":" << stamp_ns(stamp)
+         << ",\"controller_latency_ms\":" << controller_latency_ms
          << ",\"kappa_req\":" << validation.curvature_1pm
          << ",\"kappa_max\":" << maximum_ackermann_curvature_1pm()
          << ",\"kappa_cmd\":" << validation.curvature_1pm

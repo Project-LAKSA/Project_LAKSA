@@ -12,10 +12,16 @@ class AlwaysInside:
     def contains_body(self, x_m, y_m, yaw_rad):
         return True
 
+    def full_body_clearance_m(self, x_m, y_m, yaw_rad):
+        return 1.0
+
 
 class AlwaysOutside:
     def contains_body(self, x_m, y_m, yaw_rad):
         return False
+
+    def full_body_clearance_m(self, x_m, y_m, yaw_rad):
+        return -1.0
 
 
 class FakeGym:

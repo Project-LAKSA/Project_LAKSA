@@ -374,6 +374,14 @@ def test_one_step_launch_permits_exactly_one_gym_step():
     assert "include_gym:=true" in command
 
 
+def test_short_horizon_launch_uses_frozen_50_step_limit():
+    args = SimpleNamespace(mode="short-horizon", output_dir="/tmp/result")
+    command = qualification._launch_command(args)
+    assert qualification.SHORT_HORIZON_STEPS == 50
+    assert "qualification_step_limit:=50" in command
+    assert "include_gym:=true" in command
+
+
 def test_one_step_artifacts_require_exactly_one_transition(tmp_path):
     stamp = 1_000_000_000
     summary = {
@@ -432,6 +440,116 @@ def test_one_step_artifacts_require_exactly_one_transition(tmp_path):
     assert evidence["controller_evaluations"] == 1
     assert evidence["gym_steps"] == 1
     assert evidence["steering_sign_semantics"] == "PASS"
+
+
+def test_short_horizon_artifacts_require_exact_lockstep_counts(tmp_path):
+    target = qualification.SHORT_HORIZON_STEPS
+    summary = {
+        "simulator_step_count": target,
+        "accepted_drive_requests": target,
+        "duplicate_state_stamp_rejections": 0,
+        "state_stamp_mismatch_events": 0,
+        "qualification_limit_reached": True,
+        "fault": "qualification_step_limit_reached",
+        "steps_after_terminal": 0,
+        "collision_edges": 0,
+        "off_track_events": 0,
+        "reverse_command_events": 0,
+        "invalid_command_events": 0,
+        "final_applied_command": {"steering_rad": 0.0, "speed_mps": 0.0},
+        "sim_time_s": target * qualification.DT_S,
+        "initial_state_evidence": {
+            "speed_mps": 0.0,
+            "signed_cte_m": 0.25,
+            "heading_error_rad": 0.1,
+            "full_body_clearance_m": 0.2,
+        },
+    }
+    (tmp_path / "summary.json").write_text(json.dumps(summary))
+
+    telemetry_fields = [
+        "state_stamp_ns", "sequence", "upstream_linear_mps", "upstream_angular_rps",
+        "kappa_cmd_1pm", "delta_applied_rad", "downstream_steering_saturated",
+    ]
+    feasibility_fields = [
+        "state_stamp_ns", "controller_input_stamp_ns", "controller_output_stamp_ns",
+        "controller_latency_ms", "physical_feasibility", "safety_veto_pass",
+    ]
+    trajectory_fields = [
+        "step", "sim_time_s", "x_m", "y_m", "yaw_rad", "actual_speed_mps",
+        "signed_cte_m", "heading_error_rad", "collision", "off_track",
+        "full_body_clearance_m", "gym_step_latency_ms",
+    ]
+    command_fields = ["step", "applied_speed_mps", "applied_steering_rad"]
+    streams = {}
+    writers = {}
+    for name, fields in (
+        ("controller_telemetry.csv", telemetry_fields),
+        ("controller_feasibility.csv", feasibility_fields),
+        ("trajectory.csv", trajectory_fields),
+        ("commands.csv", command_fields),
+    ):
+        streams[name] = (tmp_path / name).open("w", newline="")
+        writers[name] = csv.DictWriter(streams[name], fieldnames=fields)
+        writers[name].writeheader()
+    try:
+        for step in range(1, target + 1):
+            stamp = 1_000_000_000 + step * 10_000_000
+            steering = 0.08 + step * 1e-5
+            writers["controller_telemetry.csv"].writerow(
+                {
+                    "state_stamp_ns": stamp,
+                    "sequence": step,
+                    "upstream_linear_mps": 0.1,
+                    "upstream_angular_rps": 0.025,
+                    "kappa_cmd_1pm": 0.25,
+                    "delta_applied_rad": steering,
+                    "downstream_steering_saturated": 0,
+                }
+            )
+            writers["controller_feasibility.csv"].writerow(
+                {
+                    "state_stamp_ns": stamp,
+                    "controller_input_stamp_ns": stamp,
+                    "controller_output_stamp_ns": stamp,
+                    "controller_latency_ms": 1.0,
+                    "physical_feasibility": "true",
+                    "safety_veto_pass": "true",
+                }
+            )
+            writers["trajectory.csv"].writerow(
+                {
+                    "step": step,
+                    "sim_time_s": step * qualification.DT_S,
+                    "x_m": step * 0.001,
+                    "y_m": 0.0,
+                    "yaw_rad": step * 0.0001,
+                    "actual_speed_mps": 0.09,
+                    "signed_cte_m": 0.25 - step * 0.001,
+                    "heading_error_rad": 0.1 - step * 0.001,
+                    "collision": 0,
+                    "off_track": 0,
+                    "full_body_clearance_m": 0.2,
+                    "gym_step_latency_ms": 0.5,
+                }
+            )
+            writers["commands.csv"].writerow(
+                {
+                    "step": step,
+                    "applied_speed_mps": 0.1,
+                    "applied_steering_rad": steering,
+                }
+            )
+    finally:
+        for stream in streams.values():
+            stream.close()
+
+    evidence = qualification.validate_short_horizon_artifacts(tmp_path)
+    assert evidence["executed_steps"] == target
+    assert evidence["controller_evaluations"] == target
+    assert evidence["gym_steps"] == target
+    assert evidence["lockstep_causality"] == "PASS"
+    assert (tmp_path / "short_horizon_telemetry.csv").is_file()
 
 
 def test_native_launcher_sources_ackermann_before_c1_overlay():

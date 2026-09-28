@@ -63,6 +63,8 @@ def main(args: list[str] | None = None) -> None:
                     "delta_equivalent_rad", "delta_raw_rad", "delta_applied_rad",
                     "curvature_saturated", "downstream_steering_saturated", "ttc_pass",
                     "ttc_horizon_s", "physical_feasibility", "safety_veto_pass",
+                    "controller_input_stamp_ns", "controller_output_stamp_ns",
+                    "controller_latency_ms",
                 ],
             )
             self.telemetry.writeheader()
@@ -72,6 +74,20 @@ def main(args: list[str] | None = None) -> None:
                 fieldnames=["state_stamp_ns", "sample_index", "x_m", "y_m"],
             )
             self.ttc_samples.writeheader()
+            self.feasibility_stream = (self.output_dir / "controller_feasibility.csv").open(
+                "w", newline=""
+            )
+            self.feasibility_events = csv.DictWriter(
+                self.feasibility_stream,
+                fieldnames=[
+                    "state_stamp_ns", "controller_input_stamp_ns",
+                    "controller_output_stamp_ns", "controller_latency_ms",
+                    "kappa_req_1pm", "kappa_max_1pm", "kappa_cmd_1pm",
+                    "upstream_linear_mps", "upstream_angular_rps",
+                    "delta_equivalent_rad", "physical_feasibility", "safety_veto_pass",
+                ],
+            )
+            self.feasibility_events.writeheader()
             raceline = share / "course" / "canonical" / "speed_course" / "pure_pursuit_raceline.csv"
             self.points = unroll_closed_raceline(load_frozen_raceline(raceline))
             self.progress_index = 0
@@ -80,6 +96,7 @@ def main(args: list[str] | None = None) -> None:
             self.carrot_by_stamp: dict[int, tuple[float, float]] = {}
             self.feasibility_by_stamp: dict[int, dict[str, object]] = {}
             self.publisher = self.create_publisher(AckermannDriveStamped, "/c1/drive_request", 10)
+            self.fault_publisher = self.create_publisher(String, "/c1/controller_fault", 10)
             self.create_subscription(Odometry, "/c1/odom", self.on_odom, 10)
             self.create_subscription(PointStamped, "/c1/lookahead_point", self.on_carrot, 10)
             self.create_subscription(String, "/c1/rpp_feasibility", self.on_feasibility, 100)
@@ -112,6 +129,23 @@ def main(args: list[str] | None = None) -> None:
             data = json.loads(message.data)
             stamp = int(data["stamp_ns"])
             self.feasibility_by_stamp[stamp] = data
+            self.feasibility_events.writerow(
+                {
+                    "state_stamp_ns": stamp,
+                    "controller_input_stamp_ns": data.get("controller_input_stamp_ns", ""),
+                    "controller_output_stamp_ns": data.get("controller_output_stamp_ns", ""),
+                    "controller_latency_ms": data.get("controller_latency_ms", ""),
+                    "kappa_req_1pm": data.get("kappa_req", ""),
+                    "kappa_max_1pm": data.get("kappa_max", ""),
+                    "kappa_cmd_1pm": data.get("kappa_cmd", ""),
+                    "upstream_linear_mps": data.get("v_cmd", ""),
+                    "upstream_angular_rps": data.get("omega_cmd", ""),
+                    "delta_equivalent_rad": data.get("delta_equivalent", ""),
+                    "physical_feasibility": data.get("physical_feasibility", ""),
+                    "safety_veto_pass": data.get("safety_veto_pass", ""),
+                }
+            )
+            self.feasibility_stream.flush()
             if len(self.feasibility_by_stamp) > 4:
                 del self.feasibility_by_stamp[min(self.feasibility_by_stamp)]
 
@@ -131,8 +165,19 @@ def main(args: list[str] | None = None) -> None:
         def on_twist(self, message: TwistStamped) -> None:
             linear = float(message.twist.linear.x)
             angular = float(message.twist.angular.z)
-            speed, steering, saturated = twist_to_ackermann(linear, angular)
+            try:
+                speed, steering, saturated = twist_to_ackermann(linear, angular)
+            except ValueError as error:
+                fault = String()
+                fault.data = f"ackermann_adapter_invalid_command:{error}"
+                self.fault_publisher.publish(fault)
+                return
             raw = 0.0 if speed == 0.0 else math.atan(WHEELBASE_M * angular / speed)
+            if saturated:
+                fault = String()
+                fault.data = "downstream_feasibility_clamp_required"
+                self.fault_publisher.publish(fault)
+                return
             request = AckermannDriveStamped()
             request.header = message.header
             request.header.frame_id = "c1/base_link"
@@ -177,6 +222,13 @@ def main(args: list[str] | None = None) -> None:
                     "ttc_horizon_s": feasibility.get("ttc_horizon_s", ""),
                     "physical_feasibility": feasibility.get("physical_feasibility", ""),
                     "safety_veto_pass": feasibility.get("safety_veto_pass", ""),
+                    "controller_input_stamp_ns": feasibility.get(
+                        "controller_input_stamp_ns", ""
+                    ),
+                    "controller_output_stamp_ns": feasibility.get(
+                        "controller_output_stamp_ns", ""
+                    ),
+                    "controller_latency_ms": feasibility.get("controller_latency_ms", ""),
                 }
             )
             self.telemetry_stream.flush()
@@ -184,6 +236,7 @@ def main(args: list[str] | None = None) -> None:
         def destroy_node(self):
             self.telemetry_stream.close()
             self.ttc_samples_stream.close()
+            self.feasibility_stream.close()
             return super().destroy_node()
 
     rclpy.init(args=args)

@@ -30,6 +30,7 @@ from .runtime_preflight import (
 F1TENTH_GYM_SHA = "bdaec1420c3b0f103858d289866d0d4e2e597c30"
 DT_S = 0.01
 MAX_SPEED_MPS = 1.0
+SHORT_HORIZON_STEPS = 50
 
 
 REQUIRED_READY_NODES = frozenset(
@@ -293,11 +294,262 @@ def validate_one_step_artifacts(output_dir: Path) -> dict[str, object]:
     }
 
 
+def _percentile(values: list[float], fraction: float) -> float:
+    ordered = sorted(values)
+    index = (len(ordered) - 1) * fraction
+    lower = math.floor(index)
+    upper = math.ceil(index)
+    if lower == upper:
+        return ordered[lower]
+    return ordered[lower] + (ordered[upper] - ordered[lower]) * (index - lower)
+
+
+def validate_short_horizon_artifacts(
+    output_dir: Path,
+    *,
+    target_steps: int = SHORT_HORIZON_STEPS,
+) -> dict[str, object]:
+    """Validate and merge one complete deterministic multi-step lockstep run."""
+
+    required_paths = {
+        name: output_dir / name
+        for name in (
+            "summary.json", "controller_telemetry.csv", "controller_feasibility.csv",
+            "trajectory.csv", "commands.csv",
+        )
+    }
+    missing = [name for name, path in required_paths.items() if not path.is_file()]
+    if missing:
+        raise QualificationHarnessError(f"short-horizon evidence is incomplete: {missing}")
+    summary = json.loads(required_paths["summary.json"].read_text(encoding="utf-8"))
+
+    def read_csv(name: str) -> list[dict[str, str]]:
+        with required_paths[name].open(newline="", encoding="utf-8") as stream:
+            return list(csv.DictReader(stream))
+
+    telemetry = read_csv("controller_telemetry.csv")
+    feasibility = read_csv("controller_feasibility.csv")
+    trajectory = read_csv("trajectory.csv")
+    commands = read_csv("commands.csv")
+    required_summary = {
+        "simulator_step_count": target_steps,
+        "accepted_drive_requests": target_steps,
+        "duplicate_state_stamp_rejections": 0,
+        "state_stamp_mismatch_events": 0,
+        "qualification_limit_reached": True,
+        "fault": "qualification_step_limit_reached",
+        "steps_after_terminal": 0,
+        "collision_edges": 0,
+        "off_track_events": 0,
+        "reverse_command_events": 0,
+        "invalid_command_events": 0,
+        "final_applied_command": {"steering_rad": 0.0, "speed_mps": 0.0},
+    }
+    for key, expected in required_summary.items():
+        if summary.get(key) != expected:
+            raise QualificationHarnessError(
+                f"short-horizon evidence mismatch for {key}: "
+                f"{summary.get(key)!r} != {expected!r}"
+            )
+    counts = {
+        "controller telemetry": len(telemetry),
+        "controller feasibility": len(feasibility),
+        "trajectory": len(trajectory),
+        "commands": len(commands),
+    }
+    for label, count in counts.items():
+        if count != target_steps:
+            raise QualificationHarnessError(
+                f"expected {target_steps} {label} rows, observed {count}"
+            )
+
+    feasibility_by_stamp = {int(row["state_stamp_ns"]): row for row in feasibility}
+    if len(feasibility_by_stamp) != target_steps:
+        raise QualificationHarnessError("duplicate controller feasibility stamp")
+    initial = summary.get("initial_state_evidence")
+    if not isinstance(initial, dict):
+        raise QualificationHarnessError("initial short-horizon state evidence is missing")
+
+    merged: list[dict[str, object]] = []
+    previous_stamp = 0
+    previous_steering: float | None = None
+    for expected_step, (controller, state, command) in enumerate(
+        zip(telemetry, trajectory, commands), start=1
+    ):
+        if int(controller["sequence"]) != expected_step:
+            raise QualificationHarnessError("controller sequence is not contiguous")
+        if int(state["step"]) != expected_step or int(command["step"]) != expected_step:
+            raise QualificationHarnessError("Gym/command sequence is not contiguous")
+        stamp = int(controller["state_stamp_ns"])
+        if stamp <= previous_stamp:
+            raise QualificationHarnessError("controller state stamps are not strictly increasing")
+        previous_stamp = stamp
+        feasible = feasibility_by_stamp.get(stamp)
+        if feasible is None:
+            raise QualificationHarnessError("controller output has no matching feasibility record")
+        input_stamp = int(feasible["controller_input_stamp_ns"])
+        output_stamp = int(feasible["controller_output_stamp_ns"])
+        if input_stamp != stamp or output_stamp != stamp:
+            raise QualificationHarnessError("controller input/output stamp mismatch")
+
+        vx = float(controller["upstream_linear_mps"])
+        wz = float(controller["upstream_angular_rps"])
+        kappa = float(controller["kappa_cmd_1pm"])
+        steering = float(controller["delta_applied_rad"])
+        controller_latency = float(feasible["controller_latency_ms"])
+        gym_latency = float(state["gym_step_latency_ms"])
+        actual_speed = float(state["actual_speed_mps"])
+        clearance = float(state["full_body_clearance_m"])
+        numeric = (
+            vx, wz, kappa, steering, controller_latency, gym_latency, actual_speed,
+            clearance, float(state["x_m"]), float(state["y_m"]),
+            float(state["yaw_rad"]), float(state["signed_cte_m"]),
+            float(state["heading_error_rad"]),
+        )
+        if not all(math.isfinite(value) for value in numeric):
+            raise QualificationHarnessError(f"non-finite evidence at step {expected_step}")
+        if abs(steering) > 0.288 or vx < 0.0 or vx > MAX_SPEED_MPS:
+            raise QualificationHarnessError(f"invalid command at step {expected_step}")
+        if controller["downstream_steering_saturated"] not in {"0", "false", "False"}:
+            raise QualificationHarnessError(
+                f"downstream feasibility clamp activated at step {expected_step}"
+            )
+        if feasible["physical_feasibility"].lower() not in {"1", "true"}:
+            raise QualificationHarnessError(
+                f"physical feasibility failed at step {expected_step}"
+            )
+        if feasible["safety_veto_pass"].lower() not in {"1", "true"}:
+            raise QualificationHarnessError(f"safety veto at step {expected_step}")
+        if int(state["collision"]) or int(state["off_track"]):
+            raise QualificationHarnessError(
+                f"collision/off-track state at step {expected_step}"
+            )
+        if not math.isclose(float(command["applied_speed_mps"]), vx, abs_tol=1e-12):
+            raise QualificationHarnessError(f"executed speed mismatch at step {expected_step}")
+        if not math.isclose(
+            float(command["applied_steering_rad"]), steering, abs_tol=1e-8
+        ):
+            raise QualificationHarnessError(
+                f"executed steering mismatch at step {expected_step}"
+            )
+        steering_delta = 0.0 if previous_steering is None else steering - previous_steering
+        previous_steering = steering
+        merged.append(
+            {
+                "step": expected_step,
+                "sim_time_s": float(state["sim_time_s"]),
+                "state_stamp_ns": stamp,
+                "controller_input_stamp_ns": input_stamp,
+                "controller_output_stamp_ns": output_stamp,
+                "x_m": float(state["x_m"]),
+                "y_m": float(state["y_m"]),
+                "yaw_rad": float(state["yaw_rad"]),
+                "actual_speed_mps": actual_speed,
+                "command_vx_mps": vx,
+                "command_wz_rps": wz,
+                "curvature_1pm": kappa,
+                "steering_rad": steering,
+                "steering_delta_rad": steering_delta,
+                "simulated_steering_rate_radps": steering_delta / DT_S,
+                "signed_cte_m": float(state["signed_cte_m"]),
+                "heading_error_rad": float(state["heading_error_rad"]),
+                "full_body_clearance_m": clearance,
+                "safety_veto_pass": True,
+                "collision": 0,
+                "off_track": 0,
+                "reverse": int(vx < 0.0),
+                "invalid_command": 0,
+                "controller_latency_ms": controller_latency,
+                "gym_step_latency_ms": gym_latency,
+            }
+        )
+
+    merged_path = output_dir / "short_horizon_telemetry.csv"
+    with merged_path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(merged[0]))
+        writer.writeheader()
+        writer.writerows(merged)
+
+    cte = [float(row["signed_cte_m"]) for row in merged]
+    heading = [float(row["heading_error_rad"]) for row in merged]
+    steering = [float(row["steering_rad"]) for row in merged]
+    actual_speed = [float(row["actual_speed_mps"]) for row in merged]
+    command_speed = [float(row["command_vx_mps"]) for row in merged]
+    clearance = [float(row["full_body_clearance_m"]) for row in merged]
+    controller_latency = [float(row["controller_latency_ms"]) for row in merged]
+    gym_latency = [float(row["gym_step_latency_ms"]) for row in merged]
+    steering_deltas = [abs(float(row["steering_delta_rad"])) for row in merged]
+    initial_cte = float(initial["signed_cte_m"])
+    initial_heading = float(initial["heading_error_rad"])
+    min_clearance = min(clearance)
+    min_clearance_step = clearance.index(min_clearance) + 1
+
+    def state_at(step: int) -> dict[str, object]:
+        return merged[step - 1]
+
+    return {
+        "target_steps": target_steps,
+        "executed_steps": target_steps,
+        "duration_s": float(summary["sim_time_s"]),
+        "controller_evaluations": len(feasibility),
+        "gym_steps": int(summary["simulator_step_count"]),
+        "lockstep_causality": "PASS",
+        "duplicate_stamp_count": 0,
+        "stale_command_count": 0,
+        "hidden_gym_step_count": 0,
+        "cte_initial_m": initial_cte,
+        "cte_final_m": cte[-1],
+        "cte_rms_m": math.sqrt(sum(value * value for value in cte) / len(cte)),
+        "cte_p95_m": _percentile([abs(value) for value in cte], 0.95),
+        "cte_max_m": max(abs(value) for value in cte),
+        "heading_initial_rad": initial_heading,
+        "heading_final_rad": heading[-1],
+        "heading_rms_rad": math.sqrt(
+            sum(value * value for value in heading) / len(heading)
+        ),
+        "heading_p95_rad": _percentile([abs(value) for value in heading], 0.95),
+        "heading_max_rad": max(abs(value) for value in heading),
+        "s32": state_at(32),
+        "s39": state_at(39),
+        "max_abs_steering_rad": max(abs(value) for value in steering),
+        "steering_saturation_count": sum(abs(value) >= 0.288 for value in steering),
+        "steering_saturation_percent": (
+            100.0 * sum(abs(value) >= 0.288 for value in steering) / len(steering)
+        ),
+        "max_command_delta_steering_rad": max(steering_deltas),
+        "max_simulated_steering_rate_radps": max(value / DT_S for value in steering_deltas),
+        "speed_initial_mps": float(initial["speed_mps"]),
+        "speed_final_mps": actual_speed[-1],
+        "speed_mean_mps": sum(actual_speed) / len(actual_speed),
+        "speed_p95_mps": _percentile(actual_speed, 0.95),
+        "speed_max_mps": max(actual_speed),
+        "command_speed_mean_mps": sum(command_speed) / len(command_speed),
+        "command_speed_max_mps": max(command_speed),
+        "clearance_initial_m": float(initial["full_body_clearance_m"]),
+        "clearance_final_m": clearance[-1],
+        "min_full_body_clearance_m": min_clearance,
+        "min_clearance_step": min_clearance_step,
+        "collisions": 0,
+        "off_track_events": 0,
+        "reverse_commands": 0,
+        "invalid_commands": 0,
+        "safety_veto_count": 0,
+        "downstream_feasibility_clamp_activations": 0,
+        "controller_latency_p50_ms": _percentile(controller_latency, 0.50),
+        "controller_latency_p95_ms": _percentile(controller_latency, 0.95),
+        "controller_latency_max_ms": max(controller_latency),
+        "gym_step_latency_p50_ms": _percentile(gym_latency, 0.50),
+        "gym_step_latency_p95_ms": _percentile(gym_latency, 0.95),
+        "gym_step_latency_max_ms": max(gym_latency),
+        "telemetry_artifact": str(merged_path),
+    }
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--mode",
-        choices=("preflight", "readiness", "zero-step", "one-step"),
+        choices=("preflight", "readiness", "zero-step", "one-step", "short-horizon"),
         required=True,
     )
     parser.add_argument("--workspace", default="/tmp/laksa-c1.2-runtime")
@@ -320,7 +572,12 @@ def _parser() -> argparse.ArgumentParser:
 def _launch_command(args: argparse.Namespace) -> list[str]:
     include_gym = "false" if args.mode == "readiness" else "true"
     gym_start_delay_s = "0.0" if args.mode == "readiness" else "30.0"
-    qualification_step_limit = "1" if args.mode == "one-step" else "0"
+    if args.mode == "one-step":
+        qualification_step_limit = "1"
+    elif args.mode == "short-horizon":
+        qualification_step_limit = str(SHORT_HORIZON_STEPS)
+    else:
+        qualification_step_limit = "0"
     return [
         "ros2",
         "launch",
@@ -419,8 +676,10 @@ def main(argv: Iterable[str] | None = None) -> int:
                     )
                 if args.mode == "zero-step":
                     evidence["zero_step"] = validate_zero_step_artifacts(output)
-                else:
+                elif args.mode == "one-step":
                     evidence["one_step"] = validate_one_step_artifacts(output)
+                else:
+                    evidence["short_horizon"] = validate_short_horizon_artifacts(output)
 
             shutdown = session.shutdown()
             evidence["shutdown"] = {

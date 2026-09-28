@@ -51,8 +51,9 @@ def persist_run(
         output_dir / "trajectory.csv",
         metrics.trajectory_rows,
         [
-            "step", "sim_time_s", "x_m", "y_m", "yaw_rad", "signed_cte_m",
-            "heading_error_rad", "collision", "off_track", "lap_count",
+            "step", "sim_time_s", "x_m", "y_m", "yaw_rad", "actual_speed_mps",
+            "signed_cte_m", "heading_error_rad", "collision", "off_track",
+            "full_body_clearance_m", "gym_step_latency_ms", "lap_count",
         ],
     )
     _write_csv(

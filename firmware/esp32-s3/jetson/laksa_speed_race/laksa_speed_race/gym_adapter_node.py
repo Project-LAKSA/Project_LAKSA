@@ -15,6 +15,7 @@ import json
 import math
 import os
 import platform
+import time
 from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
@@ -56,6 +57,7 @@ class StepResult:
     lap_count: int
     terminal: bool
     fault: str | None
+    gym_step_latency_ms: float = 0.0
 
 
 class StateStampGate:
@@ -165,9 +167,11 @@ class GymStepAuthority:
         self.last_applied = command
         import numpy as np
 
+        step_start = time.perf_counter()
         obs, _, done, truncated, info = self.env.step(
             np.asarray([[command.steering_rad, command.speed_mps]], dtype=np.float32)
         )
+        gym_step_latency_ms = (time.perf_counter() - step_start) * 1000.0
         x_m, y_m, yaw_rad, actual_speed_mps, cte_m, heading_error_rad, collision = self._observation(obs)
         track = getattr(self.env, "track", None)
         if track is not None:
@@ -189,6 +193,7 @@ class GymStepAuthority:
             self.previous_lap_count = lap_count
 
         off_track = not self.envelope.contains_body(x_m, y_m, yaw_rad)
+        full_body_clearance_m = self.envelope.full_body_clearance_m(x_m, y_m, yaw_rad)
         self.metrics.record_step(
             step=self.metrics.simulator_steps + 1,
             sim_time_s=sim_time_s,
@@ -196,6 +201,7 @@ class GymStepAuthority:
             requested_steering_rad=command.steering_rad,
             applied_speed_mps=command.speed_mps,
             applied_steering_rad=command.steering_rad,
+            actual_speed_mps=actual_speed_mps,
             x_m=x_m,
             y_m=y_m,
             yaw_rad=yaw_rad,
@@ -203,6 +209,8 @@ class GymStepAuthority:
             heading_error_rad=heading_error_rad,
             collision=collision,
             off_track=off_track,
+            full_body_clearance_m=full_body_clearance_m,
+            gym_step_latency_ms=gym_step_latency_ms,
             lap_count=lap_count,
             state=self.gate.state.value,
         )
@@ -218,7 +226,10 @@ class GymStepAuthority:
         elif self.gate.state is MissionState.STOPPING:
             self.gate.fail("lap_three_without_simulator_done")
         terminal = done or self.gate.state is MissionState.FAULT
-        return StepResult((x_m, y_m, yaw_rad), actual_speed_mps, sim_time_s, lap_count, terminal, self.gate.fault)
+        return StepResult(
+            (x_m, y_m, yaw_rad), actual_speed_mps, sim_time_s, lap_count,
+            terminal, self.gate.fault, gym_step_latency_ms,
+        )
 
     def terminal_zero(self) -> Command:
         zero = Command(0.0, 0.0)
@@ -403,6 +414,7 @@ def main(args: list[str] | None = None) -> None:
             self.shutdown_timer = None
             self.shutdown_requested = False
             self.qualification_transition = None
+            self.initial_state_evidence = None
 
         @staticmethod
         def stamp_ns(stamp) -> int:
@@ -476,6 +488,20 @@ def main(args: list[str] | None = None) -> None:
                     return
             command = Command(float(message.drive.steering_angle), float(message.drive.speed))
             self.accepted_drive_requests += 1
+            if self.accepted_drive_requests == 1:
+                initial = self.authority._observation(self.last_observation)
+                self.initial_state_evidence = {
+                    "x_m": initial[0],
+                    "y_m": initial[1],
+                    "yaw_rad": initial[2],
+                    "speed_mps": initial[3],
+                    "signed_cte_m": initial[4],
+                    "heading_error_rad": initial[5],
+                    "stamp_ns": self.stamp_ns(message.header.stamp),
+                    "full_body_clearance_m": self.authority.envelope.full_body_clearance_m(
+                        initial[0], initial[1], initial[2]
+                    ),
+                }
             if self.qualification_step_limit == 0:
                 invalid = self.authority.validate_without_step(command)
                 if invalid is not None:
@@ -527,7 +553,8 @@ def main(args: list[str] | None = None) -> None:
                         message.header.stamp,
                     )
                     return
-                self.publish_pose(self.authority.env.observation_type.observe())
+                self.last_observation = self.authority.env.observation_type.observe()
+                self.publish_pose(self.last_observation)
                 return
             self.finish(result, message.header.stamp)
 
@@ -582,6 +609,8 @@ def main(args: list[str] | None = None) -> None:
             }
             if self.qualification_transition is not None:
                 metadata["qualification_transition"] = self.qualification_transition
+            if self.initial_state_evidence is not None:
+                metadata["initial_state_evidence"] = self.initial_state_evidence
             persist_run(
                 self.output_dir,
                 metrics=self.authority.metrics,
