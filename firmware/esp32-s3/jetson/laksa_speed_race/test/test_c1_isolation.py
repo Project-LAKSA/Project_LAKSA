@@ -18,6 +18,8 @@ class IsolationTests(unittest.TestCase):
             ROOT / "config" / "c1_nav2_rpp.yaml",
             ROOT / "config" / "c1_nav2_mppi.yaml",
             ROOT / "docker-compose.c1.yaml",
+            ROOT / "docker" / "c1_native_runtime.sh",
+            ROOT / "laksa_speed_race" / "closed_loop_qualification.py",
         ]
         forbidden = ("/drive", "/cmd_vel", "/laksa/command", "/laksa/set_drive_command")
         for source in sources:

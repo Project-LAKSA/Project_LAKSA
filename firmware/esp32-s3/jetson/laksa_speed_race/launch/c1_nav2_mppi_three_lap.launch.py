@@ -4,7 +4,8 @@ from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, EmitEvent, RegisterEventHandler
+from launch.actions import DeclareLaunchArgument, EmitEvent, RegisterEventHandler, TimerAction
+from launch.conditions import IfCondition
 from launch.event_handlers import OnProcessExit
 from launch.events import Shutdown
 from launch.substitutions import LaunchConfiguration
@@ -63,6 +64,7 @@ def generate_launch_description():
                 ),
             }
         ],
+        condition=IfCondition(LaunchConfiguration("include_gym")),
     )
     return LaunchDescription(
         [
@@ -70,10 +72,33 @@ def generate_launch_description():
             DeclareLaunchArgument("max_laps", default_value="3"),
             DeclareLaunchArgument("output_dir", default_value="/tmp/laksa-c1-results/mppi_trial_1"),
             DeclareLaunchArgument("qualification_step_limit", default_value="-1"),
+            DeclareLaunchArgument("include_gym", default_value="true"),
+            DeclareLaunchArgument("gym_start_delay_s", default_value="0.0"),
             raceline,
             host,
             ackermann,
-            gym,
+            TimerAction(
+                period=LaunchConfiguration("gym_start_delay_s"),
+                actions=[gym],
+            ),
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=raceline,
+                    on_exit=[EmitEvent(event=Shutdown(reason="critical raceline node exited"))],
+                )
+            ),
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=host,
+                    on_exit=[EmitEvent(event=Shutdown(reason="critical MPPI host exited"))],
+                )
+            ),
+            RegisterEventHandler(
+                OnProcessExit(
+                    target_action=ackermann,
+                    on_exit=[EmitEvent(event=Shutdown(reason="critical Ackermann adapter exited"))],
+                )
+            ),
             RegisterEventHandler(
                 OnProcessExit(
                     target_action=gym,

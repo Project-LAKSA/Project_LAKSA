@@ -557,3 +557,340 @@ when a required launch child exits in error. Then restart Gate B from the
 beginning. Gate C must not run until that new Gate B passes. The correction
 must remain isolated from `/opt/ros`, production workspaces, services, and
 physical interfaces.
+
+## Gate B isolated `ackermann_msgs` runtime integration
+
+### Dependency forensics and source order
+
+The ARM64 `ackermann_msgs` dependency is not installed in `/opt/ros/humble`,
+the production LAKSA workspace, or the third-party production workspace. It is
+the ROS Humble binary package `ros-humble-ackermann-msgs` version 2.0.2,
+license BSD, extracted exclusively for C1 from:
+
+```text
+/tmp/laksa-c1-native/debs/ros-humble-ackermann-msgs_2.0.2-3jammy.20260907.212421_arm64.deb
+```
+
+Its package prefix and install space are both:
+
+```text
+/tmp/laksa-c1-native/ackermann_root/opt/ros/humble
+```
+
+The package-local canonical setup file is:
+
+```text
+/tmp/laksa-c1-native/ackermann_root/opt/ros/humble/share/ackermann_msgs/local_setup.bash
+```
+
+Gate-0 compilation had exposed that prefix only through `CMAKE_PREFIX_PATH`.
+The failed Gate-B runtime sourced `/opt/ros/humble/setup.bash` followed by the
+isolated C1 install, so neither `AMENT_PREFIX_PATH` nor `PYTHONPATH` contained
+the extracted package. The corrected deterministic order is:
+
+1. `/opt/ros/humble/setup.bash`;
+2. the package-local `ackermann_msgs/local_setup.bash` above;
+3. `/tmp/laksa-c1.2-runtime/install/setup.bash`;
+4. prepend `/tmp/laksa-c1.2-runtime/venv/lib/python3.10/site-packages` to
+   `PYTHONPATH`.
+
+No package was copied, installed globally, or added to `/opt/ros`.
+
+### Runtime preflight and fail-fast harness
+
+`runtime_preflight.py` now requires all of the following before a launch can
+start:
+
+- `ackermann_msgs.msg` imports;
+- `AckermannDriveStamped` imports;
+- `ros2 pkg prefix ackermann_msgs` succeeds;
+- the resolved prefix exactly equals the configured isolated prefix;
+- the package-local setup file exists.
+
+`c1_native_runtime.sh` establishes the source order above and invokes the
+source-controlled `c1_closed_loop_qualification` harness. The harness owns the
+complete launch session, writes structured result evidence, rejects reused
+output directories, and returns nonzero when preflight, readiness, a critical
+child, required evidence, or bounded cleanup fails.
+
+The MPPI launch now treats early exits from the raceline node, MPPI lockstep
+host, and Ackermann adapter as critical launch shutdown events. A separate
+readiness-only mode excludes Gym and requires two consecutive graph snapshots
+containing:
+
+```text
+nodes:  /c1/nav2_raceline
+        /c1/mppi_lockstep_host
+        /c1/nav2_ackermann_adapter
+
+topics: /c1/nav2_path
+        /c1/nav2_cmd_vel
+        /c1/drive_request
+```
+
+All graph probes use the exact launch environment, including the same
+`ROS_DOMAIN_ID` and `ROS_LOCALHOST_ONLY=1`, and use bounded 3-second discovery
+spins. Final readiness qualification on domain 232 passed; graceful shutdown
+observed four owned processes and left zero PIDs.
+
+The exact runtime dependency preflight passed:
+
+```text
+ACKERMANN_MSGS_IMPORT=PASS
+ACKERMANN_MSGS_ROS_PREFIX=PASS
+ACKERMANN_MSG_CLASS_IMPORT=PASS
+RUNTIME_OVERLAY=PASS
+```
+
+Targeted environment, child-propagation, lifecycle, and isolation tests passed
+**23/23**. After the final implementation, the complete LAKSA Python suite
+passed **70/70** on the ARM64 Jetson. The isolated `laksa_speed_race` rebuild
+passed.
+
+### Gate B rerun and stop decision
+
+Gate B was restarted from zero using a new output directory. Preflight passed,
+but the invocation selected `ROS_DOMAIN_ID=233`. Fast DDS rejected that domain
+before controller evaluation because its calculated RTPS port exceeded the
+valid port range:
+
+```text
+Calculated port number is too high. Probably the domainId is over 232 or
+portBase is too high.
+```
+
+The MPPI lockstep host exited with status 1. The new critical-child launch
+handler immediately shut down the other three C1 children, and the parent
+harness returned status 1 because no valid zero-step evidence existed. This is
+direct runtime proof that critical-child failure propagation works.
+
+No `summary.json` or controller telemetry was produced, so no controller
+evaluation occurred and no `Gym.step()` was called. The owned process group
+terminated in the `already_exited` phase with zero remaining PIDs.
+
+Per the explicit Gate-B stop rule, Gate B was not retried with a valid domain
+and Gate C was not run.
+
+Frozen artifacts remained unchanged:
+
+- C1.1 raceline SHA256:
+  `22ad91de3edbcbdf765f2cf223db53d43be820d829409da356a9def5a4c41783`
+- canonical manifest SHA256:
+  `b0e2e709fb2cb664600353ffb6145eff08f069e688e847c9ffc390eae8e26ead`
+- ThreeLapGate SHA256:
+  `5255497ba4e81a10988debf9e49ae832cfaea14ff071d113c1c72fb560364ba1`
+
+Production source remained clean at
+`1f0db4f027e2d3aa97d83d2c0a15216627efb5b1`; no production service or physical
+hardware was touched.
+
+`ZERO_STEP_LOCKSTEP=FAIL_INVALID_ROS_DOMAIN_ID`.
+
+`FIRST_BLOCKER=INVALID_ROS_DOMAIN_ID_233_FASTDDS_PORT_OVERFLOW`.
+
+The next action is to add an explicit valid-domain preflight and restart Gate B
+from scratch with a fresh isolated ROS domain in the supported range 0–232.
+Gate C remains unauthorized until that Gate B produces one valid controller
+evaluation and exactly zero Gym steps.
+
+## Gate B ROS domain allocation disposition
+
+### Root cause and verified DDS bounds
+
+No source-controlled allocator selected domain 233. The preceding qualification
+commands supplied domains manually and sequentially: 227 for dependency
+preflight, 228–232 for readiness development, then 233 for Gate B. The harness
+accepted that caller-provided integer without an independent range check.
+
+The Jetson Humble environment reports `rmw_fastrtps_cpp`. Harmless local ROS
+CLI probes proved that domains 0 and 232 initialize successfully while domain
+233 exits nonzero. The verified interval is therefore 0–232 for this runtime.
+
+### Bounded allocator and collision avoidance
+
+`ros_domain.py` now implements two independent protections:
+
+1. every explicit override is parsed as an integer and validated within
+   0–232 before dependency preflight or any C1 child starts;
+2. dynamic C1 allocation maps every integer seed into the high-domain pool
+   200–232 using `200 + (seed % 33)`, then rotates only within that pool.
+
+The allocator acquires a nonblocking `flock` lease under
+`/tmp/laksa-c1-domain-locks` and accepts a candidate only when a bounded,
+daemon-free ROS discovery probe finds no active graph. It never scans, kills,
+or alters unrelated ROS processes. Domain 0 and the lower domain range remain
+outside the C1 allocation pool to avoid default/production graphs.
+
+The exact historical allocator input 233 now maps to domain 202. An explicit
+`--domain-id 233` was independently rejected with status 1 before
+`ackermann_msgs` preflight or process creation:
+
+```text
+invalid ROS_DOMAIN_ID 233 from --domain-id;
+allowed integer range is 0..232
+```
+
+Boundary, malformed-value, wide-input-range, collision rotation, historical
+233, and no-child-on-invalid-override tests passed. The targeted runtime suite
+passed **28/28** and the complete LAKSA Python suite passed **86/86**. The
+isolated package rebuild passed.
+
+### Single Gate B requalification
+
+The one authorized Gate-B rerun used allocator seed 233 and selected fresh
+domain 202. The lease was held through the run. The dependency preflight and
+two-snapshot readiness handshake passed on that same domain before Gym was
+started. Readiness observed the three required nodes and all required topics.
+
+Gym startup then failed before initial-state publication:
+
+```text
+ModuleNotFoundError: No module named 'f1tenth_gym'
+```
+
+The isolated source checkout exists at
+`/tmp/laksa-c1-native/f1tenth_gym`, but it is neither installed nor included in
+the current isolated runtime Python path. Neither
+`/tmp/laksa-c1-native/venv/bin/python` nor
+`/tmp/laksa-c1.2-runtime/venv/bin/python` exists as an executable environment;
+the configured site-packages path therefore does not provide the simulator
+module.
+
+The critical Gym-child failure shut down the launch. The parent harness
+returned nonzero because no `summary.json` existed. Controller telemetry
+contains only its header: controller evaluations were zero and Gym steps were
+zero. No command, state stamp, or safety-veto evaluation can be claimed.
+
+A harmless unrelated `sleep` sentinel remained alive through the complete
+failure and shutdown sequence, proving unrelated-process preservation. The
+owned C1 process group left zero remaining PIDs. Gate C was not run and Gate B
+was not retried.
+
+The pre-existing unrelated submodule deletion at
+`firmware/esp32-s3/components/esp32_BNO08x` was not modified, restored, staged,
+or incorporated into C1.2d.
+
+`ZERO_STEP_LOCKSTEP=FAIL_F1TENTH_GYM_RUNTIME_IMPORT`.
+
+`FIRST_BLOCKER=ISOLATED_F1TENTH_GYM_RUNTIME_NOT_IMPORTABLE`.
+
+The next action is a separately authorized runtime dependency correction that
+installs or exposes the already-pinned `/tmp/laksa-c1-native/f1tenth_gym`
+checkout inside the isolated C1 Python environment, adds a fail-fast import
+and provenance check, and then restarts Gate B once. Gate C remains
+unauthorized.
+
+## Gate B F1TENTH Gym runtime provenance disposition
+
+### Pinned checkout and offline import layout
+
+The authorized checkout is:
+
+```text
+/tmp/laksa-c1-native/f1tenth_gym
+```
+
+It is a clean detached checkout of `f1tenth/f1tenth_gym` at the frozen SHA:
+
+```text
+bdaec1420c3b0f103858d289866d0d4e2e597c30
+```
+
+The pinned revision uses a root package layout: its import package is
+`/tmp/laksa-c1-native/f1tenth_gym/f1tenth_gym`, and project metadata is in the
+checkout-root `pyproject.toml`. The runtime now prepends that checkout root to
+`PYTHONPATH`; it does not install a PyPI package, clone another copy, or modify
+the checkout. Existing frozen Python dependencies are exposed from the
+already-populated offline directory `/tmp/laksa-c1-native/pydeps`. Importing
+all Gym modules used by `gym_adapter_node.py`, including `F110Env`, passed in
+the isolated runtime without network access.
+
+The resulting Python path order is:
+
+1. `/tmp/laksa-c1-native/f1tenth_gym`;
+2. `/tmp/laksa-c1-native/pydeps`;
+3. `/tmp/laksa-c1.2-runtime/venv/lib/python3.10/site-packages`;
+4. the ROS and isolated C1 overlay paths already established by their setup
+   files.
+
+### SHA and import-provenance preflight
+
+Before any critical ROS child starts, the harness now:
+
+- verifies `f1tenth_gym/f1tenth_gym/__init__.py` exists in the configured
+  checkout;
+- reads the checkout's actual `git rev-parse HEAD`;
+- requires exact equality with the pinned SHA;
+- requires `git status --short` to be empty;
+- imports `f1tenth_gym`;
+- resolves `f1tenth_gym.__file__` and requires it to lie inside that checkout's
+  package directory.
+
+An import from system or user site-packages, another checkout, a modified
+checkout, or a mismatched SHA fails preflight before runtime process creation.
+The wrong-provenance regression test passed. The targeted runtime suite passed
+**34/34**. The complete LAKSA Python suite passed **90/90**, and the isolated
+colcon package test passed with zero failures. No test was disabled.
+
+The real preflight selected domain 202 and recorded:
+
+```text
+F1TENTH_GYM_IMPORTED_FROM=
+  /tmp/laksa-c1-native/f1tenth_gym/f1tenth_gym/__init__.py
+F1TENTH_GYM_ACTUAL_SHA=
+  bdaec1420c3b0f103858d289866d0d4e2e597c30
+F1TENTH_GYM_GIT_STATUS=CLEAN
+F1TENTH_GYM_PROVENANCE=PASS
+```
+
+### Single Gate B requalification
+
+The single authorized Gate-B retry started from zero C1 processes and used the
+corrected allocator, which selected and leased fresh domain 207 from seed
+`1946542349998266247`. The complete domain, Ackermann-message, overlay, Gym
+import, Gym path, and Gym SHA preflight passed before launch. The two-snapshot
+critical-child readiness handshake passed.
+
+Exactly one canonical initial state produced exactly one MPPI controller
+evaluation. The lockstep host copied the odometry header to the returned
+`TwistStamped`, and the Ackermann adapter copied that same header to the drive
+request. The Gym state gate accepted the same stamp:
+
+```text
+STATE_STAMP=1790601053385046456
+CONTROLLER_INPUT_STAMP=1790601053385046456
+CONTROLLER_OUTPUT_STAMP=1790601053385046456
+CONTROLLER_EVALUATIONS=1
+GYM_STEPS=0
+```
+
+The command was finite, physically feasible, and accepted unchanged by the
+independent safety veto:
+
+```text
+vx=0.016281509771943092 m/s
+wz=0.0044019222259521484 rad/s
+kappa=0.27036327021328854 1/m
+steering=0.08737466934699005 rad
+safety_veto=PASS
+downstream_feasibility_clamp_activations=0
+```
+
+The zero-step qualification limit intentionally produced terminal zero without
+calling `Gym.step()`. Evidence recorded one accepted request, no duplicate or
+mismatched state stamps, zero simulator steps, zero post-terminal steps, and
+final applied command `(0.0 rad, 0.0 m/s)`. The launch exited with status 0;
+the owned process group had no remaining PIDs. A harmless pre-existing test
+sentinel remained alive throughout, proving unrelated-process preservation.
+
+`ZERO_STEP_LOCKSTEP=PASS` and `ZERO_STEP_CAUSALITY=PASS`.
+
+Gate C was not run. It is now authorized by the completed Gate-B contract, but
+requires a separate explicit task.
+
+Frozen artifacts remained unchanged. The C1.1 raceline still hashes to
+`22ad91de3edbcbdf765f2cf223db53d43be820d829409da356a9def5a4c41783`.
+Course, costmap, footprint, ThreeLapGate, controller parameters, vehicle model,
+and F1TENTH Gym source were not modified. Production and physical hardware were
+not touched. The unrelated `firmware/esp32-s3/components/esp32_BNO08x`
+submodule deletion was not modified or staged by this work.
