@@ -545,11 +545,216 @@ def validate_short_horizon_artifacts(
     }
 
 
+def validate_trial1_artifacts(output_dir: Path) -> dict[str, object]:
+    """Fail closed unless one full runtime satisfies the frozen ThreeLapGate."""
+
+    required_paths = {
+        name: output_dir / name
+        for name in (
+            "summary.json", "controller_telemetry.csv", "controller_feasibility.csv",
+            "trajectory.csv", "commands.csv", "events.csv",
+        )
+    }
+    missing = [name for name, path in required_paths.items() if not path.is_file()]
+    if missing:
+        raise QualificationHarnessError(f"Trial 1 evidence is incomplete: {missing}")
+
+    summary = json.loads(required_paths["summary.json"].read_text(encoding="utf-8"))
+
+    def read_csv(name: str) -> list[dict[str, str]]:
+        with required_paths[name].open(newline="", encoding="utf-8") as stream:
+            return list(csv.DictReader(stream))
+
+    telemetry = read_csv("controller_telemetry.csv")
+    feasibility = read_csv("controller_feasibility.csv")
+    trajectory = read_csv("trajectory.csv")
+    commands = read_csv("commands.csv")
+    events = read_csv("events.csv")
+    total_steps = int(summary.get("simulator_step_count", 0))
+    required_summary = {
+        "completed_laps": 3,
+        "lap_count": 3,
+        "done": True,
+        "terminal_state": "COMPLETE",
+        "fault": None,
+        "steps_after_terminal": 0,
+        "collision_edges": 0,
+        "off_track_events": 0,
+        "reverse_command_events": 0,
+        "invalid_command_events": 0,
+        "duplicate_state_stamp_rejections": 0,
+        "state_stamp_mismatch_events": 0,
+        "final_applied_command": {"steering_rad": 0.0, "speed_mps": 0.0},
+        "terminal_zero_observed": True,
+    }
+    for key, expected in required_summary.items():
+        if summary.get(key) != expected:
+            raise QualificationHarnessError(
+                f"Trial 1 evidence mismatch for {key}: {summary.get(key)!r} != {expected!r}"
+            )
+    if total_steps <= 0 or int(summary.get("accepted_drive_requests", 0)) != total_steps:
+        raise QualificationHarnessError("Trial 1 has invalid step/request counts")
+    acceptance = summary.get("acceptance")
+    if not isinstance(acceptance, dict) or acceptance.get("overall") != "PASS":
+        raise QualificationHarnessError("Trial 1 acceptance matrix did not pass")
+
+    counts = {
+        "controller telemetry": len(telemetry),
+        "controller feasibility": len(feasibility),
+        "trajectory": len(trajectory),
+        "commands": len(commands),
+    }
+    for label, count in counts.items():
+        if count != total_steps:
+            raise QualificationHarnessError(
+                f"expected {total_steps} {label} rows, observed {count}"
+            )
+
+    lap_events = [row["value"] for row in events if row["event"] == "lap_complete"]
+    if lap_events != ["1", "2", "3"]:
+        raise QualificationHarnessError(f"Trial 1 lap sequence is invalid: {lap_events}")
+    terminal_events = [row["value"] for row in events if row["event"] == "terminal_state"]
+    if terminal_events != ["COMPLETE"]:
+        raise QualificationHarnessError(
+            f"Trial 1 terminal event is invalid: {terminal_events}"
+        )
+
+    feasibility_by_stamp = {int(row["state_stamp_ns"]): row for row in feasibility}
+    if len(feasibility_by_stamp) != total_steps:
+        raise QualificationHarnessError("duplicate Trial 1 controller feasibility stamp")
+
+    merged: list[dict[str, object]] = []
+    previous_stamp = 0
+    previous_steering: float | None = None
+    previous_lap_count = 0
+    for expected_step, (controller, state, command) in enumerate(
+        zip(telemetry, trajectory, commands), start=1
+    ):
+        if int(controller["sequence"]) != expected_step:
+            raise QualificationHarnessError("Trial 1 controller sequence is not contiguous")
+        if int(state["step"]) != expected_step or int(command["step"]) != expected_step:
+            raise QualificationHarnessError("Trial 1 Gym/command sequence is not contiguous")
+        stamp = int(controller["state_stamp_ns"])
+        if stamp <= previous_stamp:
+            raise QualificationHarnessError("Trial 1 state stamps are not strictly increasing")
+        previous_stamp = stamp
+        feasible = feasibility_by_stamp.get(stamp)
+        if feasible is None:
+            raise QualificationHarnessError("Trial 1 command has no feasibility record")
+        input_stamp = int(feasible["controller_input_stamp_ns"])
+        output_stamp = int(feasible["controller_output_stamp_ns"])
+        if input_stamp != stamp or output_stamp != stamp:
+            raise QualificationHarnessError("Trial 1 controller stamp mismatch")
+
+        vx = float(controller["upstream_linear_mps"])
+        wz = float(controller["upstream_angular_rps"])
+        kappa = float(controller["kappa_cmd_1pm"])
+        steering = float(controller["delta_applied_rad"])
+        values = (
+            vx, wz, kappa, steering, float(feasible["controller_latency_ms"]),
+            float(state["gym_step_latency_ms"]), float(state["actual_speed_mps"]),
+            float(state["full_body_clearance_m"]), float(state["x_m"]),
+            float(state["y_m"]), float(state["yaw_rad"]),
+            float(state["signed_cte_m"]), float(state["heading_error_rad"]),
+        )
+        if not all(math.isfinite(value) for value in values):
+            raise QualificationHarnessError(f"non-finite Trial 1 evidence at step {expected_step}")
+        if vx < 0.0 or vx > MAX_SPEED_MPS or abs(steering) > 0.288:
+            raise QualificationHarnessError(f"invalid Trial 1 command at step {expected_step}")
+        if controller["downstream_steering_saturated"] not in {"0", "false", "False"}:
+            raise QualificationHarnessError(
+                f"Trial 1 feasibility clamp activated at step {expected_step}"
+            )
+        if feasible["physical_feasibility"].lower() not in {"1", "true"}:
+            raise QualificationHarnessError(
+                f"Trial 1 physical feasibility failed at step {expected_step}"
+            )
+        if feasible["safety_veto_pass"].lower() not in {"1", "true"}:
+            raise QualificationHarnessError(f"Trial 1 safety veto at step {expected_step}")
+        if int(state["collision"]) or int(state["off_track"]):
+            raise QualificationHarnessError(
+                f"Trial 1 collision/off-track at step {expected_step}"
+            )
+        if not math.isclose(float(command["applied_speed_mps"]), vx, abs_tol=1e-12):
+            raise QualificationHarnessError(f"Trial 1 speed mismatch at step {expected_step}")
+        if not math.isclose(
+            float(command["applied_steering_rad"]), steering, abs_tol=1e-8
+        ):
+            raise QualificationHarnessError(f"Trial 1 steering mismatch at step {expected_step}")
+
+        lap_count = int(state["lap_count"])
+        if lap_count < previous_lap_count or lap_count > previous_lap_count + 1:
+            raise QualificationHarnessError(f"Trial 1 lap jump at step {expected_step}")
+        lap_number = previous_lap_count + 1
+        if lap_count > previous_lap_count:
+            previous_lap_count = lap_count
+        steering_delta = 0.0 if previous_steering is None else steering - previous_steering
+        previous_steering = steering
+        merged.append(
+            {
+                "step": expected_step,
+                "sim_time_s": float(state["sim_time_s"]),
+                "lap_number": lap_number,
+                "completed_laps": lap_count,
+                "progress_index": int(controller["progress_index"]),
+                "path_copy": int(controller["path_copy"]),
+                "state_stamp_ns": stamp,
+                "controller_input_stamp_ns": input_stamp,
+                "controller_output_stamp_ns": output_stamp,
+                "x_m": float(state["x_m"]),
+                "y_m": float(state["y_m"]),
+                "yaw_rad": float(state["yaw_rad"]),
+                "actual_speed_mps": float(state["actual_speed_mps"]),
+                "command_vx_mps": vx,
+                "command_wz_rps": wz,
+                "curvature_1pm": kappa,
+                "steering_rad": steering,
+                "steering_delta_rad": steering_delta,
+                "simulated_steering_rate_radps": steering_delta / DT_S,
+                "signed_cte_m": float(state["signed_cte_m"]),
+                "heading_error_rad": float(state["heading_error_rad"]),
+                "full_body_clearance_m": float(state["full_body_clearance_m"]),
+                "safety_veto_pass": True,
+                "collision": 0,
+                "off_track": 0,
+                "reverse": 0,
+                "invalid_command": 0,
+                "controller_latency_ms": float(feasible["controller_latency_ms"]),
+                "gym_step_latency_ms": float(state["gym_step_latency_ms"]),
+            }
+        )
+    if previous_lap_count != 3:
+        raise QualificationHarnessError("Trial 1 merged telemetry did not reach lap 3")
+
+    merged_path = output_dir / "trial1_telemetry.csv"
+    with merged_path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(merged[0]))
+        writer.writeheader()
+        writer.writerows(merged)
+    return {
+        "status": "PASS",
+        "completed_laps": 3,
+        "exact_three_laps": "PASS",
+        "total_steps": total_steps,
+        "duration_s": float(summary["sim_time_s"]),
+        "controller_evaluations": len(feasibility),
+        "gym_steps": total_steps,
+        "lockstep_causality": "PASS",
+        "duplicate_stamp_count": 0,
+        "stale_command_count": 0,
+        "hidden_gym_step_count": 0,
+        "telemetry_artifact": str(merged_path),
+    }
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--mode",
-        choices=("preflight", "readiness", "zero-step", "one-step", "short-horizon"),
+        choices=(
+            "preflight", "readiness", "zero-step", "one-step", "short-horizon",
+            "trial1",
+        ),
         required=True,
     )
     parser.add_argument("--workspace", default="/tmp/laksa-c1.2-runtime")
@@ -576,6 +781,8 @@ def _launch_command(args: argparse.Namespace) -> list[str]:
         qualification_step_limit = "1"
     elif args.mode == "short-horizon":
         qualification_step_limit = str(SHORT_HORIZON_STEPS)
+    elif args.mode == "trial1":
+        qualification_step_limit = "-1"
     else:
         qualification_step_limit = "0"
     return [
@@ -678,8 +885,10 @@ def main(argv: Iterable[str] | None = None) -> int:
                     evidence["zero_step"] = validate_zero_step_artifacts(output)
                 elif args.mode == "one-step":
                     evidence["one_step"] = validate_one_step_artifacts(output)
-                else:
+                elif args.mode == "short-horizon":
                     evidence["short_horizon"] = validate_short_horizon_artifacts(output)
+                else:
+                    evidence["trial1"] = validate_trial1_artifacts(output)
 
             shutdown = session.shutdown()
             evidence["shutdown"] = {

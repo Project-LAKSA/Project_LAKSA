@@ -552,6 +552,105 @@ def test_short_horizon_artifacts_require_exact_lockstep_counts(tmp_path):
     assert (tmp_path / "short_horizon_telemetry.csv").is_file()
 
 
+def test_trial1_artifacts_require_exact_three_lap_lockstep(tmp_path):
+    summary = {
+        "simulator_step_count": 3,
+        "accepted_drive_requests": 3,
+        "completed_laps": 3,
+        "lap_count": 3,
+        "done": True,
+        "terminal_state": "COMPLETE",
+        "fault": None,
+        "steps_after_terminal": 0,
+        "collision_edges": 0,
+        "off_track_events": 0,
+        "reverse_command_events": 0,
+        "invalid_command_events": 0,
+        "duplicate_state_stamp_rejections": 0,
+        "state_stamp_mismatch_events": 0,
+        "final_applied_command": {"steering_rad": 0.0, "speed_mps": 0.0},
+        "terminal_zero_observed": True,
+        "sim_time_s": 0.03,
+        "acceptance": {"overall": "PASS"},
+    }
+    (tmp_path / "summary.json").write_text(json.dumps(summary))
+    field_sets = {
+        "controller_telemetry.csv": [
+            "state_stamp_ns", "sequence", "progress_index", "path_copy",
+            "upstream_linear_mps", "upstream_angular_rps", "kappa_cmd_1pm",
+            "delta_applied_rad", "downstream_steering_saturated",
+        ],
+        "controller_feasibility.csv": [
+            "state_stamp_ns", "controller_input_stamp_ns", "controller_output_stamp_ns",
+            "controller_latency_ms", "physical_feasibility", "safety_veto_pass",
+        ],
+        "trajectory.csv": [
+            "step", "sim_time_s", "x_m", "y_m", "yaw_rad", "actual_speed_mps",
+            "signed_cte_m", "heading_error_rad", "collision", "off_track",
+            "full_body_clearance_m", "gym_step_latency_ms", "lap_count",
+        ],
+        "commands.csv": ["step", "applied_speed_mps", "applied_steering_rad"],
+        "events.csv": ["step", "sim_time_s", "event", "value"],
+    }
+    streams = {}
+    writers = {}
+    for name, fields in field_sets.items():
+        streams[name] = (tmp_path / name).open("w", newline="")
+        writers[name] = csv.DictWriter(streams[name], fieldnames=fields)
+        writers[name].writeheader()
+    try:
+        for step in range(1, 4):
+            stamp = 1_000_000_000 + step * 10_000_000
+            writers["controller_telemetry.csv"].writerow(
+                {
+                    "state_stamp_ns": stamp, "sequence": step,
+                    "progress_index": step, "path_copy": step - 1,
+                    "upstream_linear_mps": 0.1, "upstream_angular_rps": 0.025,
+                    "kappa_cmd_1pm": 0.25, "delta_applied_rad": 0.08,
+                    "downstream_steering_saturated": 0,
+                }
+            )
+            writers["controller_feasibility.csv"].writerow(
+                {
+                    "state_stamp_ns": stamp, "controller_input_stamp_ns": stamp,
+                    "controller_output_stamp_ns": stamp, "controller_latency_ms": 1.0,
+                    "physical_feasibility": "true", "safety_veto_pass": "true",
+                }
+            )
+            writers["trajectory.csv"].writerow(
+                {
+                    "step": step, "sim_time_s": step * qualification.DT_S,
+                    "x_m": step * 0.1, "y_m": 0.0, "yaw_rad": 0.01 * step,
+                    "actual_speed_mps": 0.09, "signed_cte_m": 0.2,
+                    "heading_error_rad": 0.01, "collision": 0, "off_track": 0,
+                    "full_body_clearance_m": 0.1, "gym_step_latency_ms": 0.5,
+                    "lap_count": step,
+                }
+            )
+            writers["commands.csv"].writerow(
+                {"step": step, "applied_speed_mps": 0.1, "applied_steering_rad": 0.08}
+            )
+            writers["events.csv"].writerow(
+                {
+                    "step": step, "sim_time_s": step * qualification.DT_S,
+                    "event": "lap_complete", "value": step,
+                }
+            )
+        writers["events.csv"].writerow(
+            {"step": 3, "sim_time_s": 0.03, "event": "terminal_state", "value": "COMPLETE"}
+        )
+    finally:
+        for stream in streams.values():
+            stream.close()
+
+    evidence = qualification.validate_trial1_artifacts(tmp_path)
+    assert evidence["status"] == "PASS"
+    assert evidence["exact_three_laps"] == "PASS"
+    assert evidence["controller_evaluations"] == 3
+    assert evidence["gym_steps"] == 3
+    assert (tmp_path / "trial1_telemetry.csv").is_file()
+
+
 def test_native_launcher_sources_ackermann_before_c1_overlay():
     root = Path(__file__).resolve().parents[1]
     script = (root / "docker" / "c1_native_runtime.sh").read_text()
@@ -588,6 +687,13 @@ def test_readiness_launch_excludes_gym_without_delay():
     command = qualification._launch_command(args)
     assert "include_gym:=false" in command
     assert "gym_start_delay_s:=0.0" in command
+
+
+def test_trial1_launch_uses_unbounded_three_lap_gate():
+    args = SimpleNamespace(mode="trial1", output_dir="/tmp/result")
+    command = qualification._launch_command(args)
+    assert "qualification_step_limit:=-1" in command
+    assert "include_gym:=true" in command
 
 
 @pytest.mark.parametrize("value", [VERIFIED_DOMAIN_MIN, VERIFIED_DOMAIN_MAX, "0", "232"])

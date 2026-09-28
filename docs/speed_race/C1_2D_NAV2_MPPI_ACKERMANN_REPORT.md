@@ -1261,3 +1261,121 @@ Frozen course, raceline, costmap, footprint, ThreeLapGate, controller
 parameters, and Gym source remained unchanged. Production and physical hardware
 were not touched. The unrelated BNO08x submodule deletion was neither modified
 nor staged.
+
+## Trial 1 — Full Three-Lap Qualification
+
+Trial 1 was authorized and executed exactly once from commit
+`80e11379d97dbf2d9a0ee6cd108ac914b2e10a21`. The local and remote branch
+heads matched before execution. Preflight passed with the pinned
+`f1tenth_gym` checkout at
+`bdaec1420c3b0f103858d289866d0d4e2e597c30`, the canonical C1.1 raceline
+SHA256 `22ad91de3edbcbdf765f2cf223db53d43be820d829409da356a9def5a4c41783`,
+ThreeLapGate SHA256
+`5255497ba4e81a10988debf9e49ae832cfaea14ff071d113c1c72fb560364ba1`,
+and controller-configuration SHA256
+`87d9b54df6bda3a93b30bbd6c28e5b16bbf1e43c612ba08d0854595f38bf4692`.
+The isolated ROS domain allocator selected domain 227. No stale C1 process was
+present, Gym provenance and ROS dependency preflights passed, and physical
+topic isolation remained active.
+
+The qualification harness was extended only to expose the existing unlimited
+qualification mode as `trial1` and to validate its evidence fail-closed. The
+launch still uses the existing frozen ThreeLapGate with
+`qualification_step_limit=-1`; no controller, critic, controller parameter,
+course, raceline, costmap, footprint, vehicle model, Gym source, or gate
+semantics changed. The validator requires exactly three completed laps, a
+`COMPLETE` terminal state, terminal zero, no post-terminal steps, zero safety
+incidents, one-to-one state/command/step row counts, matching stamps, physical
+feasibility, and the lap-event sequence 1, 2, 3. Synthetic regression coverage
+was added for these requirements. On the Jetson, the Ackermann C++ tests passed
+5/5 and the Python suite passed 96/96 before the attempt.
+
+### Result
+
+`TRIAL_1_STATUS=FAIL_OFF_TRACK`. The controller completed 1,326 lockstep
+evaluations and 1,326 Gym steps (13.259999999999762 simulated seconds), then
+the full-body off-track check changed from false to true during partial lap 1.
+No lap completed. The run stopped immediately; it was not retried, and Trials
+2 and 3 were not run.
+
+The first failure was at step 1326:
+
+```text
+completed laps: 0
+pose: (23.793434143066406, 2.549774169921875, 0.14295849204063416)
+actual speed: 0.24173088371753693 m/s
+command: vx=0.24153591692447662 m/s, wz=0.0005316961323842406 rad/s
+curvature: 0.0022013129109510086 1/m
+equivalent steering: 0.0007132252622111841 rad
+CTE: 0.512046343006913 m
+heading error: 0.13401234342107493 rad
+full-body clearance: -0.00007242838671644991 m
+collision/off-track: 0/1
+safety veto: not triggered
+downstream feasibility clamp: not activated
+state/controller input/controller output stamp: 1790620101790961833 ns
+```
+
+At the preceding step (1325), full-body clearance was still
+`0.0003188512914837349 m`, CTE was `0.5117224803594151 m`, heading error was
+`0.1339155742904934 rad`, and off-track was false. This establishes the first
+causal boundary crossing between steps 1325 and 1326. The applied command was
+finite and Ackermann-feasible, but the controller's long-horizon lateral error
+had diverged from `0.26671643419952507 m` initially to
+`0.512046343006913 m`. The independent safety veto passed the exact executable
+command at the failure step; this attempt therefore exposes tracking divergence
+to the course boundary and warrants a separate evidence-driven controller and
+safety-layer audit. No tuning is performed here.
+
+### Partial-run metrics
+
+| Metric | Value |
+|---|---:|
+| CTE initial / final (m) | 0.26671643419952507 / 0.512046343006913 |
+| CTE RMS / p95 / max (m) | 0.35756152947690606 / 0.4906782438292889 / 0.512046343006913 |
+| Heading initial / final (rad) | -0.000023786786456092557 / 0.13401234342107493 |
+| Heading RMS / p95 / max (rad) | 0.08727063796842102 / 0.13516109990781155 / 0.13892107929499797 |
+| Max absolute steering (rad) | 0.08737466934699005 |
+| Steering saturation count / fraction | 0 / 0.0% |
+| Max command steering delta (rad) | 0.024858176040717925 |
+| Max simulated steering-rate demand (rad/s) | 2.4858176040717925 |
+| Command speed mean / p95 / max (m/s) | 0.24400664711031125 / 0.25136659294366837 / 0.25309669971466064 |
+| Actual speed mean / p95 / max (m/s) | 0.23974773821343356 / 0.2501738891005516 / 0.2509780824184418 |
+| Clearance initial / final / minimum (m) | 0.30919994145690904 / -0.00007242838671644991 / -0.00007242838671644991 |
+| Minimum-clearance step / partial lap | 1326 / 1 |
+| Controller latency p50 / p95 / max (ms) | 25.1600935 / 44.547588 / 68.855999 |
+| Gym-step latency p50 / p95 / max (ms) | 1.5256130136549473 / 2.0773470168933272 / 92.21370203886181 |
+
+Lap times and per-lap tracking metrics are `NOT_COMPLETED`: the failure occurred
+before the first lap event. Collision, reverse-command, invalid-command,
+safety-veto, downstream-clamp, duplicate-stamp, stale-command, and hidden-step
+counts were all zero. State stamps matched controller input and output stamps
+for all 1,326 rows, so `LOCKSTEP_CAUSALITY=PASS` for the attempted prefix.
+
+The terminal state is `FAULT`, as required for the detected off-track event.
+The final applied command was exactly `(0.0, 0.0)`, zero simulator steps
+occurred after terminal, bounded process-group shutdown passed, no owned process
+remained, and the unrelated-process sentinel survived. Production and physical
+hardware were not touched. Physical steering-rate qualification remains
+pending; the simulated demand is descriptive only.
+
+Machine-specific evidence is intentionally private and remains at:
+
+```text
+Jetson raw evidence: /tmp/laksa-c1.2-trial1.oxCbxI
+Local raw evidence: /private/tmp/laksa-c1.2-trial1.oxCbxI
+Merged telemetry: /private/tmp/laksa-c1.2-trial1.oxCbxI/trial1_failure_telemetry.csv
+Analysis: /private/tmp/laksa-c1.2-trial1.oxCbxI/trial1_analysis.json
+Trajectory plot: /private/tmp/laksa-c1.2-trial1.oxCbxI/trial1_trajectory_vs_raceline.png
+CTE plot: /private/tmp/laksa-c1.2-trial1.oxCbxI/trial1_cte.png
+Heading plot: /private/tmp/laksa-c1.2-trial1.oxCbxI/trial1_heading_error.png
+Steering plot: /private/tmp/laksa-c1.2-trial1.oxCbxI/trial1_steering.png
+Speed plot: /private/tmp/laksa-c1.2-trial1.oxCbxI/trial1_speed.png
+Clearance plot: /private/tmp/laksa-c1.2-trial1.oxCbxI/trial1_clearance.png
+```
+
+The Trial-1 verdict is `FAIL_OFF_TRACK`; `EXACT_THREE_LAPS=FAIL`. Trial 2 is
+not authorized by this result. The next action is a separate research task to
+explain the sustained MPPI lateral divergence and why the independent veto did
+not stop before the full-body boundary crossing, without changing frozen race
+artifacts or weakening safety criteria.
