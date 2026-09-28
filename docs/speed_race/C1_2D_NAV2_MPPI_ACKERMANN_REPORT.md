@@ -1136,3 +1136,128 @@ authorizes x3 determinism, subject to separate authorization. Course, raceline,
 costmap, footprint, ThreeLapGate, MPPI parameters, Gym source, production, and
 physical hardware remained unchanged. The unrelated BNO08x submodule deletion
 was neither modified nor staged.
+
+## X3 determinism methodology (frozen before Run 1)
+
+The existing C1.2d plan did not define a numerical tolerance. The pinned Humble
+MPPI `NoiseGenerator` calls `xt::random::randn<float>` through xtensor's global
+default `std::mt19937`. No C1.2d code calls `xt::random::seed`; each fresh host
+process therefore starts from the deterministic default-constructed engine.
+The frozen `regenerate_noises=false` parameter generates one fixed noise matrix
+at initialization and reuses it. Gym independently resets every invocation with
+the existing `seed=12345`; simulated LiDAR noise remains zero.
+
+The X3 seed policy is therefore the already-qualified behavior, unchanged:
+
+- MPPI: default-constructed xtensor `std::mt19937`, no added user-facing seed,
+  and fixed initialization noise because `regenerate_noises=false`;
+- Gym: explicit seed 12345 on every canonical reset;
+- ROS domain: deterministic bounded allocation from each output path and an
+  empty-graph lease. Domain IDs may differ and are not controller RNG inputs;
+- wall-clock ROS stamps, process IDs, filesystem paths, and measured latencies
+  are intentionally nondeterministic metadata and are excluded from trajectory
+  equality.
+
+Because each repeat uses the same executable, ARM64 host, deterministic
+lockstep order, default MPPI random sequence, Gym seed, and frozen artifacts,
+the numerical criterion is predeclared as **exact normalized reproducibility**.
+For each of 50 steps, the parsed IEEE-754 values for pose, yaw, actual speed,
+commands, curvature, steering, CTE, heading error, and full-body clearance must
+compare exactly between every run pair. The canonical command hash is SHA256
+over big-endian binary serialization of `(step, vx, wz, curvature, steering)`.
+All pairwise maximum dynamic deltas must be zero and all three command hashes
+must match. No tolerance will be introduced after observing results.
+
+Safety repeatability is a separate criterion: every run must independently
+complete 50 lockstep steps with zero collision, off-track, reverse, invalid
+command, safety veto, feasibility clamp, duplicate stamp, stale command, hidden
+Gym step, orphan process, or shutdown failure. Overall X3 passes only if both
+exact numerical determinism and three-run safety repeatability pass.
+
+## X3 determinism results
+
+Exactly three fresh short-horizon invocations were executed after the preceding
+criterion and seed policy were frozen. Each invocation reconstructed the Gym
+environment, reset with seed 12345, created a new MPPI host and optimizer,
+leased a fresh empty ROS domain, and started from zero C1 processes. Runs 1, 2,
+and 3 used domains 202, 226, and 208 respectively. All three per-run preflights
+passed.
+
+Every run completed exactly 50 controller evaluations and 50 Gym steps with
+lockstep causality passing. Each recorded zero duplicate stamps, stale commands,
+hidden Gym steps, collision, off-track, reverse, invalid command, safety veto,
+or downstream feasibility clamp. Terminal zero was observed, post-terminal
+steps were zero, shutdown succeeded, no owned process remained, and an unrelated
+sentinel survived all three invocations.
+
+The dynamically relevant metrics were identical in all three runs:
+
+| Metric | Run 1 | Run 2 | Run 3 |
+|---|---:|---:|---:|
+| CTE initial (m) | 0.26671643419952507 | 0.26671643419952507 | 0.26671643419952507 |
+| CTE final (m) | 0.26683371350746476 | 0.26683371350746476 | 0.26683371350746476 |
+| CTE RMS (m) | 0.2667444078469783 | 0.2667444078469783 | 0.2667444078469783 |
+| CTE p95 (m) | 0.26681693681593427 | 0.26681693681593427 | 0.26681693681593427 |
+| CTE max (m) | 0.26683371350746476 | 0.26683371350746476 | 0.26683371350746476 |
+| Heading initial (rad) | -0.000023786786456092557 | -0.000023786786456092557 | -0.000023786786456092557 |
+| Heading final (rad) | 0.003839877844177053 | 0.003839877844177053 | 0.003839877844177053 |
+| Heading RMS (rad) | 0.00210082211541244 | 0.00210082211541244 | 0.00210082211541244 |
+| Heading p95 (rad) | 0.0036173509335810203 | 0.0036173509335810203 | 0.0036173509335810203 |
+| Heading max (rad) | 0.003839877844177053 | 0.003839877844177053 | 0.003839877844177053 |
+| Max absolute steering (rad) | 0.08737466934699005 | 0.08737466934699005 | 0.08737466934699005 |
+| Steering saturation count | 0 | 0 | 0 |
+| Max command steering delta (rad) | 0.024858176040717925 | 0.024858176040717925 | 0.024858176040717925 |
+| Max simulated steering demand (rad/s) | 2.4858176040717925 | 2.4858176040717925 | 2.4858176040717925 |
+| Final speed (m/s) | 0.18972113728523254 | 0.18972113728523254 | 0.18972113728523254 |
+| Mean speed (m/s) | 0.09792036229511723 | 0.09792036229511723 | 0.09792036229511723 |
+| Max speed (m/s) | 0.18972113728523254 | 0.18972113728523254 | 0.18972113728523254 |
+| Minimum full-body clearance (m) | 0.3074667817231728 | 0.3074667817231728 | 0.3074667817231728 |
+
+Controller computation latency varied, as expected for excluded scheduling
+metadata:
+
+| Run | p50 (ms) | p95 (ms) | max (ms) |
+|---|---:|---:|---:|
+| 1 | 21.604275 | 28.54947835 | 66.013262 |
+| 2 | 23.0635145 | 34.04288995 | 65.229881 |
+| 3 | 30.784472 | 34.67946245 | 61.653491 |
+
+The final state was exactly equal in all three parsed telemetry streams:
+
+```text
+x=20.676645278930664 m
+y=2.298804998397827 m
+yaw=0.0038593821227550507 rad
+speed=0.18972113728523254 m/s
+```
+
+The pairwise maximum deltas were zero for x, y, Euclidean position, yaw, actual
+speed, CTE, heading error, commanded vx, commanded wz, and steering. Canonical
+big-endian command serialization produced the same SHA256 for all runs:
+
+```text
+c9052d7ed66323e0869ae3d7b113f50aba99dd5579b86ff9a9afd6facab4b210
+```
+
+Therefore `X3_SAFETY_REPEATABILITY=PASS`,
+`X3_NUMERICAL_DETERMINISM=PASS`, and `X3_DETERMINISM=PASS` under the criterion
+frozen before Run 1. This authorizes Trial 1 under the C1.2d gate sequence, but
+Trial 1 was not executed in this task. Physical steering-rate qualification
+remains pending.
+
+Raw machine-specific evidence is intentionally private and remains at:
+
+```text
+Jetson: /tmp/laksa-c1.2-x3-run1.kFE9Q7
+Jetson: /tmp/laksa-c1.2-x3-run2.2aY55K
+Jetson: /tmp/laksa-c1.2-x3-run3.DqhFT3
+Local mirror: /private/tmp/laksa-c1.2-x3/run1
+Local mirror: /private/tmp/laksa-c1.2-x3/run2
+Local mirror: /private/tmp/laksa-c1.2-x3/run3
+Comparison: /private/tmp/laksa-c1.2-x3/x3_comparison.json
+```
+
+Frozen course, raceline, costmap, footprint, ThreeLapGate, controller
+parameters, and Gym source remained unchanged. Production and physical hardware
+were not touched. The unrelated BNO08x submodule deletion was neither modified
+nor staged.
