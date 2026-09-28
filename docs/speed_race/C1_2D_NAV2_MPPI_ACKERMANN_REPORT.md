@@ -467,3 +467,93 @@ The next action is a separately authorized C1.2d lockstep Gym short-horizon
 qualification. It must retain the now-proven replay process ownership and stop
 at the first runtime gate failure. Physical steering-rate characterization
 remains required before making actuator-dynamics claims.
+
+## Closed-loop Gym qualification
+
+### Gate A — pre-flight
+
+The closed-loop qualification began from clean local and remote
+`competition/speed-race-track` commit
+`e9ff67d7ccfb37969dc21604ff58fca13c0d41a2`. The isolated Jetson workspace
+contained no stale C1 processes before launch. Frozen artifacts remained
+unchanged:
+
+- C1.1 raceline SHA256:
+  `22ad91de3edbcbdf765f2cf223db53d43be820d829409da356a9def5a4c41783`
+- canonical manifest SHA256:
+  `b0e2e709fb2cb664600353ffb6145eff08f069e688e847c9ffc390eae8e26ead`
+- MPPI configuration SHA256:
+  `87d9b54df6bda3a93b30bbd6c28e5b16bbf1e43c612ba08d0854595f38bf4692`
+- MPPI launch SHA256:
+  `ce0e9b89b91a957a21d0691026fca8951f32dcaab2f57de2eaa79c6ee80089a2`
+- ThreeLapGate SHA256:
+  `5255497ba4e81a10988debf9e49ae832cfaea14ff071d113c1c72fb560364ba1`
+
+The minimum relevant committed smoke checks passed in the isolated ARM64
+environment: Ackermann feasibility C++ tests **5/5 PASS** and Python
+regressions **56/56 PASS**. The previously qualified complete Gate 0 remains
+MPPI upstream **17/17 PASS**, with physical-topic isolation and the independent
+safety-veto static contract passing. `ORPHAN_PROCESSES_BEFORE_START=0`.
+
+`GATE_A_PREFLIGHT=PASS`.
+
+### Gate B — zero-step lockstep
+
+The zero-step launch used ROS domain 226, `qualification_step_limit:=0`, the
+isolated overlay `/tmp/laksa-c1.2-runtime/install`, and output directory
+`/tmp/laksa-c1.2d-results/closed_loop/zero_step`. The launch was owned by the
+qualified bounded process-session mechanism.
+
+Gate B stopped before publishing a usable initial command and before any
+`Gym.step()` call. Both `c1_gym_adapter` and
+`c1_nav2_ackermann_adapter` failed during Python module import with:
+
+```text
+ModuleNotFoundError: No module named 'ackermann_msgs'
+```
+
+The pinned MPPI host initialized successfully, but launch shutdown followed
+the two required child failures. Consequently no `summary.json`, controller
+telemetry, state advance, command, or Gym evidence was produced. Gate B cannot
+claim timestamp, TF, feasibility, or safety-veto success.
+
+The dependency exists in the isolated extracted ROS root at
+`/tmp/laksa-c1-native/ackermann_root/opt/ros/humble`, including its Python
+module and package-local setup. Gate-0 compilation had resolved it through
+`CMAKE_PREFIX_PATH`, but the closed-loop runtime environment did not source or
+otherwise add that isolated root to Python/package resolution. Direct
+`import ackermann_msgs` therefore failed after sourcing the base Humble and C1
+overlays. The package manifest already declares `ackermann_msgs`; this is an
+isolated runtime-overlay integration defect, not controller behavior.
+
+Process cleanup remained correct despite the launch failure:
+
+- launch process group: `3324374`
+- launch leader return code: `0`
+- bounded lifecycle phase: `already_exited`
+- remaining owned PIDs: none
+- C1 orphan processes: `0`
+
+The top-level launch command returning zero despite required child-process
+failure is a separate harness-hardening issue. It did not convert Gate B into
+a pass because the required result artifacts were absent and the child errors
+were explicit.
+
+`ZERO_STEP_LOCKSTEP=FAIL_ENVIRONMENT_DEPENDENCY`.
+
+Per the qualification stop rule, Gate C (one-step), short horizon, x3
+determinism, and Trial 1 were not run. No controller parameters, course,
+raceline, costmap, footprint, Gym dynamics, start pose, or ThreeLapGate
+semantics were changed.
+
+### Closed-loop first blocker and next action
+
+`FIRST_BLOCKER=ISOLATED_ACKERMANN_MSGS_RUNTIME_OVERLAY_NOT_SOURCED`.
+
+The next action is to integrate the existing `ackermann_msgs` dependency into
+the isolated C1 runtime overlay, add a preflight that proves both ROS package
+prefix resolution and Python importability, and propagate a nonzero result
+when a required launch child exits in error. Then restart Gate B from the
+beginning. Gate C must not run until that new Gate B passes. The correction
+must remain isolated from `/opt/ros`, production workspaces, services, and
+physical interfaces.
