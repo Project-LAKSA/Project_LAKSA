@@ -1379,3 +1379,93 @@ not authorized by this result. The next action is a separate research task to
 explain the sustained MPPI lateral divergence and why the independent veto did
 not stop before the full-body boundary crossing, without changing frozen race
 artifacts or weakening safety criteria.
+
+## C1.2e-R1 frozen instrumented replay
+
+One, and only one, controlled replay was run from public baseline
+`7e280465090ee98e4470082cd8dff898e30d8377` to collect the raw path-pipeline
+and per-critic evidence missing from the Trial-1 checkpoint. No controller
+parameter, critic calculation, critic ordering, optimizer buffer, RNG call,
+controller input/output, simulator input, or Gym advancement was changed. The
+observational patch is generated from the pinned Nav2 source and is enabled
+only when `LAKSA_MPPI_FORENSIC_DIR` is set.
+
+Before the replay, the instrumented Nav2 package built successfully and all
+17 upstream test targets passed (290 tests, zero errors/failures). The complete
+LAKSA Python regression suite passed 96/96. After artifact generation, four
+focused instrumentation/handoff regressions raised the final suite to 100/100
+passing. The pinned provenance remained
+Nav2 `a097086719c88f781aa59788eca29ac6ca5e56db` and F1TENTH Gym
+`bdaec1420c3b0f103858d289866d0d4e2e597c30`; both source checkouts were clean.
+The canonical raceline, controller configuration, and ThreeLapGate hashes
+remained respectively
+`22ad91de3edbcbdf765f2cf223db53d43be820d829409da356a9def5a4c41783`,
+`87d9b54df6bda3a93b30bbd6c28e5b16bbf1e43c612ba08d0854595f38bf4692`,
+and `5255497ba4e81a10988debf9e49ae832cfaea14ff071d113c1c72fb560364ba1`.
+The isolated allocator selected ROS domain 207.
+
+### Exact reproduction gate
+
+The replay reproduced the original Trial-1 dynamics exactly under the
+established normalized IEEE-754 comparison, excluding wall-clock, domain,
+PID, path, and latency metadata. Both runs have normalized dynamic hash
+`1c958fb9c61554a5c15e6b637e36ced18d5f882e00519359d4f8ec7f4228298c`.
+The first off-track event again occurred at step 1326 after 13.26 simulated
+seconds. All reference CTE, heading, steering, command-speed, and clearance
+metrics matched exactly. Therefore `REPLAY_REPRODUCTION=PASS_EXACT` and the
+instrumentation's demonstrated behavioral effect is `NONE`.
+
+### Runtime path-pipeline evidence
+
+The finite unrolled global path contained 2,185 poses and measured
+436.52016628221094 m. At both the initial evaluation and the failure
+evaluation, the transformed path contained only eight poses. Its length was
+1.3992252372071909 m initially and 1.399220174627448 m at failure. Across all
+1,326 evaluations, the maximum available transformed-path index was 7 while
+`PathAlignCritic.offset_from_furthest` required index 20.
+
+Consequently, dynamic instrumentation observed:
+
+```text
+PATH_ALIGN_ACTIVE_COUNT=0
+PATH_ALIGN_INACTIVE_COUNT=1326
+PATH_ALIGN_INACTIVE_PERCENT=100.0
+PATH_ALIGN_INACTIVE_REASON=FURTHEST_REACHED_INDEX_LT_OFFSET_FROM_FURTHEST
+```
+
+This verifies the static audit's path-pipeline claim at runtime. It is evidence
+for the subsequent causal analysis, not a root-cause decision or authorization
+to change path pruning, path density, `PathAlignCritic`, or any controller
+parameter.
+
+### Critic evidence semantics
+
+`critic_telemetry.csv` contains 10,608 rows: eight configured critics for each
+of 1,326 evaluations. For every critic and evaluation it records active state,
+inactivity reason where observable, configured weight/power, and the raw and
+weighted contribution at the diagnostic minimum-total-cost candidate. Humble
+MPPI performs a weighted batch update rather than selecting one trajectory;
+the recorded diagnostic candidate index is therefore explicitly not described
+as the optimizer's selected trajectory. No critic computation was reordered or
+re-evaluated to obtain this telemetry.
+
+### Private forensic handoff
+
+Large machine-specific evidence remains outside Git:
+
+```text
+Jetson handoff: /tmp/laksa-c1.2e-r1-forensic
+Local handoff: /private/tmp/laksa-c1.2e-r1-forensic
+Raw replay telemetry: /private/tmp/laksa-c1.2e-r1-forensic/replay_raw_telemetry.csv
+Critic telemetry: /private/tmp/laksa-c1.2e-r1-forensic/critic_telemetry.csv
+Path telemetry: /private/tmp/laksa-c1.2e-r1-forensic/path_pipeline_telemetry.csv
+Replay summary: /private/tmp/laksa-c1.2e-r1-forensic/replay_summary.json
+Provenance: /private/tmp/laksa-c1.2e-r1-forensic/provenance.json
+Instrumentation manifest: /private/tmp/laksa-c1.2e-r1-forensic/instrumentation_manifest.txt
+```
+
+The replay ended in the expected fail-closed Trial-1 status, terminal zero was
+preserved, process-group shutdown completed, and zero C1 processes remained.
+No retry, Trial 2, or Trial 3 was run. Production and physical hardware were
+untouched. The next action is to transfer this handoff to the Extra High
+C1.2e causal-analysis environment; this task makes no controller correction.

@@ -1,0 +1,304 @@
+#!/usr/bin/env python3
+"""Apply passive C1.2e telemetry to the pinned Humble MPPI CriticManager.
+
+The patch only reads CriticData before/after each existing critic invocation and
+writes buffered CSV observations when LAKSA_MPPI_FORENSIC_DIR is set. It does
+not change critic order, scores, optimizer buffers, controller inputs, or RNG.
+"""
+
+from __future__ import annotations
+
+import argparse
+import difflib
+import hashlib
+from pathlib import Path
+
+
+ORIGINAL_SHA256 = "339587bccec06962453893eba577aa3ad9b65aa804ea12999dec5be8f73fce3b"
+MARKER = "LAKSA_C1_2E_PASSIVE_FORENSICS"
+
+
+def sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def apply(
+    source_root: Path,
+    diff_output: Path | None = None,
+    canonical_source: Path | None = None,
+) -> Path:
+    target = source_root / "nav2_mppi_controller" / "src" / "critic_manager.cpp"
+    text = target.read_text(encoding="utf-8")
+    if MARKER in text:
+        if canonical_source is None:
+            return target
+        text = canonical_source.read_text(encoding="utf-8")
+    actual = hashlib.sha256(text.encode()).hexdigest()
+    if actual != ORIGINAL_SHA256:
+        raise SystemExit(
+            f"unexpected pinned CriticManager source SHA256: {actual} != {ORIGINAL_SHA256}"
+        )
+    original_text = text
+
+    text = text.replace(
+        '#include "nav2_mppi_controller/critic_manager.hpp"\n',
+        '''#include "nav2_mppi_controller/critic_manager.hpp"\n\n'''
+        '''#include <algorithm>\n'''
+        '''#include <cmath>\n'''
+        '''#include <cstdlib>\n'''
+        '''#include <fstream>\n'''
+        '''#include <iomanip>\n'''
+        '''#include <limits>\n'''
+        '''#include <vector>\n''',
+        1,
+    )
+    text = text.replace(
+        "namespace mppi\n{\n",
+        '''namespace mppi\n{\n\n'''
+        '''// LAKSA_C1_2E_PASSIVE_FORENSICS: observational, buffered telemetry only.\n'''
+        '''namespace\n'''
+        '''{\n'''
+        '''struct PassiveForensics\n'''
+        '''{\n'''
+        '''  bool enabled{false};\n'''
+        '''  uint64_t evaluation{0};\n'''
+        '''  std::ofstream critic_csv;\n'''
+        '''  std::ofstream path_csv;\n'''
+        '''  std::vector<double> weights;\n'''
+        '''  std::vector<int64_t> powers;\n'''
+        '''  size_t path_align_offset{20};\n'''
+        '''};\n\n'''
+        '''PassiveForensics & passive_forensics()\n'''
+        '''{\n'''
+        '''  static PassiveForensics state;\n'''
+        '''  return state;\n'''
+        '''}\n'''
+        '''}  // namespace\n''',
+        1,
+    )
+    text = text.replace(
+        "  getParams();\n  loadCritics();\n}",
+        '''  getParams();\n'''
+        '''  loadCritics();\n\n'''
+        '''  auto & forensic = passive_forensics();\n'''
+        '''  const char * output_dir = std::getenv("LAKSA_MPPI_FORENSIC_DIR");\n'''
+        '''  if (output_dir != nullptr && output_dir[0] != '\\0') {\n'''
+        '''    forensic.enabled = true;\n'''
+        '''    forensic.evaluation = 0;\n'''
+        '''    forensic.critic_csv.open(\n'''
+        '''      std::string(output_dir) + "/critic_telemetry.csv",\n'''
+        '''      std::ios::out | std::ios::trunc);\n'''
+        '''    forensic.path_csv.open(\n'''
+        '''      std::string(output_dir) + "/path_pipeline_telemetry_raw.csv",\n'''
+        '''      std::ios::out | std::ios::trunc);\n'''
+        '''    if (!forensic.critic_csv || !forensic.path_csv) {\n'''
+        '''      throw std::runtime_error("unable to open C1.2e passive forensic telemetry");\n'''
+        '''    }\n'''
+        '''    forensic.critic_csv\n'''
+        '''      << "evaluation,selection_semantics,diagnostic_candidate_index,total_cost,"\n'''
+        '''      "critic_name,activation_state,inactive_reason,cost_weight,cost_power,"\n'''
+        '''      "raw_contribution,weighted_contribution,furthest_reached_path_index,"\n'''
+        '''      "offset_from_furthest\\n";\n'''
+        '''    forensic.path_csv\n'''
+        '''      << "evaluation,global_path_point_count,transformed_path_point_count,"\n'''
+        '''      "transformed_path_length_m,transformed_path_first_x_m,"\n'''
+        '''      "transformed_path_first_y_m,transformed_path_last_x_m,"\n'''
+        '''      "transformed_path_last_y_m,transformed_path_spacing_min_m,"\n'''
+        '''      "transformed_path_spacing_mean_m,transformed_path_spacing_max_m,"\n'''
+        '''      "nearest_local_path_index,furthest_reached_path_index,"\n'''
+        '''      "path_align_required_index,path_align_max_available_index,"\n'''
+        '''      "path_align_activation_state,path_align_inactive_reason\\n";\n'''
+        '''    forensic.weights.clear();\n'''
+        '''    forensic.powers.clear();\n'''
+        '''    for (const auto & critic_name : critic_names_) {\n'''
+        '''      const auto prefix = name_ + "." + critic_name;\n'''
+        '''      forensic.weights.push_back(node->get_parameter(prefix + ".cost_weight").as_double());\n'''
+        '''      forensic.powers.push_back(node->get_parameter(prefix + ".cost_power").as_int());\n'''
+        '''    }\n'''
+        '''    forensic.path_align_offset = static_cast<size_t>(\n'''
+        '''      node->get_parameter(name_ + ".PathAlignCritic.offset_from_furthest").as_int());\n'''
+        '''  }\n'''
+        '''}''',
+        1,
+    )
+    old_eval = '''void CriticManager::evalTrajectoriesScores(
+  CriticData & data) const
+{
+  for (size_t q = 0; q < critics_.size(); q++) {
+    if (data.fail_flag) {
+      break;
+    }
+    critics_[q]->score(data);
+  }
+}
+'''
+    new_eval = '''void CriticManager::evalTrajectoriesScores(
+  CriticData & data) const
+{
+  auto & forensic = passive_forensics();
+  std::vector<std::vector<float>> contributions;
+  std::vector<bool> invoked;
+  if (forensic.enabled) {
+    contributions.resize(critics_.size());
+    invoked.assign(critics_.size(), false);
+  }
+
+  for (size_t q = 0; q < critics_.size(); q++) {
+    if (data.fail_flag) {
+      break;
+    }
+    std::vector<float> before;
+    if (forensic.enabled) {
+      before.assign(data.costs.begin(), data.costs.end());
+      invoked[q] = true;
+    }
+    critics_[q]->score(data);
+    if (forensic.enabled) {
+      contributions[q].resize(data.costs.size());
+      for (size_t i = 0; i < data.costs.size(); ++i) {
+        contributions[q][i] = data.costs(i) - before[i];
+      }
+    }
+  }
+
+  if (!forensic.enabled) {
+    return;
+  }
+
+  const uint64_t evaluation = ++forensic.evaluation;
+  size_t diagnostic_index = 0;
+  for (size_t i = 1; i < data.costs.size(); ++i) {
+    if (data.costs(i) < data.costs(diagnostic_index)) {
+      diagnostic_index = i;
+    }
+  }
+  const size_t furthest = data.furthest_reached_path_point.value_or(0);
+  const bool has_furthest = data.furthest_reached_path_point.has_value();
+
+  forensic.critic_csv << std::setprecision(17);
+  for (size_t q = 0; q < critics_.size(); ++q) {
+    bool any_cost_delta = false;
+    if (invoked[q]) {
+      for (const float value : contributions[q]) {
+        if (value != 0.0f) {
+          any_cost_delta = true;
+          break;
+        }
+      }
+    }
+    std::string activation = any_cost_delta ? "ACTIVE_CONTRIBUTED" : "INACTIVE_OR_ZERO";
+    std::string reason = any_cost_delta ? "" : "NO_COST_DELTA_OR_CRITIC_EARLY_RETURN";
+    if (!invoked[q]) {
+      activation = "NOT_INVOKED";
+      reason = "PRIOR_CRITIC_SET_FAIL_FLAG";
+    }
+    if (invoked[q] && critic_names_[q] == "PathAlignCritic" && has_furthest &&
+      furthest < forensic.path_align_offset)
+    {
+      activation = "INACTIVE";
+      reason = "FURTHEST_REACHED_INDEX_LT_OFFSET_FROM_FURTHEST";
+    }
+    const float weighted =
+      contributions[q].empty() ? 0.0f : contributions[q][diagnostic_index];
+    const double raw =
+      forensic.powers[q] == 1 && forensic.weights[q] != 0.0 ?
+      static_cast<double>(weighted) / forensic.weights[q] :
+      std::numeric_limits<double>::quiet_NaN();
+    forensic.critic_csv
+      << evaluation << ",MPPI_WEIGHTED_UPDATE_NO_SINGLE_SELECTED_TRAJECTORY,"
+      << diagnostic_index << ',' << data.costs(diagnostic_index) << ','
+      << critic_names_[q] << ',' << activation << ',' << reason << ','
+      << forensic.weights[q] << ',' << forensic.powers[q] << ',' << raw << ','
+      << weighted << ',';
+    if (has_furthest) {
+      forensic.critic_csv << furthest;
+    }
+    forensic.critic_csv << ',' << forensic.path_align_offset << '\\n';
+  }
+
+  const size_t path_count = data.path.x.size();
+  double path_length = 0.0;
+  double spacing_min = std::numeric_limits<double>::infinity();
+  double spacing_max = 0.0;
+  size_t nearest_local_index = 0;
+  double nearest_sq = std::numeric_limits<double>::infinity();
+  for (size_t i = 0; i < path_count; ++i) {
+    const double dx_pose = static_cast<double>(data.path.x(i)) - data.state.pose.pose.position.x;
+    const double dy_pose = static_cast<double>(data.path.y(i)) - data.state.pose.pose.position.y;
+    const double candidate_sq = dx_pose * dx_pose + dy_pose * dy_pose;
+    if (candidate_sq < nearest_sq) {
+      nearest_sq = candidate_sq;
+      nearest_local_index = i;
+    }
+    if (i > 0) {
+      const double dx = static_cast<double>(data.path.x(i)) - data.path.x(i - 1);
+      const double dy = static_cast<double>(data.path.y(i)) - data.path.y(i - 1);
+      const double spacing = std::hypot(dx, dy);
+      path_length += spacing;
+      spacing_min = std::min(spacing_min, spacing);
+      spacing_max = std::max(spacing_max, spacing);
+    }
+  }
+  const double spacing_mean = path_count > 1 ? path_length / (path_count - 1) : 0.0;
+  if (path_count < 2) {
+    spacing_min = 0.0;
+  }
+  const bool path_align_inactive = has_furthest && furthest < forensic.path_align_offset;
+  forensic.path_csv << std::setprecision(17);
+  forensic.path_csv << evaluation << ",2185," << path_count << ',' << path_length << ',';
+  if (path_count > 0) {
+    forensic.path_csv
+      << data.path.x(0) << ',' << data.path.y(0) << ','
+      << data.path.x(path_count - 1) << ',' << data.path.y(path_count - 1);
+  } else {
+    forensic.path_csv << ",,,";
+  }
+  forensic.path_csv
+    << ',' << spacing_min << ',' << spacing_mean << ',' << spacing_max << ','
+    << nearest_local_index << ',';
+  if (has_furthest) {
+    forensic.path_csv << furthest;
+  }
+  forensic.path_csv
+    << ',' << forensic.path_align_offset << ',' << (path_count == 0 ? 0 : path_count - 1)
+    << ',' << (path_align_inactive ? "INACTIVE" : "ACTIVE_OR_ZERO") << ','
+    << (path_align_inactive ? "FURTHEST_REACHED_INDEX_LT_OFFSET_FROM_FURTHEST" : "")
+    << '\\n';
+}
+'''
+    if old_eval not in text:
+        raise SystemExit("unexpected pinned CriticManager eval layout")
+    text = text.replace(old_eval, new_eval, 1)
+    if diff_output is not None:
+        diff_output.write_text(
+            "".join(
+                difflib.unified_diff(
+                    original_text.splitlines(keepends=True),
+                    text.splitlines(keepends=True),
+                    fromfile="upstream/nav2_mppi_controller/src/critic_manager.cpp",
+                    tofile="instrumented/nav2_mppi_controller/src/critic_manager.cpp",
+                )
+            ),
+            encoding="utf-8",
+        )
+    target.write_text(text, encoding="utf-8")
+    return target
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("source_root", type=Path)
+    parser.add_argument("--diff-output", type=Path)
+    parser.add_argument("--canonical-source", type=Path)
+    args = parser.parse_args()
+    target = apply(
+        args.source_root.resolve(),
+        None if args.diff_output is None else args.diff_output.resolve(),
+        None if args.canonical_source is None else args.canonical_source.resolve(),
+    )
+    print(f"target={target}")
+    print(f"sha256={sha256(target)}")
+
+
+if __name__ == "__main__":
+    main()
