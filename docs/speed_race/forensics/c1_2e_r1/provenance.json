@@ -1,0 +1,38 @@
+{
+  "branch": "competition/speed-race-track",
+  "f1tenth_gym_sha": "bdaec1420c3b0f103858d289866d0d4e2e597c30",
+  "frozen_configuration_hashes": {
+    "controller_config_sha256": "87d9b54df6bda3a93b30bbd6c28e5b16bbf1e43c612ba08d0854595f38bf4692",
+    "course_geometry_sha256": "2c76075f838a7a1c3e0891385b27f2e6f26e641ad13068280093fda273a84858",
+    "course_source_sha256": "222c897f6835a4877318cfd0ac7d76be98b7173faaeec44e028814ca3c6eb13e",
+    "proxy_config_sha256": "b9d072d92db353b0763fada60c40a85cdb82ce2b92b7c3c982652d3ef6719b76",
+    "raceline_sha256": "22ad91de3edbcbdf765f2cf223db53d43be820d829409da356a9def5a4c41783"
+  },
+  "generated_at_utc": "2026-09-29T02:22:30.355386+00:00",
+  "instrumentation": {
+    "behavioral_effect": "NONE",
+    "diff_sha256": "360fc4fad4f19765f136959040fa380625e94325ad973b9209df2b5cbce44061",
+    "instrumented_source_sha256": "5a7003fbbc6d5b581fdadfd68f6251d683badd1334f7ab48ef33e554da560e8b",
+    "script_sha256": "1a3b94e786058306b589c739688fdb0c2ca0b13ef290a6e958347f0ae8766911"
+  },
+  "nav2_mppi_sha": "a097086719c88f781aa59788eca29ac6ca5e56db",
+  "repository_sha": "7e280465090ee98e4470082cd8dff898e30d8377",
+  "ros_domain": 207,
+  "runtime_source_order": [
+    "/opt/ros/humble/setup.bash",
+    "/tmp/laksa-c1-native/ackermann_root/opt/ros/humble/share/ackermann_msgs/local_setup.bash",
+    "/tmp/laksa-c1.2-runtime/install/setup.bash",
+    "isolated venv and pinned checkout PYTHONPATH"
+  ],
+  "seed_policy": {
+    "gym_seed": 12345,
+    "mppi_regenerate_noises": false
+  },
+  "vehicle_geometry": {
+    "collision_body_center_x_m": 0.135,
+    "length_m": 0.568,
+    "steering_limit_rad": 0.288,
+    "wheelbase_m": 0.324,
+    "width_m": 0.296
+  }
+}
